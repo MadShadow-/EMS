@@ -25,30 +25,7 @@ EMS_CustomMapConfig =
 		AddPeriodicSummer(60);
 		SetupHighlandWeatherGfxSet();
 		LocalMusic.UseSet = HIGHLANDMUSIC;
-		
-		local k = 0;
-			-- u dont get resources back for start turrets
-			for playerId = 1,8 do
-				local n,eID = Logic.GetPlayerEntities(playerId, Entities.PB_Tower3, 1);
-				if (n > 0) then
-					local firstEntity = eID;
-					repeat
-						SetEntityName(eID,"start_tower_"..k);
-						k = k + 1;
-						eID = Logic.GetNextEntityOfPlayerOfType(eID);
-					until (firstEntity == eID);
-				end
-			end
-			
-			System_Start_Turrets = function()
-				local entityId = Event.GetEntityID();
-				if string.find(tostring(Logic.GetEntityName(entityId)),"start_tower_",1,true) then
-					AddWood( GetPlayer(entityId), -100);
-					AddStone( GetPlayer(entityId), -100);
-				end
-			end
-			
-			Trigger.RequestTrigger( Events.LOGIC_EVENT_ENTITY_DESTROYED, "", "System_Start_Turrets", 1)
+		MapTools.NoResourcePaybackForStartTurrets();
 	end,
  
  
@@ -64,10 +41,7 @@ EMS_CustomMapConfig =
 	-- * Called when the peacetime counter reaches zero
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
-		for i = 1,4 do
-			ReplaceEntity ("gate"..i, Entities.XD_WallStraightGate )
-			DestroyEntity("wall"..i)	
-		end
+		MapTools.OpenWallGates();
 	end,
  
  
