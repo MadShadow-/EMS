@@ -22,6 +22,7 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
  
 	Callback_OnMapStart = function()
+		XGUIEng.ShowWidget("EMSMAWShowWindow", 1);
 		Logic.AddWeatherElement(1, 1, 1, 4, 5, 10);
 		WT.SetupWeather();
 		LocalMusic.UseSet = MEDITERANEANMUSIC;
