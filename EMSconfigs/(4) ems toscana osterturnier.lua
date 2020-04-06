@@ -234,11 +234,28 @@ end
 
 -- timer update
 function ConquerArea.TimerStatusUpdate(_teamId, _show, _color)
-	if ConquerArea.isMyGUI(_teamId) then
+	if ConquerArea.IsSpectator() then
+		local widget = ConquerArea.SpectatorGetTimerWidget(_teamId);
+		XGUIEng.ShowWidget(widget, _show);
+	elseif ConquerArea.isMyGUI(_teamId) then
 		XGUIEng.ShowWidget("EMSTimer", _show);
 		ConquerArea.TimerColor = _color;
 	else
 		XGUIEng.ShowWidget("EMSTimer2", _show);
+	end
+end
+
+function ConquerArea.IsSpectator()
+	return GUI.GetPlayerID() == 17;
+end
+
+function ConquerArea.SpectatorGetTimerWidget(_teamId)
+	if GUI.GetPlayerID() == 17 then
+		if _teamID < 3 then
+			return "EMSTimer";
+		else
+			return "EMSTimer2";
+		end
 	end
 end
 
@@ -248,7 +265,10 @@ function ConquerArea.TimerSetValue(_teamId, _value)
 	if seconds < 10 then
 		seconds = "0"..seconds;
 	end
-	if ConquerArea.isMyGUI(_teamId) then
+	if ConquerArea.IsSpectator() then
+		local widget = ConquerArea.SpectatorGetTimerWidget(_teamId);
+		XGUIEng.SetText(widget,  "@color:255,165,0 ".. minutes .. ":" .. seconds);
+	elseif ConquerArea.isMyGUI(_teamId) then
 		XGUIEng.SetText("EMSTimer", ConquerArea.TimerColor .. minutes .. ":" .. seconds);
 	else
 		XGUIEng.SetText("EMSTimer2",  "@color:255,165,0 ".. minutes .. ":" .. seconds);
@@ -262,8 +282,20 @@ function ConquerArea.ResetCounter(_teamId)
 end
 
 function ConquerArea.HasEntitiesInArea(_teamId)
-	return (Logic.GetPlayerEntitiesInArea(_teamId,     0, ConquerArea.Pos.X, ConquerArea.Pos.Y, ConquerArea.Range, 1)
-		  + Logic.GetPlayerEntitiesInArea(_teamId + 1, 0, ConquerArea.Pos.X, ConquerArea.Pos.Y, ConquerArea.Range, 1)) > 0;
+	local entities = {Logic.GetPlayerEntitiesInArea(_teamId,     0, ConquerArea.Pos.X, ConquerArea.Pos.Y, ConquerArea.Range, 1)};
+	local entitiesInArea = false;
+	if entities[1] > 0 then
+		if Logic.IsBuilding(entities[2]) == 0 then
+			entitiesInArea = true;
+		end
+	end
+	entities = {Logic.GetPlayerEntitiesInArea(_teamId + 1, 0, ConquerArea.Pos.X, ConquerArea.Pos.Y, ConquerArea.Range, 1)};
+	if entities[1] > 0 then
+		if Logic.IsBuilding(entities[2]) == 0 then
+			entitiesInArea = true;
+		end
+	end
+	return entitiesInArea;
 end
 
 function ConquerArea.isMyGUI(_teamId)
