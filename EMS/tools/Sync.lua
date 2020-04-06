@@ -8,7 +8,8 @@
 Sync = {
 	PrepareChar = string.char(2),
 	AcknowledgeChar = string.char(3),
-	NoSyncChar = string.char(4)
+	NoSyncChar = string.char(4),
+	Whitelist = {}
 }
 
 function Sync.Init()
@@ -16,8 +17,6 @@ function Sync.Init()
 	GameCallback_FulfillTribute = function() return 1 end
 	
 	Sync.UseWhitelist = false
-	Sync.Whitelist = {
-	};
 	
 	if not CNetwork then
 		-- numOfTributes determines actions at the same time
@@ -167,6 +166,15 @@ function Sync.GetFreeTributeId(_pId)
 	end
 end
 
+function Sync.Add(_funcName)
+	Sync.Whitelist[_funcName] = true;
+	if CNetwork then
+		CNetwork.SetNetworkHandler(_funcName, function(name, ...)
+			Sync.ExecuteFunctionByFuncName(_funcName, unpack(arg or {}));
+		end);
+	end
+end
+
 -- type mapping: 1=string, 2=number, 3=table, 4=boolean, 5=true, 6=false
 -- structure: key, valuetype, value
 
@@ -189,6 +197,25 @@ function Sync.ExecuteFunctionByString(_s)
 		sep = string.find(fString, ".", 1, true)
 	end
 	ref[fString](unpack(arguments))
+end
+
+function Sync.ExecuteFunctionByFuncName(_funcName, ...)
+	local fcopy = _funcName;
+	local ref = _G;
+	local sep = string.find(_funcName, ".", 1, true)
+	if not sep then
+		assert(_G[_funcName], "Sync: function might be nil: " .. tostring(fcopy));
+		_G[_funcName](unpack(arg or {}));
+		return;
+	end
+	while(sep) do
+		ref = ref[string.sub(_funcName, 1, sep-1)]
+		assert(ref, "Sync: function might be nil: " .. tostring(fcopy));
+		_funcName = string.sub(_funcName, sep+1)
+		sep = string.find(_funcName, ".", 1, true)
+	end
+	assert(ref[_funcName], "Sync: function might be nil: " .. tostring(fcopy));
+	ref[_funcName](unpack(arg or {}));
 end
 
 function Sync.TableToString(_table)
