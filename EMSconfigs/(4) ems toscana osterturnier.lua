@@ -9,7 +9,7 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 1.1,
+	Version = 1.2,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -251,7 +251,7 @@ end
 
 function ConquerArea.SpectatorGetTimerWidget(_teamId)
 	if GUI.GetPlayerID() == 17 then
-		if _teamID < 3 then
+		if _teamId < 3 then
 			return "EMSTimer";
 		else
 			return "EMSTimer2";
