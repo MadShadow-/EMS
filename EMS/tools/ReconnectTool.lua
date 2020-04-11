@@ -29,13 +29,13 @@ ReconnectTool = {
 			XNetwork.Chat_SendMessageToAll(".join");
 			CNetwork.set_ready();
 			CNetwork.send_need_ticks(Network_GetLastTickReceived() + 2000);
+			CNetwork.receive_async_commands();
 			-- reset params
 			ReconnectTool.Started = false;
 			ReconnectTool.CurrentActionIndex = 0;
 			-- update GUI
 			ReconnectTool.Text = " @color:0,255,0 Verbunden! ";
 			XGUIEng.SetText( "ReconnectToolState", ReconnectTool.Text);
-			XNetwork.Manager_Create();
 			XGUIEng.ShowWidget("ReconnectToolState",0);
 			return 1;
 		end,
