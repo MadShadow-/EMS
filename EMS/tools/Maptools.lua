@@ -59,7 +59,6 @@ function MapTools.RemoveFastGameEntities()
 		for eId in S5Hook.EntityIterator(Predicate.OfPlayer(playerId)) do
 			eType = Logic.GetEntityType(eId);
 			if not MapTools.NonFastGameTypes[eType] then
-				LuaDebugger.Log(Logic.GetEntityTypeName(eType));
 				table.insert(MapTools.FastGameEntities, MapTools.GetEntityProps(eId));
 				DestroyEntity(eId);
 			end

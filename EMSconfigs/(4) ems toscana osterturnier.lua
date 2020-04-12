@@ -336,8 +336,8 @@ function ConquerArea.ActivateDebug()
 		Sync.Call("ConquerArea.Spawn", _id, x, y);
 	end
 	
-	function ConquerArea.Spawn(_id, x, y)
-		table.insert(ConquerArea.DebugEntities, Logic.CreateEntity(Entities.PU_Serf, x, y, 0, _id));
+	function ConquerArea.Spawn(_id, _x, _y)
+		table.insert(ConquerArea.DebugEntities, Logic.CreateEntity(Entities.PU_Serf, _x, _y, 0, _id));
 	end
 	
 	function ConquerArea.DespawnLocal()
