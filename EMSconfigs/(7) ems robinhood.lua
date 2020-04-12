@@ -35,7 +35,7 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
 		for i = 1,7 do
-			ForbidTechnology(i, Technologies.T_MakeSnow);
+			ForbidTechnology(Technologies.T_MakeSnow, i);
 		end
 	end,
  
@@ -46,7 +46,7 @@ EMS_CustomMapConfig =
 	Callback_OnPeacetimeEnded = function()
 		MapTools.OpenPalisadeGates();
 		for i = 1,7 do
-			AllowTechnology(i, Technologies.T_MakeSnow);
+			AllowTechnology(Technologies.T_MakeSnow, i);
 		end
 	end,
  
