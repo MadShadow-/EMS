@@ -28,7 +28,6 @@ EMS_CustomMapConfig =
 		
 
 		MapTools.WallsToPlayerZero(Entities.XD_WallStraight, Entities.XD_WallStraightCorner, Entities.XD_WallStraightGate_Closed);
-		MapTools.OpenWallGates();
 		MapTools.NoResourcePaybackForStartTurrets();
 	end,
  
@@ -45,9 +44,7 @@ EMS_CustomMapConfig =
 	-- * Called when the peacetime counter reaches zero
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
-		for eId in S5Hook.EntityIterator(Predicate.OfType(Entities.XD_WallStraightGate_Closed)) do
-			ReplaceEntity(eId, Entities.XD_WallStraightGate);
-		end
+		MapTools.OpenWallGates();
 	end,
  
  
