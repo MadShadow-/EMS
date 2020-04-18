@@ -30,7 +30,7 @@ function Sync.Init()
 	end
 	
 	-- this overwrite should be the last one, to overwrite this method
-	-- so no one can accidentely filter out sync messages
+	-- so no one can accidentally filter out sync messages
 	if CNetwork then
 		Sync.ApplicationCallback_ReceivedChatMessageRaw = ApplicationCallback_ReceivedChatMessageRaw
 		ApplicationCallback_ReceivedChatMessageRaw = function(_name, _msg, _color, _allied, _sender)
