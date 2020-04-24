@@ -9,7 +9,7 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 1,
+	Version = 1.1,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -29,7 +29,6 @@ EMS_CustomMapConfig =
 	-- * and after the 10 seconds of countdown
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
-		ResearchAllUniversityTechnologies(1)
 	end,
 	
 	-- ********************************************************************************************
