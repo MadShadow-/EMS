@@ -15,8 +15,7 @@ Sync = {
 function Sync.Init()
 	-- allow use of tributes
 	GameCallback_FulfillTribute = function() return 1 end
-	
-	Sync.UseWhitelist = false
+	Sync.UseWhitelist = false;
 	
 	if not CNetwork then
 		-- numOfTributes determines actions at the same time
@@ -168,11 +167,6 @@ end
 
 function Sync.Add(_funcName)
 	Sync.Whitelist[_funcName] = true;
-	if CNetwork then
-		CNetwork.SetNetworkHandler(_funcName, function(name, ...)
-			Sync.ExecuteFunctionByFuncName(_funcName, unpack(arg or {}));
-		end);
-	end
 end
 
 -- type mapping: 1=string, 2=number, 3=table, 4=boolean, 5=true, 6=false
