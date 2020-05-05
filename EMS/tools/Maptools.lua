@@ -137,3 +137,74 @@ function MapTools.ReplaceEntity(_eId, _replaceType, _playerId)
 	end
 end
 
+-- replaces all entities of type _entityType with woodpiles
+function MapTools.CreateWoodPiles(_entityType, _amountOfWood)
+	for eId in S5Hook.EntityIterator(Predicate.OfType(_entityType)) do
+		MapTools.CreateWoodPile( eId, _amountOfWood);
+	end
+end
+
+function MapTools.CreateWoodPile( _entityId, _amountOfWood )
+    assert( type( _entityId ) == "number" );
+    assert( type( _amountOfWood ) == "number" );
+    MapTools.WoodPiles = MapTools.WoodPiles or {
+        JobId = StartSimpleJob("MapTools_ControlWoodPiles"),
+	--	UniqueNumber = 0,
+    };
+	
+	--MapTools.WoodPiles.UniqueNumber = MapTools.WoodPiles.UniqueNumber + 1;
+    local pos = GetPosition( _entityId );
+    local woodPileId = Logic.CreateEntity( Entities.XD_ResourceTree, pos.X, pos.Y, 0, 0 );
+    --SetEntityName( woodPileId, "WoodPile"..MapTools.WoodPiles.UniqueNumber );
+	
+	Logic.SetModelAndAnimSet(woodPileId, Models.XD_SignalFire1);
+    Logic.SetResourceDoodadGoodAmount(woodPileId, _amountOfWood*10);
+	local woodPileEffectId = Logic.CreateEntity(Entities.XD_Rock03, pos.X, pos.Y, 0, 0);
+	Logic.SetModelAndAnimSet(woodPileEffectId, Models.Effects_XF_ChopTree);
+    table.insert( MapTools.WoodPiles, { WoodPileId = woodPileId, EffectId = woodPileEffectId, ResourceLimit = _resources*9 } );
+end
+
+function MapTools_ControlWoodPiles()
+    for i = table.getn( MapTools.WoodPiles ),1,-1 do
+        if Logic.GetResourceDoodadGoodAmount( MapTools.WoodPiles[i].WoodPileId ) <= MapTools.WoodPiles[i].ResourceLimit then
+            MapTools.DestroyWoodPile(MapTools.WoodPiles[i], i);
+        end
+    end
+end
+
+function MapTools.DestroyWoodPile( _piletable, _index )
+    local pos = GetPosition(_piletable.WoodPileId);
+    DestroyEntity(_piletable.WoodPileId);
+    DestroyEntity(_piletable.EffectId);
+    Logic.CreateEffect(GGL_Effects.FXCrushBuilding, pos.X, pos.Y, 0);
+    table.remove(MapTools.WoodPiles, _index)
+end
+
+function MapTools.SetMapResourceDefault()
+	local resourceTable = {
+		{Entities.XD_StonePit1, 100000},
+		{Entities.XD_IronPit1, 100000},
+		{Entities.XD_ClayPit1, 100000},
+		{Entities.XD_SulfurPit1, 100000},
+		{Entities.XD_Stone1, 4000},
+		{Entities.XD_Iron1, 4000},
+		{Entities.XD_Clay1, 4000},
+		{Entities.XD_Sulfur1, 4000}
+	}
+	MapTools.SetMapResource(resourceTable);
+end
+
+function MapTools.SetMapResource(_resourceTable)
+	for i = 1,table.getn(_resourceTable) do
+		for eId in S5Hook.EntityIterator(Predicate.OfAnyType(_resourceTable[i][1])) do
+			Logic.SetResourceDoodadGoodAmount(eId, _resourceTable[i][2]);
+		end
+	end
+end
+
+function MapTools.DestroyEntities(_type)
+	for eId in S5Hook.EntityIterator(Predicate.OfAnyType(_type)) do
+		DestroyEntity(eId);
+	end
+end
+
