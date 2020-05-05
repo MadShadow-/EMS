@@ -185,6 +185,8 @@ EMS_CustomMapConfig =
 	TowerLevel = 1,
 	WeatherChangeLockTimer = 1,
 	Thief = 0,
+	
+	InvulnerableHQs = 1,
 };
 
 function WT_MineFiller()
