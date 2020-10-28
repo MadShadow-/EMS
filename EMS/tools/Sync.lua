@@ -136,7 +136,7 @@ function Sync.OnAcknowledgeMessageArrived(_msg, _pId)
 end
 
 function Sync.Send(_str)
-	if MCS.T.IsMultiplayer() then
+	if EMS.T.IsMultiplayer() then
 		XNetwork.Chat_SendMessageToAll(_str)
 	else
 		MPGame_ApplicationCallback_ReceivedChatMessage(_str, 0, GUI.GetPlayerID())

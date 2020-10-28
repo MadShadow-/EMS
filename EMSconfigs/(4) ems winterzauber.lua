@@ -666,9 +666,9 @@ function WT_AllyArmySpawnControl()
 				WT.AI[ai].RespawnTime = WT.AI[ai].RespawnTimeMax;
 				if WT.GetPlayersAI(GUI.GetPlayerID()) == ai then
 					if WT.RespawnCountdown then
-						MCS.T.StopCountdown(WT.RespawnCountdown);
+						EMS.T.StopCountdown(WT.RespawnCountdown);
 					end
-					WT.RespawnCountdown = MCS.T.StartCountdown(WT.AI[ai].RespawnTime, nil, true);
+					WT.RespawnCountdown = EMS.T.StartCountdown(WT.AI[ai].RespawnTime, nil, true);
 				end
 			end
 		end
@@ -680,7 +680,7 @@ end
 -- Troop Buttons
 
 function WT.TroopButton(_troopType)
-	if MCS.GV.GameStarted then
+	if EMS.GV.GameStarted then
 		WT.Sync("WT.AddRespawnTroop", _troopType, GUI.GetPlayerID())
 	end
 end
@@ -790,7 +790,7 @@ end
 -- Slot Buttons
 
 function WT.SlotButton(_index)
-	if MCS.GV.GameStarted then
+	if EMS.GV.GameStarted then
 		WT.Sync("WT.SlotButton_Synced", _index, GUI.GetPlayerID())
 	end
 end
@@ -816,7 +816,7 @@ function WT.OptionButton(_index)
 	local pId = GUI.GetPlayerID();
 	local costs = WT.GetOptionCosts(_index, pId);
 	if WT.HasEnoughResources(pId, costs) and WT.OptionConditionFullfilled(_index, pId) then
-		if MCS.GV.GameStarted then
+		if EMS.GV.GameStarted then
 			WT.Sync("WT.OptionButton_Synced", _index, pId);
 		end
 	end
@@ -1873,10 +1873,10 @@ function WT.SetupColorMapping()
 	Display.SetPlayerColorMapping(7, 14);
 	Display.SetPlayerColorMapping(8, 7);
 	
-	MCS.T.SetShareExploration(1, 5, 1);
-	MCS.T.SetShareExploration(2, 5, 1);
-	MCS.T.SetShareExploration(3, 6, 1);
-	MCS.T.SetShareExploration(4, 6, 1);
+	EMS.T.SetShareExploration(1, 5, 1);
+	EMS.T.SetShareExploration(2, 5, 1);
+	EMS.T.SetShareExploration(3, 6, 1);
+	EMS.T.SetShareExploration(4, 6, 1);
 	
 	SetPlayerName(5, "Dorf Folklung")
 	SetPlayerName(6, "Dorf Norfolk")

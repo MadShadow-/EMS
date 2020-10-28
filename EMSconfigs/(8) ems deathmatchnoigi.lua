@@ -204,7 +204,7 @@ EMS_CustomMapConfig =
 
 
 function Player(_playerId)
-	return MCS.PlayerList[_playerId];
+	return EMS.PlayerList[_playerId];
 end
 
 function OpenPlayerGatesAside(_playerId)

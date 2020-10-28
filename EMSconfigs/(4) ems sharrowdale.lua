@@ -659,7 +659,7 @@ end
 
 function UpgradeTowerLevel(_level)
 	local player;
-	for playerId, playerData in pairs(MCS.PlayerList) do
+	for playerId, playerData in pairs(EMS.PlayerList) do
 		player = playerId;
 	end
 	local n,eID = Logic.GetPlayerEntities(7, Entities["PB_Tower".._level], 1);
