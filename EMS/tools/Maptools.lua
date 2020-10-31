@@ -55,7 +55,7 @@ MapTools.NonFastGameTypes =
 MapTools.FastGameEntities = {};
 function MapTools.RemoveFastGameEntities()
 	local eType;
-	for playerId, playerData in pairs(MCS.PlayerList) do
+	for playerId, playerData in pairs(EMS.PlayerList) do
 		for eId in S5Hook.EntityIterator(Predicate.OfPlayer(playerId)) do
 			eType = Logic.GetEntityType(eId);
 			if not MapTools.NonFastGameTypes[eType] then
@@ -145,6 +145,7 @@ function MapTools.CreateWoodPiles(_entityType, _amountOfWood)
 end
 
 function MapTools.CreateWoodPile( _entityId, _amountOfWood )
+	LuaDebugger.Break();
     assert( type( _entityId ) == "number" );
     assert( type( _amountOfWood ) == "number" );
     MapTools.WoodPiles = MapTools.WoodPiles or {
