@@ -46,7 +46,7 @@ EMS_CustomMapConfig =
 		end
 			
 
-		MapTools.CreateWoodPiles(5000);
+		MapTools.CreateWoodPiles(50000);
 		
 		local t = {
 			Entities.XD_StonePit1,
