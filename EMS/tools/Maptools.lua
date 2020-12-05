@@ -31,9 +31,12 @@ function MapTools.NoResourcePaybackForStartTurrets()
 		AddWood(_player, -100);
 		AddStone(_player, -100);
 	end
+	
 	if CNetwork then
-		CNetwork.SetNetworkHandler("MapTools.RemoveTurretCosts", function(name, _player)
-			MapTools.RemoveTurretCosts(_player)
+		CNetwork.SetNetworkHandler("MapTools.RemoveTurretCosts", function(_name, _player)
+			if CNetwork.IsAllowedToManipulatePlayer(_name, _player) then
+				MapTools.RemoveTurretCosts(_player)
+			end
 		end);
 	end
 end
@@ -42,7 +45,7 @@ MapTools.NonFastGameTypes =
 {
 	[Entities.PB_Headquarters1] = true,
 	[Entities.PB_Headquarters2] = true,
-	[Entities.PB_Headquarters1] = true,
+	[Entities.PB_Headquarters3] = true,
 	
 	[Entities.PB_VillageCenter1] = true,
 	[Entities.PB_VillageCenter2] = true,
@@ -138,12 +141,19 @@ function MapTools.ReplaceEntity(_eId, _replaceType, _playerId)
 end
 
 -- replaces all entities of type _entityType with woodpiles
-function MapTools.CreateWoodPiles(_entityType, _amountOfWood)
+function MapTools.CreateWoodPiles(_amountOfWood, _entityType)
+	if not _entityType then
+		_entityType = Entities.XD_SingnalFireOff;
+	end
+	local pos;
 	for eId in S5Hook.EntityIterator(Predicate.OfType(_entityType)) do
-		MapTools.CreateWoodPile( eId, _amountOfWood);
+		pos = GetPosition(eId);
+		DestroyEntity(eId);
+		MapTools.CreateWoodPile( pos.X, pos.Y, _amountOfWood);
 	end
 end
 
+--[[
 function MapTools.CreateWoodPile( _entityId, _amountOfWood )
 	LuaDebugger.Break();
     assert( type( _entityId ) == "number" );
@@ -179,6 +189,65 @@ function MapTools.DestroyWoodPile( _piletable, _index )
     DestroyEntity(_piletable.EffectId);
     Logic.CreateEffect(GGL_Effects.FXCrushBuilding, pos.X, pos.Y, 0);
     table.remove(MapTools.WoodPiles, _index)
+end]]
+
+--[[
+function MapTools.CreateWoodPile( _posEntity, _resources )
+    assert( type( _resources ) == "number" );
+    MapTools.gvWoodPiles = MapTools.gvWoodPiles or {
+        JobID = StartSimpleJob("MapTools_ControlWoodPiles"),
+    };
+    local pos = GetPosition( _posEntity );
+    local pile_id = Logic.CreateEntity( Entities.XD_Rock3, pos.X, pos.Y, 0, 0 );
+	
+    SetEntityName( pile_id, _posEntity.."_WoodPile" );
+	
+    local newE = ReplaceEntity( _posEntity, Entities.XD_ResourceTree );
+	Logic.SetModelAndAnimSet(newE, Models.XD_SignalFire1);
+    Logic.SetResourceDoodadGoodAmount( GetEntityId( _posEntity ), _resources*10 );
+	Logic.SetModelAndAnimSet(pile_id, Models.Effects_XF_ChopTree);
+    table.insert( MapTools.gvWoodPiles, { ResourceEntity = _posEntity, PileEntity = _posEntity.."_WoodPile", ResourceLimit = _resources*9 } );
+end
+
+function MapTools_ControlWoodPiles()
+    for i = table.getn( MapTools.gvWoodPiles ),1,-1 do
+        if Logic.GetResourceDoodadGoodAmount( GetEntityId( MapTools.gvWoodPiles[i].ResourceEntity ) ) <= MapTools.gvWoodPiles[i].ResourceLimit then
+            MapTools.DestroyWoodPile( MapTools.gvWoodPiles[i], i );
+        end
+    end
+end
+ 
+function MapTools.DestroyWoodPile( _piletable, _index )
+    local pos = GetPosition( _piletable.ResourceEntity );
+    DestroyEntity( _piletable.ResourceEntity );
+    DestroyEntity( _piletable.PileEntity );
+    Logic.CreateEffect( GGL_Effects.FXCrushBuilding, pos.X, pos.Y, 0 );
+    table.remove( MapTools.gvWoodPiles, _index )
+end]]
+
+function MapTools.CreateWoodPile(_x, _y, _resources)
+	local eId = Logic.CreateEntity(Entities.XD_ResourceTree, _x, _y, 0, 0);
+	Logic.SetResourceDoodadGoodAmount(eId, _resources * 10);
+	Logic.SetModelAndAnimSet(eId, Models.XD_SignalFire1);
+	MapTools.WoodPiles = MapTools.WoodPiles or {};
+	MapTools.WoodPiles[eId] = {ResourceLimit=_resources * 9, X=_x, Y=_y};
+	if not MapTools.WoodPileControlJob then
+		MapTools.WoodPileControlJob = StartSimpleJob("MapTools_ControlWoodPiles");
+	end
+end
+
+function MapTools_ControlWoodPiles()
+	for eId, t in pairs(MapTools.WoodPiles) do
+		if Logic.GetResourceDoodadGoodAmount(eId) <= t.ResourceLimit then
+            MapTools.DestroyWoodPile(eId, t.X, t.Y);
+			MapTools.WoodPiles[eId] = nil;
+        end
+	end
+end
+
+function MapTools.DestroyWoodPile(_eId, _x, _y)
+	DestroyEntity(_eId);
+    Logic.CreateEffect( GGL_Effects.FXCrushBuilding, _x, _y, 0 );
 end
 
 function MapTools.SetMapResourceDefault()
