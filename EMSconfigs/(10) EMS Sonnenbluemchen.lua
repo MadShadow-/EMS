@@ -14,6 +14,17 @@ EMS_CustomMapConfig =
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
 	Version = 1,
+	
+	ActivateDebug = true,
+	CustomDebugFunc1 = function(_fromPlayer, _target1, _target2, _x, _y)
+		--local eId=Logic.CreateEntity(Entities.XD_ResourceTree, _x, _y, 0, 0);
+		--Logic.SetResourceDoodadGoodAmount( eId, 5000 );
+		MapTools.CreateWoodPile(_x, _y, 500);
+	end,
+	
+	CustomDebugFunc2 = function(_fromPlayer, _target1, _target2, _x, _y)
+		local eId=Logic.CreateEntity(Entities.PU_Serf, _x, _y, 0, 1);
+	end,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -27,23 +38,16 @@ EMS_CustomMapConfig =
 		LocalMusic.UseSet = HIGHLANDMUSIC;
 		for i = 1,4 do
 			for eId in S5Hook.EntityIterator(Predicate.OfType(Entities["XD_Sunflower"..i] )) do
-				S5Hook.GetEntityMem(eId)[25]:SetFloat(3);
+				S5Hook.GetEntityMem(eId)[25]:SetFloat(2.5);
 			end
 		end
 		
-		local d = 0;
-		for eId in S5Hook.EntityIterator(Predicate.OfType(Entities.XD_ScriptEntity)) do
-			d = d + 1;
-			SetEntityName(eId, "ww"..d);
-		end		
-		
-		AFD = function()
-			for eId in S5Hook.EntityIterator(Predicate.OfType(Entities.XD_ScriptEntity)) do
-				CreateWoodPile(Logic.GetEntityName(eId), 100000);
-			end
-			return true;
+		for eId in S5Hook.EntityIterator(Predicate.OfType(Entities["XD_Corn1"] )) do
+			S5Hook.GetEntityMem(eId)[25]:SetFloat(math.random(0.8,1.5));
 		end
-		StartSimpleJob("AFD");
+			
+
+		MapTools.CreateWoodPiles(5000);
 		
 		local t = {
 			Entities.XD_StonePit1,
@@ -65,15 +69,13 @@ EMS_CustomMapConfig =
 			[Entities.XD_Clay1] = 4000,
 			[Entities.XD_Sulfur1] = 4000
 		}
-		for eId in S5Hook.EntityIterator(Predicate.OfAnyType(t[1],t[2],t[3],t[4])) do
+		for eId in S5Hook.EntityIterator(Predicate.OfAnyType(t[1],t[2],t[3],t[4],t[6],t[5],t[7],t[8])) do
 			local entityType = Logic.GetEntityType(eId)
 			Logic.SetResourceDoodadGoodAmount( eId, amount[entityType])
 		end
 		
-		for i = 9,10 do
-			local e = GetEntityId("hq"..i);
-			ChangePlayer(e, i);
-		end
+		--Logic.CreateEntity(Entities.PB_Headquarters1, 25700.00, 56600, 0, 9);
+		--Logic.CreateEntity(Entities.PB_Headquarters1, 17300, 44400, 0, 10);
 	end,
  
  
@@ -82,8 +84,8 @@ EMS_CustomMapConfig =
 	-- * Called at the end of the 10 seconds delay, after the host chose the rules and started
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
-		Logic.CreateEntity(Entities.PB_VillageCenter1, 24200, 51600, 0, 9);
-		Logic.CreateEntity(Entities.PB_VillageCenter1, 16400, 41400, 0, 10);
+		--Logic.CreateEntity(Entities.PB_VillageCenter1, 24200, 51600, 0, 9);
+		--Logic.CreateEntity(Entities.PB_VillageCenter1, 16400, 41400, 0, 10);
 	end,
  
 	-- ********************************************************************************************
@@ -92,6 +94,9 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
 		MapTools.OpenPalisadeGates();
+		for eId in S5Hook.EntityIterator(Predicate.OfType(Entities["XD_Palisade3"] )) do
+			DestroyEntity(eId);
+		end
 	end,
  
  
@@ -162,38 +167,3 @@ EMS_CustomMapConfig =
 	end,
 
 };
-
-
-function CreateWoodPile( _posEntity, _resources )
-    assert( type( _posEntity ) == "string" );
-    assert( type( _resources ) == "number" );
-    gvWoodPiles = gvWoodPiles or {
-        JobID = StartSimpleJob("ControlWoodPiles"),
-    };
-    local pos = GetPosition( _posEntity );
-    local pile_id = Logic.CreateEntity( Entities.XD_Rock3, pos.X, pos.Y, 0, 0 );
-	
-    SetEntityName( pile_id, _posEntity.."_WoodPile" );
-	
-    local newE = ReplaceEntity( _posEntity, Entities.XD_ResourceTree );
-	Logic.SetModelAndAnimSet(newE, Models.XD_SignalFire1);
-    Logic.SetResourceDoodadGoodAmount( GetEntityId( _posEntity ), _resources*10 );
-	Logic.SetModelAndAnimSet(pile_id, Models.Effects_XF_ChopTree);
-    table.insert( gvWoodPiles, { ResourceEntity = _posEntity, PileEntity = _posEntity.."_WoodPile", ResourceLimit = _resources*9 } );
-end
-
-function ControlWoodPiles()
-    for i = table.getn( gvWoodPiles ),1,-1 do
-        if Logic.GetResourceDoodadGoodAmount( GetEntityId( gvWoodPiles[i].ResourceEntity ) ) <= gvWoodPiles[i].ResourceLimit then
-            DestroyWoodPile( gvWoodPiles[i], i );
-        end
-    end
-end
- 
-function DestroyWoodPile( _piletable, _index )
-    local pos = GetPosition( _piletable.ResourceEntity );
-    DestroyEntity( _piletable.ResourceEntity );
-    DestroyEntity( _piletable.PileEntity );
-    Logic.CreateEffect( GGL_Effects.FXCrushBuilding, pos.X, pos.Y, 0 );
-    table.remove( gvWoodPiles, _index )
-end
