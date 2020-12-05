@@ -15,10 +15,9 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Version = 1,
 	
-	ActivateDebug = true,
+	--ActivateDebug = true,
+	
 	CustomDebugFunc1 = function(_fromPlayer, _target1, _target2, _x, _y)
-		--local eId=Logic.CreateEntity(Entities.XD_ResourceTree, _x, _y, 0, 0);
-		--Logic.SetResourceDoodadGoodAmount( eId, 5000 );
 		MapTools.CreateWoodPile(_x, _y, 500);
 	end,
 	
