@@ -72,10 +72,10 @@ EMS_CustomMapConfig =
 		WT.TechnologiesStopLimit = 60*1; -- 1min
 		
 		-- wave intervalls (better to be an exact multiple of 60);
-		WT.MaxWaveCooldown = 60;--60*5;
+		WT.MaxWaveCooldown = 60*5;
 		
 		-- this map has a special peacetime, that can be reduced by ingame actions
-		WT.InitialPeacetime = 60*1; -- default 40 minutes
+		WT.InitialPeacetime = 60*40; -- default 40 minutes
 		
 		--
 		WT.ActionCooldownLimitMax = 60*5;
