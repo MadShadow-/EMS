@@ -20,21 +20,21 @@ EMS_CustomMapConfig =
 	-- * Called directly after the loading screen vanishes and works as your entry point.
 	-- * Similar use to FirstMapAction/GameCallback_OnGameSart
 	-- ********************************************************************************************
-	--ActivateDebug = 1,
+	ActivateDebug = 1,
 	
 	CustomDebugFunc1 = function(_fromPlayer, _target1, _target2, _x, _y)
 		--Logic.CreateEntity(Entities.PU_Hero3, _x, _y, 0, _fromPlayer);
-		MyUA = QuickLazyUnlimitedArmy:New({Player=5, Area=3000, TransitAttackMove=true}, 1, 5);
-		for i = 1,8 do
-			MyUA:CreateLeaderForArmy(Entities.PU_LeaderBow4, 8, {X=_x,Y=_y}, 0);
-		end
+		--MyUA = QuickLazyUnlimitedArmy:New({Player=5, Area=3000, TransitAttackMove=true}, 1, 5);
+		--for i = 1,8 do
+		--	MyUA:CreateLeaderForArmy(Entities.PU_LeaderBow4, 8, {X=_x,Y=_y}, 0);
+		--end
 
-		MyUA:AddCommandMove({X=20200,Y=35000}, false);
+		--MyUA:AddCommandMove({X=20200,Y=35000}, false);
 		
 	end,
 	
 	CustomDebugFunc2 = function(_fromPlayer, _target1, _target2, _x, _y)
-		MyUA:AddCommandMove({X=_x,Y=_y}, false);
+		--MyUA:AddCommandMove({X=_x,Y=_y}, false);
 	end,
 	
 	Callback_OnMapStart = function()
@@ -55,6 +55,8 @@ EMS_CustomMapConfig =
 		SetupHighlandWeatherGfxSet();
 		LocalMusic.UseSet = HIGHLANDMUSIC;
 		--Tools.ExploreArea(1,1,900)
+		--MultiplayerTools.RemoveAllPlayerEntities(2)
+		
 		--createArmies();
 		--Tools.ExploreArea(1,1,900)
 		-- for eId in S5Hook.EntityIterator(Predicate.OfAnyPlayer(1,2,3,4)) do Message(eId) end
@@ -72,7 +74,7 @@ EMS_CustomMapConfig =
 		WT.TechnologiesStopLimit = 60*1; -- 1min
 		
 		-- wave intervalls (better to be an exact multiple of 60);
-		WT.MaxWaveCooldown = 60*5;
+		WT.MaxWaveCooldown = 60*5; -- default 5 min
 		
 		-- this map has a special peacetime, that can be reduced by ingame actions
 		WT.InitialPeacetime = 60*40; -- default 40 minutes
@@ -177,6 +179,7 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
 		WT.WavePeacetimeInit();
+		WT.InitWinCondition();
 	end,
  
 	-- ********************************************************************************************
@@ -272,6 +275,7 @@ EMS_CustomMapConfig =
 	TowerLimit = 10,
 	WeatherChangeLockTimer = 1,
 	Thief = 0,
+	HQRush = 0,
 	
 	InvulnerableHQs = false,
 };
@@ -291,6 +295,42 @@ function WT.InitHQPositions()
 		{X=56700,Y=41900},
 		{X=56700,Y=35000},
 	};
+end
+
+function WT.InitWinCondition()
+	local team1Dead = IsDead("hq1") and IsDead("hq2");
+	local team2Dead = IsDead("hq3") and IsDead("hq4");
+	if team1Dead or team2Dead then
+		-- one team dead at start? skip win condition;
+		return;
+	end
+	WT.WinConditionJob = StartSimpleJob("WT_WinController");
+end
+
+function WT_WinController()
+	local team1Dead = IsDead("hq1") and IsDead("hq2");
+	local team2Dead = IsDead("hq3") and IsDead("hq4");
+	
+	if team1Dead and team2Dead then
+		Message("@color:0,255,0 Das Spiel ist zu Ende! Es gibt ein Unentschieden?");
+	elseif team1Dead then
+		Message("@color:0,255,0 Das Spiel ist zu Ende! Team 2 hat gewonnen!");
+	elseif team2Dead then
+		Message("@color:0,255,0 Das Spiel ist zu Ende! Team 1 hat gewonnen!");
+	end
+
+	if team1Dead or team2Dead then
+		-- end game mechanics
+		WT.WavesActivated[1] = false;
+		WT.WavesActivated[2] = false;
+		for i = 1, 4 do
+			for j = 5,8 do
+				SetNeutral(i,j);
+			end
+		end
+		return true;
+	end
+		
 end
 
 function WT.ClearGarbage()
@@ -357,13 +397,15 @@ end
 
 function WT.InitWaves()
 	WT.SpawnArmies = {};
-	
+	WT.SpawnedArmies ={{},{}}
 	-- set actual wave count based on how much time has passed when ws is over.
 	-- assuming wave 1 spawns at 20 minutes
 	WT.WaveCount = {
 		1,
 		1
 	};
+	-- only for displaying wave count - actualy wave count may start with wave 4, for example, so wave count local always start at 1
+	WT.WaveCountLocal = 1;
 	-- contains the table of the waves
 	WT.CreateSpawnTable();
 end
@@ -379,6 +421,10 @@ function WT.SpawnWave(_teamId)
 		player1 = 3;
 		player2 = 4;
 	end
+	if IsDead("hq"..player1) and IsDead("hq"..player2) then
+		WT.TeamDeadCallback(_teamId);
+		return;
+	end
 	target1 = WT.HQPositions[player1];
 	target2 = WT.HQPositions[player2];
 	
@@ -392,9 +438,9 @@ function WT.SpawnWave(_teamId)
 		end
 		WT.UniqueDeltaCounter = (WT.UniqueDeltaCounter or 0) + 1;
 		local tickdelta = math.mod(WT.UniqueDeltaCounter, maxdelta);
-		table.insert(WT.SpawnArmies,
+		local armyData = 
 		{
-			Army=QuickLazyUnlimitedArmy:New({Player=5, Area=4000, TransitAttackMove=true, DoNotNormalizeSpeed=true, AutoDestroyIfEmpty=true}, tickdelta, maxdelta),
+			Army=QuickLazyUnlimitedArmy:New({Player=5, Area=6000, TransitAttackMove=true, DoNotNormalizeSpeed=true, AutoDestroyIfEmpty=true}, tickdelta, maxdelta),
 			WaveCount = _strength,
 			ArmyTypeId    = _armyId,
 			AttackPlayer  = _playerId,
@@ -402,7 +448,9 @@ function WT.SpawnWave(_teamId)
 			AttackY = _y,
 			SpawnX = spawn.X,
 			SpawnY = spawn.Y
-		});
+		};
+		table.insert(WT.SpawnArmies, armyData);
+		table.insert(WT.SpawnedArmies[_teamId], armyData.Army);
 	end
 	
 	local waveCount = WT.WaveCount[_teamId];
@@ -434,12 +482,16 @@ function WT.SpawnWave(_teamId)
 	StartSimpleHiResJob("WT_SpawnArmies");
 	
 	if WT.IsLocalPlayerInTeam(_teamId) then
-		Message("@color:255,80,80 Die "..WT.WaveCount[_teamId]..". Welle ist erschienen!");
+		Message("@color:255,80,80 Die "..WT.WaveCountLocal..". Welle ist erschienen!");
+		WT.WaveCountLocal = WT.WaveCountLocal + 1;
 	end
 	
 	WT.WaveCount[_teamId] = math.min(WT.WaveCount[_teamId] + 1, table.getn(WT.SpawnTable));
 end
 
+function WT.TeamDeadCallback(_teamId)
+	WT.WavesActivated[_teamId] = false;
+end
 
 function WT.IsLocalPlayerInTeam(_teamId)
 	if GUI.GetPlayerID() <= 2 then
@@ -484,6 +536,7 @@ function WT_SpawnArmies()
 		armyData.Army:AddCommandWaitForIdle();
 	end]]
 	armyData.Army:AddCommandMove({X=armyData.AttackX,Y=armyData.AttackY}, false);
+	armyData.Army:AddCommandDefend({X=armyData.AttackX,Y=armyData.AttackY}, 20000);
 	return;
 end
 
