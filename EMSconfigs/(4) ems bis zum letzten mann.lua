@@ -20,7 +20,7 @@ EMS_CustomMapConfig =
 	-- * Called directly after the loading screen vanishes and works as your entry point.
 	-- * Similar use to FirstMapAction/GameCallback_OnGameSart
 	-- ********************************************************************************************
-	ActivateDebug = 1,
+	--ActivateDebug = 1,
 	
 	CustomDebugFunc1 = function(_fromPlayer, _target1, _target2, _x, _y)
 		--Logic.CreateEntity(Entities.PU_Hero3, _x, _y, 0, _fromPlayer);
