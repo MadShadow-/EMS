@@ -13,14 +13,14 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.21,
+	Version = 1.22,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * Called directly after the loading screen vanishes and works as your entry point.
 	-- * Similar use to FirstMapAction/GameCallback_OnGameSart
 	-- ********************************************************************************************
-	ActivateDebug = 1,
+	--ActivateDebug = 1,
 	
 	CustomDebugFunc1 = function(_fromPlayer, _target1, _target2, _x, _y)
 		--Logic.CreateEntity(Entities.PU_Hero3, _x, _y, 0, _fromPlayer);
@@ -30,7 +30,17 @@ EMS_CustomMapConfig =
 		--end
 
 		--MyUA:AddCommandMove({X=20200,Y=35000}, false);
+		--[[
+		todo:
+		söldnerqurtiere, npc callback orig aufrufen
+		diebe sollen weglaufen, bzw wissen ob man aus einem gebäude klauen kann
+		besseres feedback bei ws reduktion
+		amree links oben spawnt obwohl brücke weg
+		performanz verbessern, bei der armee UND bei dem gift.
+		- mitte in eine unlimited army packen
+		- diebe sind op. kosten sollten mit zeit steigern
 		
+		]]
 	end,
 	
 	CustomDebugFunc2 = function(_fromPlayer, _target1, _target2, _x, _y)
@@ -77,11 +87,11 @@ EMS_CustomMapConfig =
 		WT.MaxWaveCooldown = 60*5; -- default 5 min
 		
 		-- this map has a special peacetime, that can be reduced by ingame actions
-		WT.InitialPeacetime = 60*10; -- default 40 minutes
+		WT.InitialPeacetime = 60*40; -- default 40 minutes
 		
 		--
-		WT.ActionCooldownLimitMax = 60*2; -- 5 min
-		WT.ProtectionLimitMax = 60*2; --
+		WT.ActionCooldownLimitMax = 60*5; -- 5 min
+		WT.ProtectionLimitMax = 60*5; --
 		
 		MapTools.CreateWoodPiles(50000);
 		
