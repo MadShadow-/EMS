@@ -77,11 +77,11 @@ EMS_CustomMapConfig =
 		WT.MaxWaveCooldown = 60*5; -- default 5 min
 		
 		-- this map has a special peacetime, that can be reduced by ingame actions
-		WT.InitialPeacetime = 60*40; -- default 40 minutes
+		WT.InitialPeacetime = 60*10; -- default 40 minutes
 		
 		--
-		WT.ActionCooldownLimitMax = 60*5;
-		WT.ProtectionLimitMax = 60*5;
+		WT.ActionCooldownLimitMax = 60*2; -- 5 min
+		WT.ProtectionLimitMax = 60*2; --
 		
 		MapTools.CreateWoodPiles(50000);
 		
@@ -275,7 +275,7 @@ EMS_CustomMapConfig =
 	TowerLimit = 10,
 	WeatherChangeLockTimer = 1,
 	Thief = 0,
-	HQRush = 0,
+	AntiHQRush = 0,
 	
 	InvulnerableHQs = false,
 };
