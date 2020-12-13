@@ -1775,6 +1775,12 @@ end
 --Kala
 
 function KILeaderThief1()
+	if IsDead("NVLeader") then
+		if IsDead("NVHQ") then
+			return true
+		end
+		return false
+	end
 	KalaLeaderpos = GetPosition("NVLeader")
 	for thiefid in S5Hook.EntityIterator(Predicate.OfAnyType(Entities.PU_Thief, Entities.PU_Hero5),Predicate.InCircle(KalaLeaderpos.X, KalaLeaderpos.Y, 800)) do
 		local ThiefPlayerID = Logic.EntityGetPlayer(thiefid)
@@ -1971,6 +1977,12 @@ end
 --Kerberos
 
 function KILeaderThief2()
+	if IsDead("DarkLeader") then
+		if IsDead("KILeaderBase") then
+			return true
+		end
+        return false
+    end
 	KerberosLeaderpos = GetPosition("DarkLeader")
 	for thiefid1 in S5Hook.EntityIterator(Predicate.OfAnyType(Entities.PU_Thief, Entities.PU_Hero5),Predicate.InCircle(KerberosLeaderpos.X, KerberosLeaderpos.Y, 800)) do
 		local ThiefPlayerID1 = Logic.EntityGetPlayer(thiefid1)
