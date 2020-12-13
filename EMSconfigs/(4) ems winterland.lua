@@ -270,12 +270,12 @@ EMS_CustomMapConfig =
  function Mission_InitWeather()
 
 	Logic.AddWeatherElement(2, 60, 1, 2, 5, 10)	-- Foggy with Rain
-	Logic.AddWeatherElement(2, 60, 1, 5, 5, 10)	-- Foggy with Rain and Snow
+	Logic.AddWeatherElement(2, 90, 1, 5, 5, 10)	-- Foggy with Rain and Snow
 	Logic.AddWeatherElement(3, 160, 1, 3, 5, 10)	-- Winter with Snow
-	Logic.AddWeatherElement(3, 160, 1, 6, 5, 10)	-- Winter
+	Logic.AddWeatherElement(3, 180, 1, 6, 5, 10)	-- Winter
 	Logic.AddWeatherElement(3, 160, 1, 3, 5, 10)	-- Winter with Snow
-	Logic.AddWeatherElement(3, 60, 1, 8, 5, 10)	-- Winter with Rain and Snow
-	Logic.AddWeatherElement(3, 60, 1, 7, 5, 10)	-- Winter with Rain
+	Logic.AddWeatherElement(3, 120, 1, 8, 5, 10)	-- Winter with Rain and Snow
+	Logic.AddWeatherElement(3, 120, 1, 7, 5, 10)	-- Winter with Rain
 end
 
 function Mission_InitWeatherGfxSets()
