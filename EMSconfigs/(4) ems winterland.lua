@@ -252,13 +252,15 @@ EMS_CustomMapConfig =
 	BlessLimit = 1,
  
 	-- * Heroes
+	NumberOfHeroesForAll = 1,
 	Dario    = 1,
 	Pilgrim  = 1,
 	Ari      = 1,
-	Erec     = 1,
+	Erec     = 0,
 	Salim    = 1,
 	Helias   = 1,
 	Yuki     = 1,
+	Drake 	 = 0,
 	Kerberos = 1,
 	Varg     = 1,
 	Mary_de_Mortfichet = 1,
@@ -279,13 +281,21 @@ end
 function Mission_InitWeatherGfxSets()
 
 	Display.SetRenderUseGfxSets(1)
-	
+	WeatherSets_SetupNormal(1)
 	WeatherSets_SetupRain(2)
 	WeatherSets_SetupSnow(3)
 	WeatherSets_SetupRain(5, 1, 1)
 	WeatherSets_SetupSnow(6, 1, 0)
 	WeatherSets_SetupSnow(7, 1, 1)
 	WeatherSets_SetupSnow(8, 1, 1)
+	local rainIds = {2, 5}
+	local winterIds = {3, 6, 7, 8}
+	for i = 1, table.getn(rainIds) do
+		Display.GfxSetSetFogParams( rainIds[i], 0.0, 1.0, 1, 102,132,142, 3000, 30000)
+	end
+	for i = 1, table.getn(winterIds) do
+		Display.GfxSetSetFogParams( winterIds[i], 0.0, 1.0, 1, 152,172,182, 3000, 34000)
+	end
 end
 
 -- eigentlich auch sp code, weiß gerade nicht ob die im mp genutzt wird. muss auf jeden fall aus der GameCallback_OnGameStart raus
