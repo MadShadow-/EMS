@@ -812,10 +812,14 @@ end
 
 function InvulerableTowers(_flag)
 	for i = 1,7,1 do
-		Logic.SetEntityInvulnerabilityFlag(GetID("NVTower"..i), _flag)
+		if IsAlive("NVTower"..i) then
+			Logic.SetEntityInvulnerabilityFlag(GetID("NVTower"..i), _flag)
+		end
 	end
 	for i = 1,5,1 do
-		Logic.SetEntityInvulnerabilityFlag(GetID("KeberosTower"..i), _flag)
+		if IsAlive("KeberosTower"..i) then
+			Logic.SetEntityInvulnerabilityFlag(GetID("KeberosTower"..i), _flag)
+		end
 	end
 end
 
@@ -1821,78 +1825,89 @@ function KalaTributePaied(CreateATable_table)
 			end
 		end
 	end
+	if NVBasedown then
+		Logic.AddToPlayersGlobalResource(CreateATable_table.pId, ResourceType.Gold, 5000)
+		Logic.AddToPlayersGlobalResource(CreateATable_table.pId, ResourceType.Iron, 5000)
+		Logic.AddToPlayersGlobalResource(CreateATable_table.pId, ResourceType.Faith, 5000)
+		if GUI.GetPlayerID() == CreateATable_table.pId then
+			Message("Da Kala bereits vernichtet ist, erhaltet ihr die Rohstoffe zurück.")
+		end
+		return
+	end
 	local newleaderID = Logic.ChangeEntityPlayerID(GetID("NVLeader"),6)
-	local spawnpos= {}
-	spawnpos[1] = GetPosition("NVBarracksSpawn2")
-	spawnpos[1].Generator = "NVBarracksSpawn2Generator"
-	spawnpos[2] = GetPosition("NVBarracksSpawn1")
-	spawnpos[2].Generator = "NVBarracksSpawn1Generator"
-	NVAttackPlayerUASpawnGenerator = UnlimitedArmySpawnGenerator:New(NVAttackPlayerUA,{
-								Position = spawnpos,
-								ArmySize = math.floor(Maptimervariable/250),
-								SpawnCounter = 600,
-								SpawnLeaders = math.floor(Maptimervariable/250),
-								LeaderDesc = {
-											{LeaderType = Entities.CU_Evil_LeaderBearman1, SoldierNum = 16, SpawnNum = 1, Looped = true, Experience = 3},
-											{LeaderType = Entities.CU_Evil_LeaderSkirmisher1, SoldierNum = 16,  SpawnNum = 1, Looped = true, Experience = 3}
-											},
-								RandomizeSpawnPoint = true
-											})
-	NVAttackPlayerUA:AddCommandSetSpawnerStatus(true,false)
-	NVAttackPlayerUA:AddLeader(newleaderID)
+	if IsAlive("NVBarracksSpawn2Generator") and IsAlive("NVBarracksSpawn1Generator") then
+		local spawnpos= {}
+		spawnpos[1] = GetPosition("NVBarracksSpawn2")
+		spawnpos[1].Generator = "NVBarracksSpawn2Generator"
+		spawnpos[2] = GetPosition("NVBarracksSpawn1")
+		spawnpos[2].Generator = "NVBarracksSpawn1Generator"
+		NVAttackPlayerUASpawnGenerator = UnlimitedArmySpawnGenerator:New(NVAttackPlayerUA,{
+									Position = spawnpos,
+									ArmySize = math.floor(Maptimervariable/250),
+									SpawnCounter = 600,
+									SpawnLeaders = math.floor(Maptimervariable/250),
+									LeaderDesc = {
+												{LeaderType = Entities.CU_Evil_LeaderBearman1, SoldierNum = 16, SpawnNum = 1, Looped = true, Experience = 3},
+												{LeaderType = Entities.CU_Evil_LeaderSkirmisher1, SoldierNum = 16,  SpawnNum = 1, Looped = true, Experience = 3}
+												},
+									RandomizeSpawnPoint = true
+												})
+	end
+		NVAttackPlayerUA:AddCommandSetSpawnerStatus(true,false)
+		NVAttackPlayerUA:AddLeader(newleaderID)
 
 
-	 if IsInTeamNorth(CreateATable_table.pId) then
-		SetFriendly(1,6)
-		Logic.SetShareExplorationWithPlayerFlag(1, 6, 1)
-		Logic.SetTechnologyState(1,Technologies.T_UpgradeRifle1, 2)
-		Logic.SetTechnologyState(1,Technologies.MU_LeaderRifle, 2)
-		Logic.SetTechnologyState(1,Technologies.T_FleeceArmor, 2)
-		Logic.SetTechnologyState(1,Technologies.T_FleeceLinedLeatherArmor, 2)
-		Logic.SetTechnologyState(1,Technologies.T_LeadShot, 2)
-		Logic.SetTechnologyState(1,Technologies.T_Sights, 2)
-		SetFriendly(2,6)
-		Logic.SetShareExplorationWithPlayerFlag(2, 6, 1)
-		Logic.SetTechnologyState(2,Technologies.T_UpgradeRifle1, 2)
-		Logic.SetTechnologyState(2,Technologies.MU_LeaderRifle, 2)
-		Logic.SetTechnologyState(2,Technologies.T_FleeceArmor, 2)
-		Logic.SetTechnologyState(2,Technologies.T_FleeceLinedLeatherArmor, 2)
-		Logic.SetTechnologyState(2,Technologies.T_LeadShot, 2)
-		Logic.SetTechnologyState(2,Technologies.T_Sights, 2)
-		NVAttackPlayerUA:AddCommandWaitForSpawnerFull(false)
-		NVAttackPlayerUA:AddCommandSetSpawnerStatus(false,false)
-		NVAttackPlayerUA:AddCommandWaitForIdle(false)
-		NVAttackPlayerUA:AddCommandMove(GetPosition("NVUAWaypoint1"),false)
-		NVAttackPlayerUA:AddCommandWaitForIdle(false)
-		NVAttackPlayerUA:AddCommandLuaFunc(SouthAttackPlayerfunc1, true)
-		NVAttackPlayerUA:AddCommandWaitForIdle(true)
-		NVAttackPlayerUA:AddCommandLuaFunc(NVAttackerChecker1, true)
-	 else
-		SetFriendly(3,6)
-		Logic.SetShareExplorationWithPlayerFlag(3, 6, 1)
-		Logic.SetTechnologyState(3,Technologies.T_UpgradeRifle1, 2)
-		Logic.SetTechnologyState(3,Technologies.MU_LeaderRifle, 2)
-		Logic.SetTechnologyState(3,Technologies.T_FleeceArmor, 2)
-		Logic.SetTechnologyState(3,Technologies.T_FleeceLinedLeatherArmor, 2)
-		Logic.SetTechnologyState(3,Technologies.T_LeadShot, 2)
-		Logic.SetTechnologyState(3,Technologies.T_Sights, 2)
-		SetFriendly(4,6)
-		Logic.SetShareExplorationWithPlayerFlag(4, 6, 1)
-		Logic.SetTechnologyState(4,Technologies.T_UpgradeRifle1, 2)
-		Logic.SetTechnologyState(4,Technologies.MU_LeaderRifle, 2)
-		Logic.SetTechnologyState(4,Technologies.T_FleeceArmor, 2)
-		Logic.SetTechnologyState(4,Technologies.T_FleeceLinedLeatherArmor, 2)
-		Logic.SetTechnologyState(4,Technologies.T_LeadShot, 2)
-		Logic.SetTechnologyState(4,Technologies.T_Sights, 2)
-		NVAttackPlayerUA:AddCommandWaitForSpawnerFull(false)
-		NVAttackPlayerUA:AddCommandSetSpawnerStatus(false,false)
-		NVAttackPlayerUA:AddCommandWaitForIdle(false)
-		NVAttackPlayerUA:AddCommandMove(GetPosition("NVUAWaypoint1"),false)
-		NVAttackPlayerUA:AddCommandWaitForIdle(false)
-		NVAttackPlayerUA:AddCommandLuaFunc(SouthAttackPlayerfunc2, true)
-		NVAttackPlayerUA:AddCommandWaitForIdle(true)
-		NVAttackPlayerUA:AddCommandLuaFunc(NVAttackerChecker2, true)
-	 end
+		 if IsInTeamNorth(CreateATable_table.pId) then
+			SetFriendly(1,6)
+			Logic.SetShareExplorationWithPlayerFlag(1, 6, 1)
+			Logic.SetTechnologyState(1,Technologies.T_UpgradeRifle1, 2)
+			Logic.SetTechnologyState(1,Technologies.MU_LeaderRifle, 2)
+			Logic.SetTechnologyState(1,Technologies.T_FleeceArmor, 2)
+			Logic.SetTechnologyState(1,Technologies.T_FleeceLinedLeatherArmor, 2)
+			Logic.SetTechnologyState(1,Technologies.T_LeadShot, 2)
+			Logic.SetTechnologyState(1,Technologies.T_Sights, 2)
+			SetFriendly(2,6)
+			Logic.SetShareExplorationWithPlayerFlag(2, 6, 1)
+			Logic.SetTechnologyState(2,Technologies.T_UpgradeRifle1, 2)
+			Logic.SetTechnologyState(2,Technologies.MU_LeaderRifle, 2)
+			Logic.SetTechnologyState(2,Technologies.T_FleeceArmor, 2)
+			Logic.SetTechnologyState(2,Technologies.T_FleeceLinedLeatherArmor, 2)
+			Logic.SetTechnologyState(2,Technologies.T_LeadShot, 2)
+			Logic.SetTechnologyState(2,Technologies.T_Sights, 2)
+			NVAttackPlayerUA:AddCommandWaitForSpawnerFull(false)
+			NVAttackPlayerUA:AddCommandSetSpawnerStatus(false,false)
+			NVAttackPlayerUA:AddCommandWaitForIdle(false)
+			NVAttackPlayerUA:AddCommandMove(GetPosition("NVUAWaypoint1"),false)
+			NVAttackPlayerUA:AddCommandWaitForIdle(false)
+			NVAttackPlayerUA:AddCommandLuaFunc(SouthAttackPlayerfunc1, true)
+			NVAttackPlayerUA:AddCommandWaitForIdle(true)
+			NVAttackPlayerUA:AddCommandLuaFunc(NVAttackerChecker1, true)
+		 else
+			SetFriendly(3,6)
+			Logic.SetShareExplorationWithPlayerFlag(3, 6, 1)
+			Logic.SetTechnologyState(3,Technologies.T_UpgradeRifle1, 2)
+			Logic.SetTechnologyState(3,Technologies.MU_LeaderRifle, 2)
+			Logic.SetTechnologyState(3,Technologies.T_FleeceArmor, 2)
+			Logic.SetTechnologyState(3,Technologies.T_FleeceLinedLeatherArmor, 2)
+			Logic.SetTechnologyState(3,Technologies.T_LeadShot, 2)
+			Logic.SetTechnologyState(3,Technologies.T_Sights, 2)
+			SetFriendly(4,6)
+			Logic.SetShareExplorationWithPlayerFlag(4, 6, 1)
+			Logic.SetTechnologyState(4,Technologies.T_UpgradeRifle1, 2)
+			Logic.SetTechnologyState(4,Technologies.MU_LeaderRifle, 2)
+			Logic.SetTechnologyState(4,Technologies.T_FleeceArmor, 2)
+			Logic.SetTechnologyState(4,Technologies.T_FleeceLinedLeatherArmor, 2)
+			Logic.SetTechnologyState(4,Technologies.T_LeadShot, 2)
+			Logic.SetTechnologyState(4,Technologies.T_Sights, 2)
+			NVAttackPlayerUA:AddCommandWaitForSpawnerFull(false)
+			NVAttackPlayerUA:AddCommandSetSpawnerStatus(false,false)
+			NVAttackPlayerUA:AddCommandWaitForIdle(false)
+			NVAttackPlayerUA:AddCommandMove(GetPosition("NVUAWaypoint1"),false)
+			NVAttackPlayerUA:AddCommandWaitForIdle(false)
+			NVAttackPlayerUA:AddCommandLuaFunc(SouthAttackPlayerfunc2, true)
+			NVAttackPlayerUA:AddCommandWaitForIdle(true)
+			NVAttackPlayerUA:AddCommandLuaFunc(NVAttackerChecker2, true)
+		 end
 	 InvulerableTowers(0)
 end
 
@@ -2023,30 +2038,42 @@ function KerberosTributePaied(CreateATable_table)
 			end
 		end
 	end
+	if KIBasedown then
+		Logic.AddToPlayersGlobalResource(CreateATable_table.pId, ResourceType.Gold, 8000)
+		Logic.AddToPlayersGlobalResource(CreateATable_table.pId, ResourceType.Sulfur, 3000)
+		Logic.AddToPlayersGlobalResource(CreateATable_table.pId, ResourceType.Iron, 1500)
+		Logic.AddToPlayersGlobalResource(CreateATable_table.pId, ResourceType.Faith, 5000)
+		if GUI.GetPlayerID() == CreateATable_table.pId then
+			Message("Da Highport bereits vernichtet ist, erhaltet ihr die Rohstoffe zurück.")
+		end
+		return
+	end
 	local newleaderID = Logic.ChangeEntityPlayerID(GetID("DarkLeader"),5)
-	local spawnpos= {}
-	spawnpos[1] = GetPosition("KeberosUACollectingDefPoint")
-	spawnpos[1].Generator = {"KeberosUASpawnGenerator2","KeberosUASpawnGenerator1"}
-	spawnpos[2] = GetPosition("KeberosUACollectingDefPoint1")
-	spawnpos[2].Generator = "KeberosUASpawnGenerator3"
-	KerberosAttackPlayerUASpawnGenerator = UnlimitedArmySpawnGenerator:New(KerberosAttackPlayerUA,{
-								Position = spawnpos,
-								ArmySize = math.floor(Maptimervariable/257),
-								SpawnCounter = 600,
-								SpawnLeaders = math.floor(Maptimervariable/257),
-								LeaderDesc = {
-											{LeaderType = Entities.PU_LeaderSword4, SoldierNum = 8, SpawnNum = 1, Looped = true, Experience = 3},
-											{LeaderType = Entities.PU_LeaderPoleArm4, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
-											{LeaderType = Entities.PV_Cannon4, SoldierNum = 8,  SpawnNum = 1, Looped = true, Experience = 3},
-											{LeaderType = Entities.PU_LeaderBow4, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
-											{LeaderType = Entities.PV_Cannon3, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
-											{LeaderType = Entities.PU_LeaderHeavyCavalry2, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
-											{LeaderType = Entities.PU_LeaderCavalry2, SoldierNum = 8,  SpawnNum = 3, Looped = true, Experience = 3},
-											{LeaderType = Entities.PU_LeaderBow4, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
-											{LeaderType = Entities.PU_LeaderSword4, SoldierNum = 8, SpawnNum = 2, Looped = true, Experience = 3},
-											},
-								RandomizeSpawn = true
-											})
+	if IsAlive("KeberosUASpawnGenerator2") and IsAlive("KeberosUASpawnGenerator1") and IsAlive("KeberosUASpawnGenerator3") then
+		local spawnpos= {}
+		spawnpos[1] = GetPosition("KeberosUACollectingDefPoint")
+		spawnpos[1].Generator = {"KeberosUASpawnGenerator2","KeberosUASpawnGenerator1"}
+		spawnpos[2] = GetPosition("KeberosUACollectingDefPoint1")
+		spawnpos[2].Generator = "KeberosUASpawnGenerator3"
+		KerberosAttackPlayerUASpawnGenerator = UnlimitedArmySpawnGenerator:New(KerberosAttackPlayerUA,{
+									Position = spawnpos,
+									ArmySize = math.floor(Maptimervariable/257),
+									SpawnCounter = 600,
+									SpawnLeaders = math.floor(Maptimervariable/257),
+									LeaderDesc = {
+												{LeaderType = Entities.PU_LeaderSword4, SoldierNum = 8, SpawnNum = 1, Looped = true, Experience = 3},
+												{LeaderType = Entities.PU_LeaderPoleArm4, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
+												{LeaderType = Entities.PV_Cannon4, SoldierNum = 8,  SpawnNum = 1, Looped = true, Experience = 3},
+												{LeaderType = Entities.PU_LeaderBow4, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
+												{LeaderType = Entities.PV_Cannon3, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
+												{LeaderType = Entities.PU_LeaderHeavyCavalry2, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
+												{LeaderType = Entities.PU_LeaderCavalry2, SoldierNum = 8,  SpawnNum = 3, Looped = true, Experience = 3},
+												{LeaderType = Entities.PU_LeaderBow4, SoldierNum = 8,  SpawnNum = 2, Looped = true, Experience = 3},
+												{LeaderType = Entities.PU_LeaderSword4, SoldierNum = 8, SpawnNum = 2, Looped = true, Experience = 3},
+												},
+									RandomizeSpawn = true
+												})
+	end
 	KerberosAttackPlayerUA:AddCommandSetSpawnerStatus(true,false)
 	KerberosAttackPlayerUA:AddLeader(newleaderID)
 											
