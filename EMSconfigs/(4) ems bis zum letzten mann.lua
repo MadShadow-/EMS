@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.22,
+	Version = 1.23,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -23,7 +23,7 @@ EMS_CustomMapConfig =
 	--ActivateDebug = 1,
 	
 	CustomDebugFunc1 = function(_fromPlayer, _target1, _target2, _x, _y)
-		--Logic.CreateEntity(Entities.PU_Hero3, _x, _y, 0, _fromPlayer);
+		--Logic.CreateEntity(Entities.PU_Serf, _x, _y, 0, _fromPlayer);
 		--MyUA = QuickLazyUnlimitedArmy:New({Player=5, Area=3000, TransitAttackMove=true}, 1, 5);
 		--for i = 1,8 do
 		--	MyUA:CreateLeaderForArmy(Entities.PU_LeaderBow4, 8, {X=_x,Y=_y}, 0);
@@ -32,19 +32,25 @@ EMS_CustomMapConfig =
 		--MyUA:AddCommandMove({X=20200,Y=35000}, false);
 		--[[
 		todo:
-		söldnerqurtiere, npc callback orig aufrufen
+		
 		diebe sollen weglaufen, bzw wissen ob man aus einem gebäude klauen kann
-		besseres feedback bei ws reduktion
-		amree links oben spawnt obwohl brücke weg
-		performanz verbessern, bei der armee UND bei dem gift.
+		
+		
 		- mitte in eine unlimited army packen
 		- diebe sind op. kosten sollten mit zeit steigern
 		
+		-- done
+		besseres feedback bei ws reduktion
+		amree links oben spawnt obwohl brücke weg
+		söldnerqurtiere, npc callback orig aufrufen
+		performanz verbessern, bei der armee UND bei dem gift.
 		]]
+		WT.SpawnCity();
 	end,
 	
 	CustomDebugFunc2 = function(_fromPlayer, _target1, _target2, _x, _y)
 		--MyUA:AddCommandMove({X=_x,Y=_y}, false);
+		WT.Covid19(1,1,1);
 	end,
 	
 	Callback_OnMapStart = function()
@@ -58,6 +64,7 @@ EMS_CustomMapConfig =
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua");
 		
 		WT.ExtendUnlimitedArmy();
+		WT.ChangeUABehaviour();
 		
 		S5HookLoader.Init()
 		EntityIdChangedHelper.Init()
@@ -65,6 +72,7 @@ EMS_CustomMapConfig =
 		SetupHighlandWeatherGfxSet();
 		LocalMusic.UseSet = HIGHLANDMUSIC;
 		--Tools.ExploreArea(1,1,900)
+		--MultiplayerTools.RemoveAllPlayerEntities(2)
 		--MultiplayerTools.RemoveAllPlayerEntities(2)
 		
 		--createArmies();
@@ -91,7 +99,7 @@ EMS_CustomMapConfig =
 		
 		--
 		WT.ActionCooldownLimitMax = 60*5; -- 5 min
-		WT.ProtectionLimitMax = 60*5; --
+		WT.ProtectionLimitMax = 60*5; -- 5 min
 		
 		MapTools.CreateWoodPiles(50000);
 		
@@ -146,6 +154,8 @@ EMS_CustomMapConfig =
 		WT.InitStopTechnologies();
 		
 		WT.InitTaxes();
+		
+		WT.InitCovid19();
 		
 		WT.CurrentTargetPlayer = 0;
 		if GUI.GetPlayerID() == 1 then
@@ -294,8 +304,8 @@ WT = {};
 WT20 = {};
 
 WT.Bridge1 = 65568;
-WT.Bridge2 = 78667;
-WT.Bridge3 = 81781;
+WT.Bridge2 = 78666;
+WT.Bridge3 = 81780;
 WT.Bridge4 = 72123;
 
 function WT.InitHQPositions()
@@ -1109,7 +1119,10 @@ end
 function WT.InitKala()
 	WT.GameCallback_NPCInteraction = GameCallback_NPCInteraction
 	GameCallback_NPCInteraction = function(_heroId, _npcId)
-		--WT.GameCallback_NPCInteraction( _heroId, _npcId )
+		WT.GameCallback_NPCInteraction( _heroId, _npcId )
+		if _npcId ~= GetEntityId("kala1") and _npcId ~= GetEntityId("kala2") then
+			return;
+		end
 		if GUI.GetPlayerID() == GetPlayer(_heroId) then
 			XGUIEng.ShowWidget("EMSMAWT20", 1);
 		end
@@ -1176,6 +1189,7 @@ end
 function WT.AttackFeedback(_buttonIndex, _targetPlayerId, _fromPlayerId, success)
 	local col1 = "@color:255,165,0 "; -- orange
 	local col2 = "@color:80,255,80 "; -- green
+	--LuaDebugger.Log(_targetPlayerId .. " " .. _fromPlayerId);
 	if GUI.GetPlayerID() == _targetPlayerId then
 		if success then
 			Message(col1 .. WT.TextTable.Attacks[_buttonIndex].ReceivedAttackSuccess); -- ihr wurdet angegriffen
@@ -1315,7 +1329,9 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 		local range = 6000;
 		local buildings = {};
 		for eId in S5Hook.EntityIterator(Predicate.IsBuilding(), Predicate.InRect(pos.X-range, pos.Y-range, pos.X+range, pos.Y+range), Predicate.OfPlayer(_playerId)) do
-			table.insert(buildings, eId);
+			if WT.DoesBuildingHaveADoor(eId) then
+				table.insert(buildings, eId);
+			end
 		end
 		local dbgStr = "numBuildings: "..table.getn(buildings);
 		
@@ -1349,7 +1365,7 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 			thiefData.Thief = thiefId;
 			if math.mod(math.random(1,chance),chance) == 0 then
 				buildingId = getBuildingId(thiefId, true);
-				LuaDebugger.Log("Sabotage: "..thiefId.." "..buildingId);
+				--LuaDebugger.Log("Sabotage: "..thiefId.." "..buildingId);
 				if buildingId > 0 then
 					--WT.ThiefSabotage(thiefId, buildingId);
 				end
@@ -1370,12 +1386,21 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 					end
 				end
 				thiefData.Building = buildingId;
-				LuaDebugger.Log("StealGoods: "..thiefId.." "..buildingId .. " " .. str);
+				--LuaDebugger.Log("StealGoods: "..thiefId.." "..buildingId .. " " .. str);
 			end
 			table.insert(WT.SpawnThiefActionList, thiefData);
 		end
 	end
 	StartSimpleHiResJob("WT_ThiefAction");
+end
+
+function WT.DoesBuildingHaveADoor(_buildingId)
+	local eTypeName = Logic.GetEntityTypeName(Logic.GetEntityType(_buildingId));
+	if string.find(eTypeName, "Tower", 1, true)
+	or string.find(eTypeName, "Beautification", 1, true) then
+		return false;
+	end
+	return true;
 end
 
 function WT_ThiefAction()
@@ -1519,25 +1544,42 @@ function WT.InitCovid19()
 			end
 		end
 	end
-	
 end
 
 WT.CovidPositions = {};
+WT.CovidCenterPositions = {};
 WT.CovidActivePlayers = {};
-WT.CovidRangePerSpot = 1000;
-WT.CovidDuration = 60;
+WT.CovidRangePerSpot = 10;
+WT.CovidDuration = 80;
+--WT.CovidMinDamage = 3;
+--WT.CovidMaxDamage = 3;
+WT.CovidDamage = 2;
+WT.MotiReduction = 0.02;
 function WT.Covid19(_playerId, _buttonIndex, _fromPlayerId)
 	local buttonIndex = 1;
 	if not WT.IsAttackable(_playerId, _buttonIndex, _fromPlayerId) then
 		return;
 	end
-	local spawn = WT.HQPositions[_playerId];
-	local numSpawns = 10;
-	local range = 5000;
+	local spawns = {WT.HQPositions[_playerId], GetPosition("covid".._playerId.."1"), GetPosition("covid".._playerId.."2")};
+	local spawn;
+	local numSpawns = 12;
+	local range = 35;--00;
 	WT.CovidPositions[_playerId] = {};
-	for i = 1, numSpawns do
-		WT.CovidPositions[_playerId][i] = {X = spawn.X + math.random(-range,range), Y = spawn.Y + math.random(-range,range)};
+	WT.CovidCenterPositions[_playerId] = {};
+	local covidSpawn;
+	for k = 1, numSpawns do
+		spawn = spawns[math.random(1,3)];
+		covidSpawn = {X = spawn.X + math.random(-range,range)*100, Y = spawn.Y + math.random(-range,range)*100};
+		WT.CovidCenterPositions[_playerId][WT.GetPosStr(covidSpawn)] = covidSpawn;
+		Logic.CreateEffect(GGL_Effects.FXKalaPoison, covidSpawn.X, covidSpawn.Y);
+		
+		for i = -WT.CovidRangePerSpot, WT.CovidRangePerSpot do
+			for j = -WT.CovidRangePerSpot, WT.CovidRangePerSpot do
+				WT.CovidPositions[_playerId][WT.GetPosStr(covidSpawn, i, j)] = true;
+			end
+		end
 	end
+	
 	if WT.CovidJobId == nil then
 		WT.CovidJobId = StartSimpleJob("WT_CovidJob");
 	end
@@ -1554,6 +1596,41 @@ end
 
 function WT.CovidTick(_playerId)
 	local pos;
+	-- create effects
+	if math.mod(WT.CovidActivePlayers[_playerId], 7) == 0 then
+		for spawnStr, pos in pairs(WT.CovidCenterPositions[_playerId]) do
+			Logic.CreateEffect(GGL_Effects.FXKalaPoison, pos.X, pos.Y);
+		end
+	end
+	
+	local poolId = WT.UnitPoolId1;
+	if _playerId > 2 then
+		poolId = WT.UnitPoolId2;
+	end
+
+	local ref = WT.CovidPositions[_playerId];
+	local damage, newHealth;
+	for eId, v in pairs(WT.UnitPool[poolId].Covid) do
+		pos = GetPosition(eId);
+		posstr = WT.GetPosStr(pos);
+		--LuaDebugger.Log(posstr);
+		if ref[posstr] then
+			damage = WT.CovidDamage; -- math.random(WT.CovidMinDamage, WT.CovidMaxDamage);
+			newHealth = Logic.GetEntityHealth(eId) - damage;
+			--LuaDebugger.Log("hurt");
+			Logic.HurtEntity(eId, damage);
+			if Logic.IsWorker(eId) == 1 and newHealth > 0 then
+				local newMotivation = math.max(Logic.GetSettlersMotivation(eId) - WT.MotiReduction, 0.2);
+				--LuaDebugger.Log("Set moti"..Logic.GetEntityTypeName(Logic.GetEntityType(eId)));
+				S5Hook.SetSettlerMotivation(eId, newMotivation);
+			end
+			if math.random(1,60) == 1 then
+				WT.SpreadCovid(_playerId, pos);
+			end
+		end
+	end
+	
+	--[[
 	local range = WT.CovidRangePerSpot;
 	for i = 1, table.getn(WT.CovidPositions[_playerId]) do
 		pos = WT.CovidPositions[_playerId][i];
@@ -1574,8 +1651,61 @@ function WT.CovidTick(_playerId)
 			end
 
 		end
-	end
+	end]]
 	WT.CovidActivePlayers[_playerId] = WT.CovidActivePlayers[_playerId] - 1;
+end
+
+function WT.SpawnCity()
+	for i = 1, table.getn(WT.City) do
+		Logic.CreateEntity(WT.City[i][1], WT.City[i][2].X, WT.City[i][2].Y);
+	end
+	
+	--t = {}; for eId in S5Hook.EntityIterator(Predicate.IsBuilding(), Predicate.OfPlayer(1)) do table.insert(t,{Logic.GetEntityType(eId),GetPosition(eId)}); end
+end
+
+function WT.RecordCity()
+	t = {}; for eId in S5Hook.EntityIterator(Predicate.IsBuilding(), Predicate.OfPlayer(1)) do table.insert(t,{Logic.GetEntityType(eId),GetPosition(eId)}); end
+end
+
+function WT.SpreadCovid(_playerId, _pos)
+	local minDist = 10000000;
+	for spawnStr, pos in pairs(WT.CovidCenterPositions[_playerId]) do
+		local squaredMin = WT.GetSquaredDistancePP(_pos, pos);
+		if squaredMin < minDist then
+			minDist = squaredMin;
+		end
+	end
+	if minDist > 250000 then
+		WT.CovidCenterPositions[_playerId][WT.GetPosStr(_pos)] = _pos;
+		Logic.CreateEffect(GGL_Effects.FXKalaPoison, _pos.X, _pos.Y);
+	end
+	--	WT.CovidCenterPositions[_playerId][WT.GetPosStr(_pos)] = {X=_pos.X, Y=_pos.Y};
+	--	Logic.CreateEffect(GGL_Effects.FXKalaPoison, _pos.X, _pos.Y);
+	--end
+
+	local posStr;
+	for i = -WT.CovidRangePerSpot, WT.CovidRangePerSpot do
+		for j = -WT.CovidRangePerSpot, WT.CovidRangePerSpot do
+			posStr = WT.GetPosStr(_pos, i, j);
+			if not WT.CovidPositions[_playerId][posStr] then
+				WT.CovidPositions[_playerId][posStr] = true;
+				if not addNewEffect then
+					addNewEffect = {X=(math.floor(_pos.X/100)+i)*100, Y=(math.floor(_pos.Y/100)+j)*100};
+				end
+			end
+		end
+	end
+	if addNewEffect then
+	--	WT.CovidCenterPositions[_playerId][WT.GetPosStr(addNewEffect)] = {X=addNewEffect.X, Y=addNewEffect.Y};
+	--	Logic.CreateEffect(GGL_Effects.FXKalaPoison, addNewEffect.X, addNewEffect.Y);
+	end
+end
+
+function WT.GetPosStr(_pos, _x, _y)
+	if _x then
+		return tostring(math.floor(_pos.X/100)+_x)..tostring(math.floor(_pos.Y/100)+_y);
+	end
+	return tostring(math.floor(_pos.X/100))..tostring(math.floor(_pos.Y/100));
 end
 
 function WT.MakeBBArmiesAttack()
@@ -1799,18 +1929,19 @@ end
 function WT.ReducePeacetime(_teamId)
 	local factor = 0.95; -- -5% zeit pro zerstörtes camp
 	WT.Peacetimes[_teamId] = math.floor(WT.Peacetimes[_teamId] * factor);
-	WT.TeamMessage(_teamId, "@color:255,0,0 Euer Waffenstillstand wurde verkürzt!");
+	WT.TeamMessage(_teamId,
+		"@color:255,0,0 Eure Ruhephase wurde verkürzt!",
+		"@color:255,0,0 Die Ruhephase der Gegner wurde verkürzt!"
+	);
 end
 
-function WT.TeamMessage(_teamId, _text)
+function WT.TeamMessage(_teamId, _text, _textOther)
 	local playerId = GUI.GetPlayerID();
-	if _teamId == 1 then
-		if playerId == 1 or playerId == 2 then
-			Message(_text);
-		end
+	if WT.IsLocalPlayerInTeam(_teamId) then
+		Message(_text);
 	else
-		if playerId == 3 or playerId == 4 then
-			Message(_text);
+		if _textOther then
+			Message(_textOther);
 		end
 	end
 end
@@ -1832,8 +1963,8 @@ function WT.InitText()
 		Tooltips = {
 			{
 				Titel= "Seuche",
-				Text = "Schergen werfen Giftpakete an zufällige Orte ins Land eures Gegners, die dort "..colorize("1 Minute").." verweilen. "..
-						"Sollten Arbeiter in diese Giftpakete laufen, stecken Sie sich an und sterben daran.",
+				Text = "Schergen werfen Giftpakete an zufällige Orte ins Land eures Gegners, die dort "..colorize("80 Sekunden").." verweilen. "..
+						"Sollten Arbeiter in diese Giftpakete laufen, stecken Sie sich an einer Krankheit an.",
 			},
 			{
 				Titel= "Diebesmeute",
@@ -1882,14 +2013,14 @@ function WT.InitText()
 			{
 				ReceivedAttackSuccess = "Eure Siedler werden durch eine Seuche vergifted!",
 				ReceivedAttackFail = "Ihr habt eine Seuche abgewehrt!",
-				SentAttackSuccess = "Eure Seuche vergifted euren Gegner erfolgreich!",
+				SentAttackSuccess = "Eine Seuche vergifted euren Gegner!",
 				SentAttackFail = "Euer Seuchenanschlag wurde abgewehrt!",
-				WitnessAttackSuccess = " an. Eine Seuche vergifted die Siedlung!",
+				WitnessAttackSuccess = " an. Eine Seuche vergifted wurde ausgebracht!",
 				WitnessAttackFail = " an. Die Seuche hatte keine Chance!"
 			},
 			
 			{
-				ReceivedAttackSuccess = "Eine meute an Dieben überfällt Eure Siedlung!",
+				ReceivedAttackSuccess = "Eine Meute an Dieben überfällt Eure Siedlung!",
 				ReceivedAttackFail = "Eure Stadtwache hat einen Diebesangriff abgewehrt!",
 				SentAttackSuccess = "Eure Diebe verwüsten die gegnerische Siedlung",
 				SentAttackFail = "Oh nein! Die Diebe wurden von der gegnerischen Stadtwache aufgehalten!",
@@ -1907,19 +2038,19 @@ function WT.InitText()
 			},
 			
 			{
-				ReceivedAttackSuccess = "Ihr habt erfolgreich die Steuern des Gegner gesenkt!",
-				ReceivedAttackFail = "Die Steuerumschreibung ist fehlgeschlagen!",
-				SentAttackSuccess = "Ihr werdet gezwungen niedrige Steuern zu beziehen! Wir erarbeiten so schnell es geht neue Gesetze!",
-				SentAttackFail = "Dank eurer stabilen Rechtslage konnte der Gegner eure Steuerlage nicht ändern!",
+				ReceivedAttackSuccess = "Ihr werdet gezwungen niedrige Steuern zu beziehen! Wir erarbeiten so schnell es geht neue Gesetze!",
+				ReceivedAttackFail = "Dank eurer stabilen Rechtslage konnte der Gegner eure Steuerlage nicht ändern!",
+				SentAttackSuccess = "Ihr habt erfolgreich die Steuern des Gegner gesenkt!",
+				SentAttackFail = "Die Steuerumschreibung ist fehlgeschlagen!",
 				WitnessAttackSuccess = " an. Die Steuereinnahmen werden auf ein Minimum gedrückt.",
 				WitnessAttackFail = " an. Durch eine stabile Rechtslage findet keine Steueränderung statt."
 			},
 			
 			{
-				ReceivedAttackSuccess = "Der Alkohol ist angekommen! Die Gelehrten des Gegners liegen im Koma!",
-				ReceivedAttackFail = "Unmöglich! Niemand interessiert sich für den Alkohol.",
-				SentAttackSuccess = "Eure Gelehrten feiern das Leben! Ein hoch auf König Dario. Geforscht wird morgen wieder.",
-				SentAttackFail = "Ihr habt eine kostenlose Lieferung Alkohol erhalten! Und dank der Disziplin eurer Männer bleibt alles für euch!",
+				ReceivedAttackSuccess = "Eure Gelehrten feiern das Leben! Ein Hoch auf König Dario. Geforscht wird morgen wieder.",
+				ReceivedAttackFail = "Ihr habt eine kostenlose Lieferung Alkohol erhalten! Und dank der Disziplin eurer Männer bleibt alles für euch!",
+				SentAttackSuccess = "Der Alkohol ist angekommen! Die Gelehrten des Gegners liegen im Koma!",
+				SentAttackFail = "Unmöglich! Niemand interessiert sich für eure Alkohollieferung!",
 				WitnessAttackSuccess = " an. Man feiert den plötzlichen Alkoholüberschuss gebürig. Alle Forschungen wurden vertagt.",
 				WitnessAttackFail = " an. Dem eisernen Willen seiner Männer zum Dank, betrinkt sich heute niemand!"
 			},
@@ -1985,6 +2116,14 @@ end
 
 
 function WT.ExtendUnlimitedArmy()
+
+		--[[S5Hook.EntityIterator_O = S5Hook.EntityIterator;
+		IteratorCounter = 0;
+		S5Hook.EntityIterator = function(...)
+			IteratorCounter = IteratorCounter + 1;
+			return S5Hook.EntityIterator_O(unpack(arg));
+		end]]
+
 	QuickLazyUnlimitedArmy = UnlimitedArmy:CreateSubClass("QuickLazyUnlimitedArmy")
 
 	QuickLazyUnlimitedArmy:AMethod()
@@ -2000,10 +2139,731 @@ function WT.ExtendUnlimitedArmy()
 			if math.mod(math.floor(Logic.GetTime()*10+0.5), self.tickfrequency)==self.tickdelta then
 				--LuaDebugger.Log(math.mod(math.floor(Logic.GetTime()*10+0.5), self.tickfrequency) .. "/"..self.tickdelta);
 				self:TickO()
+				--LuaDebugger.Log(IteratorCounter);
+				IteratorCounter = 0;
 			end
 		end
 	end
+	QuickLazyUnlimitedArmy:FinalizeClass();
+	
+end 
 
-	QuickLazyUnlimitedArmy:FinalizeClass()
+function WT.ChangeUABehaviour()
+	-- all of this pretty bad style, but it just a quick hack
+	-- to make ua less cost intensive on this map
+	-- might not work anymore as soon as the api changes.
+	WT.UnitPoolId1 = 5;
+	WT.UnitPoolId2 = 7;
+	
+	WT.UnitPool =
+	{
+		-- units of player 1 and 2 are collected in
+		[WT.UnitPoolId1] = 
+		{
+			Leaders = {},
+			Buildings = {},
+			Others = {},
+			Covid = {},
+		},
+		
+		-- units of player 3, 4 are collected in this pool
+		[WT.UnitPoolId2] = 
+		{
+			Leaders = {},
+			Buildings = {},
+			Others = {},
+			Covid = {}, -- for covid
+		},
+	}
+	WT.PoolCategories = {"Leaders","Buildings","Others"};
+	
+	Trigger.RequestTrigger(Events.LOGIC_EVENT_ENTITY_CREATED, "", "WT_UnitPool_EntityCreated", 1);
+	Trigger.RequestTrigger(Events.LOGIC_EVENT_ENTITY_DESTROYED, "", "WT_UnitPool_EntityDestroyed", 1);
+	
+	for eId in S5Hook.EntityIterator(Predicate.OfAnyPlayer(1,2)) do
+		WT.AddUnitToPool(WT.UnitPoolId1, eId);
+	end
+	
+	for eId in S5Hook.EntityIterator(Predicate.OfAnyPlayer(1,2)) do
+		WT.AddUnitToPool(WT.UnitPoolId2, eId);
+	end
+	
+	function UnlimitedArmy.GetNearestEnemyInArea(p, player, area, leader, building, aiactive, addCond, excludeFleeing)
+		if not (leader == true and building == false) then
+			-- only support first call to this function
+			--LuaDebugger.Log("unecessary call?");
+			return;
+		end
+		
+		if p == invalidPosition then
+			return nil
+		end
+		addCond = addCond or function() return true end
+		
+		local unitPool = WT.UnitPool[player];
+		local maxDistSquared = area*area;
+		local nearestDistSquared = maxDistSquared+1;
+		
+		local nearestEntity;
+		local category;
+		local loops = 0;
+		for i = 1,3 do 
+			category = WT.PoolCategories[i];
+			for eId, v in pairs(unitPool[category]) do
+				loops = loops + 1;
+				local squaredDistance = WT.GetSquaredDistance(eId, p)
+				-- check if entity is in area
+				if squaredDistance < nearestDistSquared then
+					-- check if target is valid and not fleeing
+					--LuaDebugger.Log("possible target");
+					if UnlimitedArmy.IsValidTarget(eId, player, aiactive)
+					and (not excludeFleeing or not UnlimitedArmy.IsEntityFleeingFrom(eId, p))
+					and addCond(eId) then
+						nearestDistSquared = squaredDistance;
+						nearestEntity = eId;
+					end
+				end
+			end
+			if nearestEntity then
+				--LuaDebugger.Log("Nearest entity is "..nearestEntity .." of category "..category.." after "..loops.."loops");
+				return nearestEntity;
+			end
+		end
+		--LuaDebugger.Log("return nil after " .. loops .. " loops");
+		-- return nil, no unit found in range
+	end
+	
+	function UnlimitedArmy.GetFirstEnemyInArea(p, player, area, leader, building, aiactive, addCond, excludeFleeing)
+		if p == invalidPosition then
+			return nil
+		end
+		addCond = addCond or function() return true end
+		
+		local unitPool = WT.UnitPool[player];
+		local maxDistSquared = area*area;
+		local nearestDistSquared = maxDistSquared+1;
+		local loops = 0;
+		local category;
+		for i = 1,3 do 
+			category = WT.PoolCategories[i];
+			for eId, v in pairs(unitPool[category]) do
+				loops = loops + 1;
+				local squaredDistance = WT.GetSquaredDistance(eId, p)
+				-- check if entity is in area
+				if squaredDistance < nearestDistSquared then
+					-- check if target is valid and not fleeing
+					if UnlimitedArmy.IsValidTarget(eId, player, aiactive)
+					and (not excludeFleeing or not UnlimitedArmy.IsEntityFleeingFrom(eId, p))
+					and addCond(eId) then
+						--LuaDebugger.Log("GetFirstEnemyInArea "..eId.. "of category "..category.." after "..loops.." loops");
+						return eId;
+					end
+				end
+			end
+		end
+	end
+	
+	-- this is only used for hero abilites => no hero abilities
+	function UnlimitedArmy.GetNumberOfEnemiesInArea(p, player, area, aiactive, addCond, excludeFleeing)
+		return 0;
+	end
 end
 
+function WT.GetSquaredDistance(_entityId, _pos)
+	local ePos = GetPosition(_entityId);
+	local a = _pos.X - ePos.X;
+	local b = _pos.Y - ePos.Y;
+	return (a*a)+(b*b);
+end
+
+function WT.GetSquaredDistancePP(_pos1, _pos2)
+	local a = _pos1.X - _pos2.X;
+	local b = _pos1.Y - _pos2.Y;
+	return (a*a)+(b*b);
+end
+
+function WT_UnitPool_EntityCreated()
+	local entityId = Event.GetEntityID();
+	local entityPlayer = Logic.EntityGetPlayer(entityId);
+	if entityPlayer == 1 or entityPlayer == 2 then
+		WT.AddUnitToPool(WT.UnitPoolId1, entityId);
+	elseif entityPlayer == 3 or entityPlayer == 4 then
+		WT.AddUnitToPool(WT.UnitPoolId2, entityId);
+	end
+end
+
+function WT_UnitPool_EntityDestroyed()
+	local entityId = Event.GetEntityID();
+	local entityPlayer = Logic.EntityGetPlayer(entityId);
+	if entityPlayer == 1 or entityPlayer == 2 then
+		WT.RemoveUnitFromPool(WT.UnitPoolId1, entityId);
+	elseif entityPlayer == 3 or entityPlayer == 4 then
+		WT.RemoveUnitFromPool(WT.UnitPoolId2, entityId);
+	end
+end
+
+function WT.GetUnitCategory(_entityId)
+	if Logic.IsLeader(_entityId) == 1 
+	or Logic.IsHero(_entityId) == 1 then
+		return "Leaders";
+	elseif Logic.IsBuilding(_entityId) == 1 then
+		return "Buildings";
+	elseif Logic.IsSerf(_entityId) == 1 then
+		-- include heroes, serfs
+		return "Others";
+	end
+	return "";
+end
+
+function WT.AddUnitToPool(_poolId, _entityId)
+	local cat = WT.GetUnitCategory(_entityId);
+	if cat ~= "" then
+		WT.UnitPool[_poolId][cat][_entityId] = Logic.GetEntityTypeName(Logic.GetEntityType(_entityId));
+	end
+	if WT.IsCovidUnit(_entityId) then
+		WT.UnitPool[_poolId].Covid[_entityId] = Logic.GetEntityTypeName(Logic.GetEntityType(_entityId));
+	end
+end
+
+function WT.RemoveUnitFromPool(_poolId, _entityId)
+	local cat = WT.GetUnitCategory(_entityId);
+	if cat ~= "" then
+		WT.UnitPool[_poolId][cat][_entityId] = nil;
+	end
+	if WT.IsCovidUnit(_entityId) then
+		WT.UnitPool[_poolId].Covid[_entityId] = nil;
+	end
+end
+
+function WT.IsCovidUnit(_entityId)
+	return Logic.IsSettler(_entityId) == 1;
+end
+
+WT.City =
+{
+    [1] = {
+        [1] = 4,
+        [2] = {
+            Y = 35000,
+            X = 20200,
+        },
+    },
+    [2] = {
+        [1] = 49,
+        [2] = {
+            Y = 25900,
+            X = 20300,
+        },
+    },
+    [3] = {
+        [1] = 7,
+        [2] = {
+            Y = 29000,
+            X = 21000,
+        },
+    },
+    [4] = {
+        [1] = 43,
+        [2] = {
+            Y = 28100,
+            X = 11400,
+        },
+    },
+    [5] = {
+        [1] = 61,
+        [2] = {
+            Y = 23500,
+            X = 17500,
+        },
+    },
+    [6] = {
+        [1] = 61,
+        [2] = {
+            Y = 23700,
+            X = 19600,
+        },
+    },
+    [7] = {
+        [1] = 61,
+        [2] = {
+            Y = 29200,
+            X = 6700,
+        },
+    },
+    [8] = {
+        [1] = 61,
+        [2] = {
+            Y = 27900,
+            X = 7800,
+        },
+    },
+    [9] = {
+        [1] = 61,
+        [2] = {
+            Y = 37200,
+            X = 30900,
+        },
+    },
+    [10] = {
+        [1] = 61,
+        [2] = {
+            Y = 30400,
+            X = 27400,
+        },
+    },
+    [11] = {
+        [1] = 61,
+        [2] = {
+            Y = 29300,
+            X = 25800,
+        },
+    },
+    [12] = {
+        [1] = 79,
+        [2] = {
+            Y = 32300,
+            X = 27800,
+        },
+    },
+    [13] = {
+        [1] = 61,
+        [2] = {
+            Y = 37000,
+            X = 7400,
+        },
+    },
+    [14] = {
+        [1] = 31,
+        [2] = {
+            Y = 31600,
+            X = 27300,
+        },
+    },
+    [15] = {
+        [1] = 31,
+        [2] = {
+            Y = 34700,
+            X = 27200,
+        },
+    },
+    [16] = {
+        [1] = 31,
+        [2] = {
+            Y = 30200,
+            X = 25300,
+        },
+    },
+    [17] = {
+        [1] = 31,
+        [2] = {
+            Y = 33600,
+            X = 23700,
+        },
+    },
+    [18] = {
+        [1] = 51,
+        [2] = {
+            Y = 28600,
+            X = 18200,
+        },
+    },
+    [19] = {
+        [1] = 51,
+        [2] = {
+            Y = 34100,
+            X = 9800,
+        },
+    },
+    [20] = {
+        [1] = 651,
+        [2] = {
+            Y = 30600,
+            X = 28300,
+        },
+    },
+    [21] = {
+        [1] = 51,
+        [2] = {
+            Y = 29100,
+            X = 14000,
+        },
+    },
+    [22] = {
+        [1] = 51,
+        [2] = {
+            Y = 31800,
+            X = 11400,
+        },
+    },
+    [23] = {
+        [1] = 51,
+        [2] = {
+            Y = 32200,
+            X = 9800,
+        },
+    },
+    [24] = {
+        [1] = 51,
+        [2] = {
+            Y = 28600,
+            X = 17100,
+        },
+    },
+    [25] = {
+        [1] = 51,
+        [2] = {
+            Y = 27400,
+            X = 14600,
+        },
+    },
+    [26] = {
+        [1] = 51,
+        [2] = {
+            Y = 30500,
+            X = 9700,
+        },
+    },
+    [27] = {
+        [1] = 35,
+        [2] = {
+            Y = 32800,
+            X = 7700,
+        },
+    },
+    [28] = {
+        [1] = 35,
+        [2] = {
+            Y = 37000,
+            X = 27600,
+        },
+    },
+    [29] = {
+        [1] = 51,
+        [2] = {
+            Y = 29800,
+            X = 11200,
+        },
+    },
+    [30] = {
+        [1] = 38,
+        [2] = {
+            Y = 33200,
+            X = 21500,
+        },
+    },
+    [31] = {
+        [1] = 1,
+        [2] = {
+            Y = 31700,
+            X = 19600,
+        },
+    },
+    [32] = {
+        [1] = 31,
+        [2] = {
+            Y = 36200,
+            X = 24500,
+        },
+    },
+    [33] = {
+        [1] = 31,
+        [2] = {
+            Y = 32200,
+            X = 24800,
+        },
+    },
+    [34] = {
+        [1] = 25,
+        [2] = {
+            Y = 36700,
+            X = 20900,
+        },
+    },
+    [35] = {
+        [1] = 7,
+        [2] = {
+            Y = 31900,
+            X = 20400,
+        },
+    },
+    [36] = {
+        [1] = 1,
+        [2] = {
+            Y = 31600,
+            X = 21700,
+        },
+    },
+    [37] = {
+        [1] = 7,
+        [2] = {
+            Y = 31100,
+            X = 20600,
+        },
+    },
+    [38] = {
+        [1] = 23,
+        [2] = {
+            Y = 35900,
+            X = 18800,
+        },
+    },
+    [39] = {
+        [1] = 23,
+        [2] = {
+            Y = 34500,
+            X = 18700,
+        },
+    },
+    [40] = {
+        [1] = 23,
+        [2] = {
+            Y = 37300,
+            X = 18500,
+        },
+    },
+    [41] = {
+        [1] = 40,
+        [2] = {
+            Y = 34700,
+            X = 17200,
+        },
+    },
+    [42] = {
+        [1] = 40,
+        [2] = {
+            Y = 37900,
+            X = 25200,
+        },
+    },
+    [43] = {
+        [1] = 23,
+        [2] = {
+            Y = 34800,
+            X = 23700,
+        },
+    },
+    [44] = {
+        [1] = 23,
+        [2] = {
+            Y = 33100,
+            X = 18700,
+        },
+    },
+    [45] = {
+        [1] = 23,
+        [2] = {
+            Y = 37500,
+            X = 19600,
+        },
+    },
+    [46] = {
+        [1] = 23,
+        [2] = {
+            Y = 31600,
+            X = 18700,
+        },
+    },
+    [47] = {
+        [1] = 40,
+        [2] = {
+            Y = 32700,
+            X = 17200,
+        },
+    },
+    [48] = {
+        [1] = 25,
+        [2] = {
+            Y = 37000,
+            X = 17300,
+        },
+    },
+    [49] = {
+        [1] = 1,
+        [2] = {
+            Y = 37400,
+            X = 16200,
+        },
+    },
+    [50] = {
+        [1] = 31,
+        [2] = {
+            Y = 35400,
+            X = 22400,
+        },
+    },
+    [51] = {
+        [1] = 20,
+        [2] = {
+            Y = 36450,
+            X = 22825,
+        },
+    },
+    [52] = {
+        [1] = 1,
+        [2] = {
+            Y = 31900,
+            X = 23400,
+        },
+    },
+    [53] = {
+        [1] = 7,
+        [2] = {
+            Y = 34600,
+            X = 21400,
+        },
+    },
+    [54] = {
+        [1] = 7,
+        [2] = {
+            Y = 35200,
+            X = 16100,
+        },
+    },
+    [55] = {
+        [1] = 23,
+        [2] = {
+            Y = 35000,
+            X = 24900,
+        },
+    },
+    [56] = {
+        [1] = 1,
+        [2] = {
+            Y = 36100,
+            X = 16200,
+        },
+    },
+    [57] = {
+        [1] = 36,
+        [2] = {
+            Y = 33400,
+            X = 25000,
+        },
+    },
+    [58] = {
+        [1] = 31,
+        [2] = {
+            Y = 31200,
+            X = 24900,
+        },
+    },
+    [59] = {
+        [1] = 31,
+        [2] = {
+            Y = 32200,
+            X = 26000,
+        },
+    },
+    [60] = {
+        [1] = 31,
+        [2] = {
+            Y = 31200,
+            X = 26100,
+        },
+    },
+    [61] = {
+        [1] = 31,
+        [2] = {
+            Y = 33500,
+            X = 26400,
+        },
+    },
+    [62] = {
+        [1] = 31,
+        [2] = {
+            Y = 34700,
+            X = 26000,
+        },
+    },
+    [63] = {
+        [1] = 31,
+        [2] = {
+            Y = 35700,
+            X = 26000,
+        },
+    },
+    [64] = {
+        [1] = 51,
+        [2] = {
+            Y = 34000,
+            X = 12200,
+        },
+    },
+    [65] = {
+        [1] = 51,
+        [2] = {
+            Y = 33500,
+            X = 13700,
+        },
+    },
+    [66] = {
+        [1] = 51,
+        [2] = {
+            Y = 35700,
+            X = 12300,
+        },
+    },
+    [67] = {
+        [1] = 51,
+        [2] = {
+            Y = 32300,
+            X = 12600,
+        },
+    },
+    [68] = {
+        [1] = 51,
+        [2] = {
+            Y = 37700,
+            X = 11400,
+        },
+    },
+    [69] = {
+        [1] = 51,
+        [2] = {
+            Y = 30900,
+            X = 14200,
+        },
+    },
+    [70] = {
+        [1] = 51,
+        [2] = {
+            Y = 37400,
+            X = 13100,
+        },
+    },
+    [71] = {
+        [1] = 51,
+        [2] = {
+            Y = 30600,
+            X = 12500,
+        },
+    },
+    [72] = {
+        [1] = 51,
+        [2] = {
+            Y = 36600,
+            X = 9900,
+        },
+    },
+    [73] = {
+        [1] = 51,
+        [2] = {
+            Y = 30300,
+            X = 15300,
+        },
+    },
+    [74] = {
+        [1] = 51,
+        [2] = {
+            Y = 28600,
+            X = 15800,
+        },
+    },
+    [75] = {
+        [1] = 38,
+        [2] = {
+            Y = 33300,
+            X = 19900,
+        },
+    },
+}
