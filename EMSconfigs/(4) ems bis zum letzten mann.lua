@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.23,
+	Version = 1.3,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -28,13 +28,21 @@ EMS_CustomMapConfig =
 		--for i = 1,8 do
 		--	MyUA:CreateLeaderForArmy(Entities.PU_LeaderBow4, 8, {X=_x,Y=_y}, 0);
 		--end
-
+	
 		--MyUA:AddCommandMove({X=20200,Y=35000}, false);
 		--[[
 		todo:
+		-- suddendeath
+		kala größer start cooldown.. 20  minuten ruhe
+		steinhaufen größer, seuche als krasser angriff für 10k
+		cooldown 10 minuten bei seuche und diebe.
+		suddean death fixe, dass man wirklich ress verliert.
+		-- genaue infos an alle.
 		
+		3 minuten bei dem alchemie kram.
+		-- diebe bisschen teuerer, sollten in gegner siedlung reinlaufen. 3,5
 		diebe sollen weglaufen, bzw wissen ob man aus einem gebäude klauen kann
-		
+		- zerstörung auf einer seite
 		
 		- mitte in eine unlimited army packen
 		- diebe sind op. kosten sollten mit zeit steigern
@@ -50,10 +58,12 @@ EMS_CustomMapConfig =
 	
 	CustomDebugFunc2 = function(_fromPlayer, _target1, _target2, _x, _y)
 		--MyUA:AddCommandMove({X=_x,Y=_y}, false);
-		WT.Covid19(1,1,1);
+		--WT.Covid19(1,1,1);
+		WT.SpawnThiefs(1,1,1)
 	end,
 	
 	Callback_OnMapStart = function()
+		TriggerFix_mode = "Xpcall" -- disable trigger warnings
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua");
 		if not mcbPacker then
 			Message("@color:255,0,0 mcbPacker is missing! maybe the community lib is not installed!");
@@ -98,8 +108,8 @@ EMS_CustomMapConfig =
 		WT.InitialPeacetime = 60*40; -- default 40 minutes
 		
 		--
-		WT.ActionCooldownLimitMax = 60*5; -- 5 min
-		WT.ProtectionLimitMax = 60*5; -- 5 min
+		WT.ActionCooldownLimitMax = 60*5; -- 5 min not used for all anymore
+		--WT.ProtectionLimitMax = 60*5; -- 5 min
 		
 		MapTools.CreateWoodPiles(50000);
 		
@@ -108,13 +118,13 @@ EMS_CustomMapConfig =
 		for pId = 1,4 do
 			ResearchTechnology(Technologies.T_ThiefSabotage, pId);
 			
-			local mercTent = GetEntityId( "m"..pId.."1" );
+			local mercTent = GetEntityId( "m"..pId.."2" );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_Scout, 2, ResourceType.Wood, 100 );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderBow3, 5, ResourceType.Wood, 800 );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 5, ResourceType.Wood, 800 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderBow3, 5, ResourceType.Wood, 600 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 5, ResourceType.Wood, 600 );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword2, 5, ResourceType.Wood, 300 );
 			
-			mercTent = GetEntityId( "m"..pId.."2" );
+			mercTent = GetEntityId( "m"..pId.."1" );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderHeavyCavalry2, 3, ResourceType.Gold, 1500, ResourceType.Wood, 1000 );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 3, ResourceType.Wood, 900 );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword2, 5, ResourceType.Wood, 300 );
@@ -184,7 +194,7 @@ EMS_CustomMapConfig =
 		
 		WT.PlayerColorMapping();
 		local resourceTable = {
-			{Entities.XD_Stone1, 3000},
+			{Entities.XD_Stone1, 5000},
 			{Entities.XD_Iron1, 1500},
 			{Entities.XD_Clay1, 3000},
 			{Entities.XD_Sulfur1, 1500}
@@ -200,6 +210,7 @@ EMS_CustomMapConfig =
 	Callback_OnGameStart = function()
 		WT.WavePeacetimeInit();
 		WT.InitWinCondition();
+		WT.SuddenDeathInit();
 	end,
  
 	-- ********************************************************************************************
@@ -1033,8 +1044,8 @@ function WT.InitGUI()
 	WT.ActionCooldownLimits =
 	{
 
-		cd,
-		cd,
+		60*10,
+		60*10,
 		cd,
 		cd,
 		cd,
@@ -1047,15 +1058,37 @@ function WT.InitGUI()
 		60*5,
 	};
 	
+	WT.ActionInitialCooldowns = 
+	{
+		60*30,
+		60*30,
+		60*15,
+		60*15,
+		60*15,
+		
+		-- protections
+		60*29,
+		60*29,
+		60*5,
+		60*5,
+		60*5,
+	}
+	
 	-- if a protection for a player is > 0 then he is protected
 	WT.Protections = {};
-	WT.ProtectionLimits = WT.ProtectionLimitMax; --60*5;
+	WT.ProtectionLimits = {
+		30,--60*29,
+		30,--60*29,
+		30,--60*5,
+		30,--60*5,
+		30,--60*5,
+	};
 	
 	for playerId = 1,4 do
 		WT.Protections[playerId] = {};
 		WT.ActionCooldowns[playerId] = {}
 		for i = 1,table.getn(WT.ActionCooldownLimits) do
-			WT.ActionCooldowns[playerId][i] = WT.ActionCooldownLimits[i];
+			WT.ActionCooldowns[playerId][i] = WT.ActionInitialCooldowns[i];
 		end
 		for attackType = 1,5 do
 			WT.Protections[playerId][attackType] = 0;
@@ -1072,32 +1105,32 @@ function WT.InitGUI()
 	WT.ActionCosts = 
 	{
 		{
+			{ResourceType.Gold, 10000}
+		},
+		{
+			{ResourceType.Gold, 4000}
+		},
+		{
 			{ResourceType.Gold, 2000}
 		},
 		{
-			{ResourceType.Gold, 1400}
-		},
-		{
-			{ResourceType.Gold, 1200}
-		},
-		{
-			{ResourceType.Gold, 1200}
+			{ResourceType.Gold, 2000}
 		},
 		{
 			{ResourceType.Gold, 2000}
 		},
 			-- protect
 		{
+			{ResourceType.Gold, 4000}
+		},
+		{
 			{ResourceType.Gold, 1000}
 		},
 		{
-			{ResourceType.Gold, 700}
+			{ResourceType.Gold, 1000}
 		},
 		{
-			{ResourceType.Gold, 600}
-		},
-		{
-			{ResourceType.Gold, 600}
+			{ResourceType.Gold, 1000}
 		},
 		{
 			{ResourceType.Gold, 1000}
@@ -1171,9 +1204,22 @@ end
 
 
 function WT.Protect(_playerId, _buttonIndex, _fromPlayerId)
-	WT.Protections[_fromPlayerId][_buttonIndex-5] = WT.ProtectionLimits;
-	if GUI.GetPlayerID() == _fromPlayerId then
+	local player1 = 1;
+	local player2 = 2;
+	if _fromPlayerId > 2 then
+		player1 = 3;
+		player2 = 4;
+	end
+	WT.Protections[player1][_buttonIndex-5] = WT.ProtectionLimits[_buttonIndex-5];
+	WT.Protections[player2][_buttonIndex-5] = WT.ProtectionLimits[_buttonIndex-5];
+	
+	if GUI.GetPlayerID() == player1 or GUI.GetPlayerID() == player2 then
 		XGUIEng.DisableButton(WT.Buttons[_buttonIndex], 1);
+		if GUI.GetPlayerID() == _fromPlayerId then
+			Message("@color:80,255,0 " .. WT.TextTable.ProtectionActivated.Self[_buttonIndex-5]);
+		else
+			Message("@color:80,255,0 " .. WT.TextTable.ProtectionActivated.Teammate[_buttonIndex-5]);
+		end
 	end
 end
 
@@ -1263,7 +1309,7 @@ function WT.SetCooldowns(_playerId, _buttonIndex)
 	local secondPlayerInTeam = WT.TogglePlayerId(_playerId);
 	local players = {_playerId, secondPlayerInTeam}
 	local playerId;
-	local cooldownForAll = 60;
+	local cooldownForAll = 120;
 	for pIndex = 1,2 do
 		playerId = players[pIndex]
 		for i = 1, 5 do
@@ -1285,7 +1331,7 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 	if not WT.IsAttackable(_playerId, _buttonIndex, _fromPlayerId) then
 		return;
 	end
-	local spawn = WT.HQPositions[_playerId];
+	--local spawn = WT.HQPositions[_playerId];
 
 	local sector = Logic.GetSector(GetEntityId("hq".._playerId));
 	local numThiefs = 20;
@@ -1301,11 +1347,20 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 	WT.SpawnThiefsData = WT.SpawnThiefsData or {};
 	WT.SpawnThiefsData[_playerId] = {};
 	
+	local thiefSpawnAreas = 
+	{
+		GetPosition("w".._playerId.."5"),
+		GetPosition("w".._playerId.."7"),
+		GetPosition("w".._playerId.."1"),
+	};
+	
 	local x,y;
 	local range = 35; -- up to 3500 range, spawn only in 100er steps
+	local spawnAreaId;
 	for i = 1, numThiefs do
-		x = math.random(-range, range)*100 + spawn.X;
-		y = math.random(-range, range)*100 + spawn.Y;
+		spawnAreaId = math.random(1,3);
+		x = thiefSpawnAreas[spawnAreaId].X + math.random(-300,300);
+		y = thiefSpawnAreas[spawnAreaId].Y + math.random(-300, 300);
 		WT.SpawnThiefsData[_playerId][i] = AI.Entity_CreateFormation(
 			thiefPlayerId,
 			entity,
@@ -1324,14 +1379,14 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 	WT.ThiefBuildings = WT.ThiefBuildings or {};
 	WT.ThiefBuildings[_playerId] = {};
 	
-	local getBuildingId = function(_thiefId, _reuseBuilding)
+	--[[local getBuildingId = function(_thiefId, _reuseBuilding)
 		local pos = GetPosition(_thiefId);
 		local range = 6000;
 		local buildings = {};
 		for eId in S5Hook.EntityIterator(Predicate.IsBuilding(), Predicate.InRect(pos.X-range, pos.Y-range, pos.X+range, pos.Y+range), Predicate.OfPlayer(_playerId)) do
-			if WT.DoesBuildingHaveADoor(eId) then
+			--if WT.DoesBuildingHaveADoor(eId) then
 				table.insert(buildings, eId);
-			end
+			--end
 		end
 		local dbgStr = "numBuildings: "..table.getn(buildings);
 		
@@ -1353,6 +1408,30 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 			end
 		end
 		return buildingId, dbgStr;
+	end]]
+	--for eId in S5Hook.EntityIterator(Predicate.IsBuilding(), Predicate.InRect(pos.X-range, pos.Y-range, pos.X+range, pos.Y+range), Predicate.OfPlayer(_playerId)) do
+	local buildings = {};
+	local poolId = WT.GetUnitPoolByPlayerId(_playerId);
+	for eId, v in pairs(WT.UnitPool[poolId].Buildings) do
+		if Logic.EntityGetPlayer(eId) == _playerId then
+			table.insert(buildings, eId);
+		end
+	end
+	--end
+
+	local getBuildingId = function(thiefId)
+		if table.getn(buildings) == 0 then
+			return -1;
+		end
+		local bIndex = math.random(1,table.getn(buildings));
+		local bId = buildings[bIndex];
+		WT.ThiefBuildings[_playerId][bId] = WT.ThiefBuildings[_playerId][bId] or 0;
+		WT.ThiefBuildings[_playerId][bId] = WT.ThiefBuildings[_playerId][bId] + 1;
+		if WT.ThiefBuildings[_playerId][bId] >= 3 then
+			-- not more then 3 thiefs on one building
+			table.remove(buildings, bIndex);
+		end
+		return bId;
 	end
 	
 	WT.SpawnThiefActionList = WT.SpawnThiefActionList or {};
@@ -1363,7 +1442,7 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 		thiefData = {};
 		if IsAlive(thiefId) then
 			thiefData.Thief = thiefId;
-			if math.mod(math.random(1,chance),chance) == 0 then
+			if true then -- if math.mod(math.random(1,chance),chance) == 0 then
 				buildingId = getBuildingId(thiefId, true);
 				--LuaDebugger.Log("Sabotage: "..thiefId.." "..buildingId);
 				if buildingId > 0 then
@@ -1391,6 +1470,7 @@ function WT.SpawnThiefs(_playerId, _buttonIndex, _fromPlayerId)
 			table.insert(WT.SpawnThiefActionList, thiefData);
 		end
 	end
+
 	StartSimpleHiResJob("WT_ThiefAction");
 end
 
@@ -1415,7 +1495,28 @@ function WT_ThiefAction()
 		end
 		table.remove(WT.SpawnThiefActionList, i);
 	end
+	StartSimpleJob("WT_ThiefsWaitIdle");
 	return true;
+end
+
+function WT_ThiefsWaitIdle()
+	local thiefId;
+	for playerId = 1,4 do
+		if WT.SpawnThiefsData[playerId] then
+			for j = 1, table.getn(WT.SpawnThiefsData[playerId]) do
+				thiefId = WT.SpawnThiefsData[playerId][j];
+				if IsAlive(thiefId) then
+					if Logic.GetCurrentTaskList(thiefId) == "TL_THIEF_IDLE" then
+						Logic.HurtEntity(thiefId, Logic.GetEntityHealth(thiefId));
+						table.remove(WT.SpawnThiefsData[playerId], j);
+						if table.getn(WT.SpawnThiefsData[playerId]) == 0 then
+							return true;
+						end
+					end
+				end
+			end
+		end
+	end
 end
 
 function WT.ThiefSabotage(_thiefId, _buildingId)
@@ -1726,6 +1827,7 @@ function WT_SuddenDeathCountdown()
 	WT.SuddenDeathCounter = WT.SuddenDeathCounter - 1;
 	if WT.SuddenDeathCounter <= 0 then
 		WT.ActivateSuddenDeath();
+		WT.MaxWaveCooldown = 60*4;
 		return true;
 	end
 end
@@ -1737,13 +1839,25 @@ end
 
 function WT_SuddenDeath()
 	WT.SuddenDeathCounter = WT.SuddenDeathCounter + 1;
-	local amount = math.ceil(WT.SuddenDeathCounter/30); -- every 30 seconds + 1
+	local amount = math.ceil(WT.SuddenDeathCounter/45); -- every 45 seconds + 1
 	for playerId = 1,4 do
-		AddGold(playerId, -amount);
-		AddWood(playerId, -amount);
-		AddStone(playerId, -amount);
-		AddIron(playerId, -amount);
-		AddGold(playerId, -amount);
+		Message(math.min(amount, GetWood(playerId)));
+		AddGold(playerId, -math.min(amount*1.5, GetGold(playerId)));
+		AddClay(playerId, -math.min(amount, GetClay(playerId)));
+		AddWood(playerId, -math.min(amount, GetWood(playerId)));
+		AddStone(playerId, -math.min(amount, GetStone(playerId)));
+		AddIron(playerId, -math.min(amount, GetIron(playerId)));
+		AddSulfur(playerId, -math.min(amount, GetSulfur(playerId)));
+	end
+	if WT.SuddenDeathCounter == 60*60 then
+		-- 1hour into sudden death
+		WT.DestroyAllTowers();
+	end
+end
+
+function WT.DestroyAllTowers()
+	for eId in S5Hook.EntityIterator(Predicate.OfAnyType(Entities.PB_Tower3, Entities.PB_Tower2, Entities.PB_Tower1)) do
+		DestroyEntity(eId);
 	end
 end
 
@@ -1968,7 +2082,7 @@ function WT.InitText()
 			},
 			{
 				Titel= "Diebesmeute",
-				Text = "Eine Meute an Dieben überfällt euren Gegner und verwüstet die Siedlung. (Jeder Dieb hat "..colorize("20%").." Chance auf Sprengsatz anbringen und "..colorize("80%").." Chance auf Rohstoffklau.)",
+				Text = "Eine Meute an Dieben überfällt euren Gegner und verwüstet dessen Siedlung. (Jeder Dieb bringt einen Sprengsatz an einem willkürlich gewählten Gebäude an.)",
 			},
 			{
 				Titel= "Angst",
@@ -2011,7 +2125,7 @@ function WT.InitText()
 			Attack = " greift ",
 			-- 1-5
 			{
-				ReceivedAttackSuccess = "Eure Siedler werden durch eine Seuche vergifted!",
+				ReceivedAttackSuccess = "Eure Siedler werden durch eine Seuche vergiftet!",
 				ReceivedAttackFail = "Ihr habt eine Seuche abgewehrt!",
 				SentAttackSuccess = "Eine Seuche vergifted euren Gegner!",
 				SentAttackFail = "Euer Seuchenanschlag wurde abgewehrt!",
@@ -2055,6 +2169,23 @@ function WT.InitText()
 				WitnessAttackFail = " an. Dem eisernen Willen seiner Männer zum Dank, betrinkt sich heute niemand!"
 			},
 			
+		},
+		
+		ProtectionActivated = {
+			Self = {
+				"Ihr habt den Schutz gegen Seuchen aktiviert!",
+				"Ihr habt den Schutz gegen die Diebesmeute aktiviert!",
+				"Ihr habt den Schutz gegen Kalas Fluch aktiviert!",
+				"Ihr habt den Schutz gegen Steuersenkung aktiviert!",
+				"Ihr habt den Schutz gegen Alkoholismus aktiviert!",
+			},
+			Teammate = {
+				"Euer Partner hat den Schutz gegen Seuchen aktiviert!",
+				"Euer Partner hat den Schutz gegen die Diebesmeute aktiviert!",
+				"Euer Partner hat den Schutz gegen Kalas Fluch aktiviert!",
+				"Euer Partner hat den Schutz gegen Steuersenkung aktiviert!",
+				"Euer Partner hat den Schutz gegen Alkoholismus aktiviert!",
+			},
 		},
 	}
 		
@@ -2147,6 +2278,13 @@ function WT.ExtendUnlimitedArmy()
 	QuickLazyUnlimitedArmy:FinalizeClass();
 	
 end 
+
+function WT.GetUnitPoolByPlayerId(_playerId)
+	if _playerId > 2 then
+		return WT.UnitPoolId2;
+	end
+	return WT.UnitPoolId1;
+end
 
 function WT.ChangeUABehaviour()
 	-- all of this pretty bad style, but it just a quick hack
@@ -2338,7 +2476,6 @@ end
 function WT.IsCovidUnit(_entityId)
 	return Logic.IsSettler(_entityId) == 1;
 end
-
 WT.City =
 {
     [1] = {
