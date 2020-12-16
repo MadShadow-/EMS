@@ -1813,13 +1813,15 @@ function KalaTributePaied(CreateATable_table)
 				end
 			end
 		end
-		if XNetwork.GameInformation_GetLogicPlayerTeam(j) == XNetwork.GameInformation_GetLogicPlayerTeam(CreateATable_table.pId) then
-			--hier tribute löschen von kerberos bei team wo kala verbündet
-			ThiefAtKeberos[j] = 1
-			for _,playeridtributes in pairs(PlayersTributes) do
-				if KerberosTributes[j] ~= nil then
-					if playeridtributes == KerberosTributes[j].Tribute then
-						Logic.RemoveTribute(j,playeridtributes)
+		if not NVBasedown then
+			if XNetwork.GameInformation_GetLogicPlayerTeam(j) == XNetwork.GameInformation_GetLogicPlayerTeam(CreateATable_table.pId) then
+				--hier tribute löschen von kerberos bei team wo kala verbündet
+				ThiefAtKeberos[j] = 1
+				for _,playeridtributes in pairs(PlayersTributes) do
+					if KerberosTributes[j] ~= nil then
+						if playeridtributes == KerberosTributes[j].Tribute then
+							Logic.RemoveTribute(j,playeridtributes)
+						end
 					end
 				end
 			end
@@ -2026,13 +2028,15 @@ function KerberosTributePaied(CreateATable_table)
 				end
 			end
 		end
-		if XNetwork.GameInformation_GetLogicPlayerTeam(j) == XNetwork.GameInformation_GetLogicPlayerTeam(CreateATable_table.pId) then
-			--hier tribute löschen von kerberos bei team wo kala verbündet
-			ThiefAtKala[j] = 1
-			for _,playeridtributes in pairs(PlayersTributes) do
-				if KalaTributes[j] ~= nil then
-					if playeridtributes == KalaTributes[j].Tribute then
-						Logic.RemoveTribute(j,playeridtributes)
+		if not KIBasedown then
+			if XNetwork.GameInformation_GetLogicPlayerTeam(j) == XNetwork.GameInformation_GetLogicPlayerTeam(CreateATable_table.pId) then
+				--hier tribute löschen von kerberos bei team wo kala verbündet
+				ThiefAtKala[j] = 1
+				for _,playeridtributes in pairs(PlayersTributes) do
+					if KalaTributes[j] ~= nil then
+						if playeridtributes == KalaTributes[j].Tribute then
+							Logic.RemoveTribute(j,playeridtributes)
+						end
 					end
 				end
 			end
