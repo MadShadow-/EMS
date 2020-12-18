@@ -215,7 +215,7 @@ EMS_CustomMapConfig =
 	-- * 0 = Building markets is forbidden
 	-- * 1 = Building markets is allowed
 	-- * greater then one = Markets are allowed and limited to the number given
-	Markets = 2,
+	Markets = -1,
  
 	-- * Trade Limit
 	-- * 0 = no trade limit
@@ -239,7 +239,7 @@ EMS_CustomMapConfig =
 	-- * Minutes for how long the weather can't be changed directly again after a weatherchange happened
 	WeatherChangeLockTimer =  6,
  
-	MakeSummer = 1,
+	MakeSummer = 0,
 	MakeRain   = 1,
 	MakeSnow   = 1,
  
