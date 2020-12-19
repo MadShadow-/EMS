@@ -126,7 +126,7 @@ EMS_CustomMapConfig =
 			
 			mercTent = GetEntityId( "m"..pId.."1" );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderHeavyCavalry2, 5, ResourceType.Iron, 500 );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 3, ResourceType.Iron, 400 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword4, 3, ResourceType.Iron, 400 );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderRifle2, 5, ResourceType.Sulfur, 500 );
 			
 		end
