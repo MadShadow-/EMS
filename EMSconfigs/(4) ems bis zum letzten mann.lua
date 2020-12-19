@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.3,
+	Version = 1.4,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -120,14 +120,14 @@ EMS_CustomMapConfig =
 			
 			local mercTent = GetEntityId( "m"..pId.."2" );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_Scout, 2, ResourceType.Wood, 100 );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderBow3, 5, ResourceType.Wood, 600 );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 5, ResourceType.Wood, 600 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderBow3, 5, ResourceType.Wood, 500 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 5, ResourceType.Wood, 500 );
 			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword2, 5, ResourceType.Wood, 300 );
 			
 			mercTent = GetEntityId( "m"..pId.."1" );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderHeavyCavalry2, 3, ResourceType.Gold, 1500, ResourceType.Wood, 1000 );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 3, ResourceType.Wood, 900 );
-			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword2, 5, ResourceType.Wood, 300 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderHeavyCavalry2, 5, ResourceType.Iron, 500 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderSword3, 3, ResourceType.Iron, 400 );
+			Logic.AddMercenaryOffer( mercTent, Entities.PU_LeaderRifle2, 5, ResourceType.Sulfur, 500 );
 			
 		end
 		
@@ -1835,23 +1835,28 @@ end
 function WT.ActivateSuddenDeath()
 	Message("@color:255,0,0 Suddendeath ist aktiv!");
 	StartSimpleJob("WT_SuddenDeath");
+	WT.DestroyAllTowers();
+	for playerId = 1,4 do 
+		ForbidTechnology(Technologies.B_Tower, playerId);
+	end
+	local selEntities = {GUI.GetSelectedEntities()};
+	for i = 1, table.getn(selEntities) do
+		if Logic.GetEntityType(selEntities[i]) == Entities.PU_Serf then
+			GUI.DeselectEntity(selEntities[i]);
+		end
+	end
 end
 
 function WT_SuddenDeath()
 	WT.SuddenDeathCounter = WT.SuddenDeathCounter + 1;
 	local amount = math.ceil(WT.SuddenDeathCounter/45); -- every 45 seconds + 1
 	for playerId = 1,4 do
-		Message(math.min(amount, GetWood(playerId)));
 		AddGold(playerId, -math.min(amount*1.5, GetGold(playerId)));
 		AddClay(playerId, -math.min(amount, GetClay(playerId)));
 		AddWood(playerId, -math.min(amount, GetWood(playerId)));
 		AddStone(playerId, -math.min(amount, GetStone(playerId)));
 		AddIron(playerId, -math.min(amount, GetIron(playerId)));
 		AddSulfur(playerId, -math.min(amount, GetSulfur(playerId)));
-	end
-	if WT.SuddenDeathCounter == 60*60 then
-		-- 1hour into sudden death
-		WT.DestroyAllTowers();
 	end
 end
 
