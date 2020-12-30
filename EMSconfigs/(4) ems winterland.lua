@@ -13,8 +13,8 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 4.9,
- 
+	Version = 5.0,
+	--ActivateDebug = true,
  
  
 	-- ********************************************************************************************
@@ -26,6 +26,7 @@ EMS_CustomMapConfig =
 	Callback_OnMapStart = function()
 	    WT.SetupControllableTowers()
 	    Truppen()
+		--Logic.AddWeatherElement(2, 1, 1, 2, 5, 10)	-- Foggy with Rain
         Mission_InitWeather()
 		Mission_InitWeatherGfxSets()
 
@@ -199,15 +200,15 @@ EMS_CustomMapConfig =
 	Sword   = 4,
 	Bow     = 4,
 	PoleArm = 4,
-	HeavyCavalry = 0,
-	LightCavalry = 0,
-	Thief = 0,
+	HeavyCavalry = 2,
+	LightCavalry = 2,
+	Thief = 1,
 	Rifle = 2,
 	Scout = 1,
-	Cannon1 = 0,
-	Cannon2 = 0,
-	Cannon3 = 0,
-	Cannon4 = 0,
+	Cannon1 = 1,
+	Cannon2 = 1,
+	Cannon3 = 1,
+	Cannon4 = 1,
  
 	-- * Buildings
 	Bridge = 1,
@@ -227,12 +228,12 @@ EMS_CustomMapConfig =
 	-- * 1 = Watchtowers
 	-- * 2 = Balistatowers
 	-- * 3 = Cannontowers
-	TowerLevel =2, -- 0-3
+	TowerLevel = 3, -- 0-3
 	
 	-- * TowerLimit
 	-- * 0  = no tower limit
 	-- * >0 = towers are limited to the number given
-	TowerLimit = 5,
+	TowerLimit = 3,
  
  
 	-- * WeatherChangeLockTimer
