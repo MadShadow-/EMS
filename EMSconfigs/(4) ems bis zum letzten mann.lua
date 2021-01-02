@@ -65,7 +65,7 @@ EMS_CustomMapConfig =
 	
 	Callback_OnMapStart = function()
 		--math.randomseed(1234);
-		--TriggerFix_mode = "Xpcall" -- disable trigger warnings
+		TriggerFix_mode = "Xpcall" -- disable trigger warnings
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua");
 		if not mcbPacker then
 			Message("@color:255,0,0 mcbPacker is missing! maybe the community lib is not installed!");
@@ -572,6 +572,7 @@ function WT_SpawnArmies()
 		armyData.Army:AddCommandWaitForIdle();
 	end]]
 	armyData.Army:AddCommandMove({X=armyData.AttackX,Y=armyData.AttackY}, false);
+	armyData.Army:AddCommandWaitForIdle();
 	armyData.Army:AddCommandDefend({X=armyData.AttackX,Y=armyData.AttackY}, 20000);
 	return;
 end
@@ -673,10 +674,10 @@ function WT.CreateAI()
 	for i = 1,2 do
 		SetHostile(i, 5);
 		SetHostile(i, 6);
-		SetFriendly(i, 7);
+		SetNeutral(i, 7);
 	end
 	for i = 3,4 do
-		SetHostile(i, 5);
+		SetNeutral(i, 5);
 		SetHostile(i, 7);
 		SetHostile(i, 8);
 	end
@@ -1083,11 +1084,11 @@ function WT.InitGUI()
 	-- if a protection for a player is > 0 then he is protected
 	WT.Protections = {};
 	WT.ProtectionLimits = {
-		30,--60*29,
-		30,--60*29,
-		30,--60*5,
-		30,--60*5,
-		30,--60*5,
+		60*5,
+		60*5,
+		60*5,
+		60*5,
+		60*5,
 	};
 	
 	for playerId = 1,4 do
