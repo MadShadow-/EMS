@@ -183,11 +183,15 @@ EMS_CustomMapConfig =
 	TowerLevel = 3,
 	TowerLimit = 5,
 	NumberOfHeroesForAll = 0,
-	Cannon1 = 0,
-	Cannon2 = 0,
-	Cannon3 = 0,
-	Cannon4 = 0,
+	Cannon1 = 1,
+	Cannon2 = 1,
+	Cannon3 = 1,
+	Cannon4 = 1,
 	TradeLimit = 3500,
+	
+	HeavyCavalry = 2,
+	LightCavalry = 2,
+	Thief = 1,
 	
 	AntiHQRush = 0,
 
