@@ -28,7 +28,7 @@ EMS_CustomMapConfig =
 		DrawBridge1 = ReplaceEntity(65750, Entities.XD_DrawBridgeOpen1);
 		DrawBridge2 = ReplaceEntity(85056, Entities.XD_DrawBridgeOpen1);
 		
-		Tools.ExploreArea(1,1,900)
+		--Tools.ExploreArea(1,1,900)
 		
 		-- brückebauplätze
 		if isHuman(4) then
