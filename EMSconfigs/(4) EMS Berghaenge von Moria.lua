@@ -42,6 +42,7 @@ EMS_CustomMapConfig =
 		
 		CreateUAs()
 		
+		
 		WT.Init();
 	end,
  
@@ -335,6 +336,7 @@ function WT.Init()
 	WT.InitTechnologyCounter();
 end
 
+
 function WT.InitFlags()
 	WT.Players = 4;
 	
@@ -369,10 +371,241 @@ function WT.InitFlags()
 	-- points needed
 	WT.ScoreLimit = 15000;
 	
+	-- track all existing units, that is serfs and leaders
+	local listOfSerfs = S5Hook.EntityIteratorTableize( Predicate.OfType(Entities.PU_Serf))
+	local listOfLeaders = S5Hook.EntityIteratorTableize( Predicate.OfCategory(EntityCategories.Leader))
+	WT.ListOfTrackedEntities = {}
+	for k,v in pairs(listOfSerfs) do
+		table.insert( WT.ListOfTrackedEntities, v)
+	end
+	for k,v in pairs(listOfLeaders) do
+		table.insert( WT.ListOfTrackedEntities, v)
+	end
+	WT.ListOfIncompleteBuildings = {}
+	Trigger.RequestTrigger( Events.LOGIC_EVENT_ENTITY_CREATED, nil, "WT_OnEntityCreated", 1)
+	StartSimpleJob("WT_TrackerWatchDog")
+	
+	-- Setup nice flags
+	-- type of flag: XD_StandardLarge
+	-- Central flag does not have standards, maybe add some?
+	WT.CreateStandardsForCentralFlag()
+	-- replace by XD_StandartePlayerColor?
+	WT.ListOfStandardData = {}
+	for eId in S5Hook.EntityIterator( Predicate.OfType( Entities.XD_StandardLarge)) do
+		local pos = GetPosition( eId)
+		local rot = Logic.GetEntityOrientation( eId)
+		table.insert( WT.ListOfStandardData, {pos = pos, rot = rot, eId = eId})
+	end
+	for k,v in pairs(WT.ListOfStandardData) do
+		v.flag = WT.GetFlagIDByPosition( v.pos)
+		DestroyEntity( v.eId)
+		v.eId = Logic.CreateEntity( Entities.XD_Rock1, v.pos.X, v.pos.Y, v.rot, 0)
+		Logic.SetModelAndAnimSet( v.eId, Models.XD_StandartePlayerColor)
+	end
+	for k,v in pairs(WT.Flags) do
+		v.OldOwner = 0
+	end
+	
 	StartSimpleJob("WT_FlagController");
 	WT.SetupFlagGUI();
 end
 
+function WT.CreateStandardsForCentralFlag()
+	local pos = GetPosition("p1")
+	local range = 3500
+	-- create outer flags that indicate range
+	--local angles = {15, 79, 194, 252}					-- Range flags are in the middle of entries
+	local angles = {185, 205, 241, 263, 4, 27, 69, 85}	-- Range flags are at the borders of entry points
+	for k,angle in pairs(angles) do 
+		local flagX, flagY = WT.GetPositionByCenterAndAngle( pos, angle, range)
+		Logic.CreateEntity( Entities.XD_StandardLarge, flagX, flagY, angle + 90, 1)
+	end
+	-- create inner flags for eye candy
+	range = 2500
+	n = 36
+	for i = 1, n do
+		local angle = 360/n*i
+		local flagX, flagY = WT.GetPositionByCenterAndAngle( pos, angle, range)
+		Logic.CreateEntity( Entities.XD_StandardLarge, flagX, flagY, angle + 90, 1)
+	end
+	local x, y, alpha
+	for i = 1, 4 do
+		for lambda = 0, 1, 0.04 do
+			x, y, alpha = WT.GetSpiralPositionAndRot( range, math.pi, i/2*math.pi, 1-math.sqrt(1-lambda))
+			Logic.CreateEntity( Entities.XD_StandardLarge, x + pos.X, y + pos.Y, alpha - 90, 1)
+		end
+	end
+end
+function WT.GetSpiralPositionAndRot( _r, _omega, _phiOff, _lambda)
+	local angle = _omega*_lambda + _phiOff
+	local cos = math.cos(angle)
+	local sin = math.sin(angle)
+	local x = (1-_lambda)*_r*cos
+	local y = (1-_lambda)*_r*sin
+	local dx = -(1-_lambda)*_r*sin*_omega - _r*cos
+	local dy = (1-_lambda)*_r*cos*_omega - _r*sin
+	return x, y, WT.GetAngleByDXDY( dx, dy)+90
+end
+function WT.GetAngleByDXDY( _dx, _dy)
+	if _dx < 0 then 
+		return 180 + math.deg(math.atan( _dy / _dx))
+	else
+		return math.deg(math.atan( _dy / _dx))
+	end
+end
+function WT.GetPositionByCenterAndAngle( _center, _angle, _range)
+	local x = _center.X + _range*math.cos(math.rad(_angle))
+	local y = _center.Y + _range*math.sin(math.rad(_angle))
+	return x,y
+end
+function WT.DEBUG_GetAngleToCenterFlag()
+	local eId = GUI.GetSelectedEntity()
+	local p1 = GetPosition("p1")
+	local p2 = GetPosition(eId)
+	local dX = p2.X - p1.X
+	local dY = p2.Y - p1.Y
+	LuaDebugger.Log(dX)
+	LuaDebugger.Log(dY)
+	if dX < 0 then 
+		LuaDebugger.Log(180 + math.deg(math.atan(dY / dX)))
+	else
+		LuaDebugger.Log(math.deg(math.atan(dY / dX)))
+	end
+end
+-- Is called by the OnEntityCreated-Trigger, fills the list of tracked entities and list of incomplete buildings
+function WT_OnEntityCreated()
+	local created = Event.GetEntityID()
+	local pId = Logic.EntityGetPlayer( created)
+	-- throw out bad player ids
+	if pId == 0 or pId > 4 then
+		return
+	end
+	-- track serfs
+	if Logic.GetEntityType( created) == Entities.PU_Serf then
+		table.insert( WT.ListOfTrackedEntities, created)
+		return
+	end
+	-- and leaders
+	if Logic.IsEntityInCategory( created, EntityCategories.Leader) == 1 then
+		table.insert( WT.ListOfTrackedEntities, created)
+		return
+	end
+	-- and building, but wait for completion
+	if Logic.IsBuilding( created) == 1 then
+		-- check if "building" is actually a construction site
+		local typeName = Logic.GetEntityTypeName(Logic.GetEntityType( created))
+		if string.find( typeName, "ConstructionSite") then
+			return
+		end
+		table.insert( WT.ListOfIncompleteBuildings, created)
+	end
+	-- and heroes
+	if Logic.IsHero( created) == 1 then
+		table.insert( WT.ListOfTrackedEntities, created)
+		return
+	end
+end
+-- Cleans the list of tracked entities and incomplete buildings
+function WT_TrackerWatchDog()
+	-- clear the tracker list
+	for i = table.getn(WT.ListOfTrackedEntities), 1, -1 do
+		if IsDead(WT.ListOfTrackedEntities[i]) and Logic.IsHero(WT.ListOfTrackedEntities[i]) == 0 then
+			table.remove( WT.ListOfTrackedEntities, i)
+		end
+	end
+	-- clear the list of incomplete buildings
+	for i = table.getn(WT.ListOfIncompleteBuildings), 1, -1 do
+		if IsDead(WT.ListOfIncompleteBuildings[i]) then
+			table.remove( WT.ListOfIncompleteBuildings, i)
+		end
+	end
+	-- transfer ids to main list if building is complete
+	for i = table.getn(WT.ListOfIncompleteBuildings), 1, -1 do
+		if Logic.IsConstructionComplete(WT.ListOfIncompleteBuildings[i]) == 1 then
+			local bId = WT.ListOfIncompleteBuildings[i]
+			table.insert( WT.ListOfTrackedEntities, bId)
+			table.remove( WT.ListOfIncompleteBuildings, i)
+		end
+	end
+end
+-- Actual getter function, returns 1 if team 1,2 has the flag, 2 if team 3,4 has the flag and 0 if none of the above holds
+function WT.GetOwnerOfFlag( _x, _y, _range)
+	local isNearby = {}
+	for i = 1, 4 do
+		isNearby[i] = false
+	end
+	for k,v in pairs(WT.ListOfTrackedEntities) do
+		local pId = Logic.EntityGetPlayer( v)
+		if pId < 5 then
+			if WT.GetDistance( _x, _y, GetPosition(v)) < _range and IsAlive(v) then
+				isNearby[pId] = true
+			end
+		end
+	end	
+	-- compute from the isNearby table the state of the flag
+	local team1Nearby = isNearby[1] or isNearby[2]
+	local team2Nearby = isNearby[3] or isNearby[4]
+	if team1Nearby and not team2Nearby then
+		return 1
+	elseif team2Nearby and not team1Nearby then
+		return 2
+	else
+		return 0
+	end
+end
+function WT.GetDistance( _x, _y, _pos)
+	local dX = _x - _pos.X
+	local dY = _y - _pos.Y
+	return( math.sqrt(dX*dX + dY*dY))
+end
+
+-- Code for changing flags when position gets conquered
+function WT.GetFlagIDByPosition( _pos)
+	local tol = 5000
+	for k,v in pairs(WT.Flags) do
+		local dX = math.abs( v.Position.X - _pos.X)
+		local dY = math.abs( v.Position.Y - _pos.Y)
+		-- use \ell^1 norm, im too lazy to code \ell^2 norm
+		if dX + dY < tol then
+			return k
+		end
+	end
+	return 0
+end
+function WT.OnFlagOwnershipChange( _flagId, _newOwner)
+	-- remove old flags if necessary
+	for k,v in pairs(WT.ListOfStandardData) do
+		if v.flag ==_flagId and v.eId ~= nil then
+			DestroyEntity( v.eId)
+			v.eId = nil
+		end
+	end
+	-- create new flags if necessary
+	-- dummy flags for neutral
+	if _newOwner == 0 then
+		for k,v in pairs(WT.ListOfStandardData) do
+			if v.flag ==_flagId then
+				v.eId = Logic.CreateEntity( Entities.XD_Rock1, v.pos.X, v.pos.Y, v.rot, 0)
+				Logic.SetModelAndAnimSet( v.eId, Models.XD_StandartePlayerColor)
+			end
+		end
+		return
+	end
+	-- get the correct player id
+	-- for the flags we will use pId = offset + alt where alt is alternating from 0 to 1 and back
+	local offset = 1
+	local alt = 0
+	if _newOwner == 2 then
+		offset = 3
+	end
+	for k,v in pairs(WT.ListOfStandardData) do
+		if v.flag ==_flagId then
+			local eId = Logic.CreateEntity( Entities.XD_StandartePlayerColor, v.pos.X, v.pos.Y, v.rot, offset + alt)
+			alt = 1 - alt
+			v.eId = eId
+		end
+	end
+end
 function WT_FlagController()
 	for i = 1, WT.NumFlags do
 		WT.CheckTeamsInArea(i);
@@ -382,41 +615,22 @@ function WT_FlagController()
 		return true;
 	end
 end
-
 function WT.CheckTeamsInArea(_flagIndex)
+	local owner = WT.GetOwnerOfFlag( WT.Flags[_flagIndex].Position.X, WT.Flags[_flagIndex].Position.Y, WT.Flags[_flagIndex].Range)
 	
-	-- conquer mode: if one team is solo in the area of range around the tower, the tower will fall into their hands
-	local entities, isTeam1, isTeam2 = 0, false, false;
-	for playerId = 1, 2 do
-		entities = {Logic.GetPlayerEntitiesInArea(playerId, 0, WT.Flags[_flagIndex].Position.X, WT.Flags[_flagIndex].Position.Y, WT.Flags[_flagIndex].Range, 3)}
-		for i = 1, entities[1] do
-			if IsAlive(entities[i+1]) then
-				isTeam1 = true;
-				break;
-			end
-		end
+	-- update if there is some change
+	if owner ~= WT.Flags[_flagIndex].OldOwner then
+		WT.OnFlagOwnershipChange( _flagIndex, owner)
+		WT.Flags[_flagIndex].OldOwner = owner
 	end
 	
-	for playerId = 3, 4 do
-		entities = {Logic.GetPlayerEntitiesInArea(playerId, 0, WT.Flags[_flagIndex].Position.X, WT.Flags[_flagIndex].Position.Y, WT.Flags[_flagIndex].Range, 3)}
-		for i = 1, entities[1] do
-			if IsAlive(entities[i+1]) then
-				isTeam2 = true;
-				break;
-			end
-		end
-	end
-	
-	if isTeam1 and isTeam2 then
-		return;
-	end
-	
-	if isTeam1 then
+	if owner == 1 then
 		WT.Score[1] = WT.Score[1] + WT.Flags[_flagIndex].GivePoints;
-	elseif isTeam2 then
+	elseif onwer == 2 then
 		WT.Score[2] = WT.Score[2] + WT.Flags[_flagIndex].GivePoints;
 	end
 end
+
 
 function WT.ColorGrade(_c1, _c2, _lambda)
 	return math.clamp(math.abs(math.floor(_c1*_lambda + _c2*(1-_lambda))),0,255);
