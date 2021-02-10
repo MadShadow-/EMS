@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 5.0,
+	Version = 5.1,
 	--ActivateDebug = true,
  
  
@@ -431,7 +431,7 @@ function SetupPlayer8Army1()
 			{Entities.PV_Cannon3, 0},
 		},
 		spawnPos            = GetPosition("AB3"),
-		spawnGenerator      = "AB2",
+		spawnGenerator      = "AB22",
 		endless             = true,
 		respawnTime         = 1,
 		refresh             = true,

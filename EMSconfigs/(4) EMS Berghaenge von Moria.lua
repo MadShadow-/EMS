@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.2,
+	Version = 1.3,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -626,7 +626,7 @@ function WT.CheckTeamsInArea(_flagIndex)
 	
 	if owner == 1 then
 		WT.Score[1] = WT.Score[1] + WT.Flags[_flagIndex].GivePoints;
-	elseif onwer == 2 then
+	elseif owner == 2 then
 		WT.Score[2] = WT.Score[2] + WT.Flags[_flagIndex].GivePoints;
 	end
 end
