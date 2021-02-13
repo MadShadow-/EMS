@@ -7,20 +7,31 @@
 -- *                                                                                              *
 -- ************************************************************************************************
 
+--[[
+
+	Map improvements:
+	- stronger early waves
+	- randomize spawns
+	- spawns uncampar machen
+	- kalas moti angriff in unwetter umwandeln - senkt moti, verdunkelt map, erschafft regen effekt.
+	- diebe sprengen sinnvoller
+	- zuschauer sehen cooldowns
+	
+]]
+
 EMS_CustomMapConfig =
 {
 	-- ********************************************************************************************
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.6,
+	Version = 1.7,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * Called directly after the loading screen vanishes and works as your entry point.
 	-- * Similar use to FirstMapAction/GameCallback_OnGameSart
 	-- ********************************************************************************************
-	--ActivateDebug = 1,
 	
 	CustomDebugFunc1 = function(_fromPlayer, _target1, _target2, _x, _y)
 		--Logic.CreateEntity(Entities.PU_Serf, _x, _y, 0, _fromPlayer);
@@ -83,6 +94,7 @@ EMS_CustomMapConfig =
 		EntityIdChangedHelper.Init()
 		AddPeriodicSummer(60);
 		SetupHighlandWeatherGfxSet();
+		LuaDebugger.Log = function()end;
 		LocalMusic.UseSet = HIGHLANDMUSIC;
 		--Tools.ExploreArea(1,1,900)
 		--MultiplayerTools.RemoveAllPlayerEntities(2)

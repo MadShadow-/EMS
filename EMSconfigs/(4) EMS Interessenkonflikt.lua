@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.23,
+	Version = 1.24,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -30,6 +30,7 @@ EMS_CustomMapConfig =
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\\comfort\\player\\AddTribute.lua")
 		S5HookLoader.Init()
 		EntityIdChangedHelper.Init()
+		LuaDebugger.Log() = function()end
 		--ActivateDebug = true
 		--TriggerFix.xpcallTimeMsg = false
 		Logic.SetPlayerRawName(5, "Highport")

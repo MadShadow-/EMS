@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.3,
+	Version = 1.31,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -29,6 +29,7 @@ EMS_CustomMapConfig =
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua");
 		S5HookLoader.Init()
 		EntityIdChangedHelper.Init()
+		LuaDebugger.Log = function() end
 		AddPeriodicSummer(60);
 		Diploeinstellung();
 		SetupColorMappingForPlayers();
