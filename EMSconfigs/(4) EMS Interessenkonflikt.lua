@@ -30,7 +30,7 @@ EMS_CustomMapConfig =
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\\comfort\\player\\AddTribute.lua")
 		S5HookLoader.Init()
 		EntityIdChangedHelper.Init()
-		LuaDebugger.Log() = function()end
+		LuaDebugger.Log = function()end
 		--ActivateDebug = true
 		--TriggerFix.xpcallTimeMsg = false
 		Logic.SetPlayerRawName(5, "Highport")
