@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.24,
+	Version = 1.25,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
