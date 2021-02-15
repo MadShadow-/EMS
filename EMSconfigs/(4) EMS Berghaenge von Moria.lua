@@ -27,7 +27,6 @@ EMS_CustomMapConfig =
 		mcbPacker.mainPath="maps\\user\\EMS\\tools\\";
 		mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight");
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua");
-		UnlimitedArmy.ForceNoHook = true;
 		S5HookLoader.Init()
 		EntityIdChangedHelper.Init()
 		LuaDebugger.Log = function() end
