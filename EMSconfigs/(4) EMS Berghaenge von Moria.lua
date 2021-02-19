@@ -848,7 +848,7 @@ function WT_ControlTechnologyPoints()
 end
 
 function WT.UpdateTechnologyGUI(_teamId)
-	local text = "@cr @cr @cr @cr @cr @cr @cr ";
+	local text = "@cr @cr @cr @cr @cr @cr @cr @cr @cr @cr @cr ";
 	text = text .. " @color:30,144,255 Nächte Technologien: @cr @color:255,125,0 ";
 	local myTeam = false;
 	for playerIndex = 1, table.getn(WT.Teams[_teamId]) do
