@@ -1577,10 +1577,9 @@ function IsInTeamNorth(_playerids)
 	for _,teamid in ipairs(NorthTeam) do
 		if _playerids == teamid then
 			return true
-		else
-			return false
 		end
 	end
+	return false
 end
 
 --kosten durch tests bestimmen
