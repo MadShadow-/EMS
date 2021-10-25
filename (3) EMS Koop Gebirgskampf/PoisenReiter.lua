@@ -42,7 +42,7 @@ end;
 function P1EntityCreated()
 	local id = Event.GetEntityID();
 	local type = Logic.GetEntityType(id);
-	if Logic.EntityGetPlayer(id) == 1 then
+	if Logic.EntityGetPlayer(id) == 1 or Logic.EntityGetPlayer(id) == 2 or Logic.EntityGetPlayer(id) == 3 then
 		if gvTypesToTrack[type] then
 		   -- füge in liste ein
 		PlayerUnits[id] = true;
@@ -52,7 +52,7 @@ end
 
 function P1EntityDestroied()
     local id = Event.GetEntityID();
-    if Logic.EntityGetPlayer(id) == 1 then
+    if Logic.EntityGetPlayer(id) == 1 or Logic.EntityGetPlayer(id) == 2 or Logic.EntityGetPlayer(id) == 3 then
         if PlayerUnits[id] then
             PlayerUnits[id] = nil;
         end;
