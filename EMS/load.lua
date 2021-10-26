@@ -4,4 +4,5 @@ ems_debug_options = {
 	Vision = false,				-- complete vision on map
 	UniversityTechs = false, 	-- uni techs
 };
-Script.Load("maps\\user\\EMS\\ems.luac");
+
+Script.Load("maps\\user\\EMS\\ems.lua");
