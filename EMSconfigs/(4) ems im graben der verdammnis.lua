@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.1,
+	Version = 1.2,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -44,7 +44,7 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
 		StartSimpleJob("WT21_KerbeRevive");
-		EMS.T.StartCountdown( 60, WT21.TimeEnd, true );
+		EMS.T.StartCountdown( 60*60, WT21.TimeEnd, true );
 	end,
  
 	-- ********************************************************************************************
@@ -380,10 +380,16 @@ end
 
 function WT21.SetupKerbeHPBar()
 	XGUIEng.ShowWidget("EMSMAWT21",1);
+	WT21.IsBossBarVisible = 1
 	WT21.TeamString1 = UserTool_GetPlayerName(1).." & "..UserTool_GetPlayerName(2);
 	WT21.TeamString2 = UserTool_GetPlayerName(3).." & "..UserTool_GetPlayerName(4);
 	XGUIEng.SetText("EMSMAWT21Text1", WT21.TeamString1);
 	XGUIEng.SetText("EMSMAWT21Text2", WT21.TeamString2);
+	Input.KeyBindDown( Keys.OemBackslash, "WT21_ToggleBossBar()", 2)
+end
+function WT21_ToggleBossBar()
+	WT21.IsBossBarVisible = 1 - WT21.IsBossBarVisible
+	XGUIEng.ShowWidget( "EMSMAWT21", WT21.IsBossBarVisible)
 end
 
 function GUIUpdate_WT21_UpdateHealthBar()
@@ -488,7 +494,9 @@ function WT21.CalculateChurchBonus()
 		end
 	end
 	Raidboss.PlayerMultiplier[1] = WT21.ChurchBonus[1]+1;
-	Raidboss.PlayerMultiplier[2] = WT21.ChurchBonus[2]+1;
+	Raidboss.PlayerMultiplier[2] = WT21.ChurchBonus[1]+1;
+	Raidboss.PlayerMultiplier[3] = WT21.ChurchBonus[2]+1;
+	Raidboss.PlayerMultiplier[4] = WT21.ChurchBonus[2]+1;
 	if not WT21.ArmyJob then
 		WT21.ArmyJob = StartSimpleJob("WT21_ArmyController");
 	end 
