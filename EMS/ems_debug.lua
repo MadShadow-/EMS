@@ -32,10 +32,11 @@ function EMS.D.Setup(_customFunc1, _customFunc2)
 	addKeyBind("R", "Restart the map immediately (only works in Singleplayer)");
 	addKeyBind("L", "Global map vision for target1");
 	addKeyBind("Alt + 1-8", "Set current target to player id to 1-8. Press one of the buttons to change current target.");
-	addKeyBind("A", "Spawn bow troop for target 1 at mouse pos");
-	addKeyBind("S", "Spawn bow troop for target 2 at mouse pos");
-	addKeyBind("Y", "Spawn sword troop for target 1 at mouse pos");
-	addKeyBind("X", "Spawn sword troop for target 2 at mouse pos");
+	addKeyBind("A", "Spawn Bow target 1");
+	addKeyBind("S", "Spawn Bow target 2");
+	addKeyBind("Y", "Spawn Sword target 1");
+	addKeyBind("X", "Spawn Sword target 2");
+	addKeyBind("W", "Spawn Serf target 1");
 	addKeyBind("C", "Delete all spawned troops");
 	addKeyBind("U", "Research all university technologies for target 1");
 	addKeyBind("E", "Toggle unlimited resources for target1");
@@ -78,6 +79,8 @@ function EMS.D.Setup(_customFunc1, _customFunc2)
 	Input.KeyBindDown(Keys.Y, "Sync.Call('EMS.D.SpawnTroop', GUI.GetPlayerID(), EMS.D.TargetPlayerId[1], ({GUI.Debug_GetMapPositionUnderMouse()})[1], ({GUI.Debug_GetMapPositionUnderMouse()})[2], Entities.PU_LeaderSword4)", 2);
 	Input.KeyBindDown(Keys.X, "Sync.Call('EMS.D.SpawnTroop', GUI.GetPlayerID(), EMS.D.TargetPlayerId[2], ({GUI.Debug_GetMapPositionUnderMouse()})[1], ({GUI.Debug_GetMapPositionUnderMouse()})[2], Entities.PU_LeaderSword4)", 2);
 	
+	Input.KeyBindDown(Keys.W, "Sync.Call('EMS.D.CreateEntity', Entities.PU_Serf, ({GUI.Debug_GetMapPositionUnderMouse()})[1], ({GUI.Debug_GetMapPositionUnderMouse()})[2], 0, EMS.D.TargetPlayerId[1])", 2);
+
 	Input.KeyBindDown(Keys.C, "Sync.Call('EMS.D.ClearTroops', GUI.GetPlayerID())", 2);
 	
 	Input.KeyBindDown(Keys.E, "Sync.Call('EMS.D.ToggleUnlimitedResources', EMS.D.TargetPlayerId[1])", 2);
@@ -100,6 +103,10 @@ end
 function EMS.D.CustomFunc2(_fromPlayer, _target1, _target2, _x, _y)
 end
 
+function EMS.D.CreateEntity(_entity, _x, _y, _rot, _playerId)
+	Logic.CreateEntity(_entity, _x, _y, _rot, _playerId);
+end
+
 function EMS.D.InitCNetworkHandler()
 	if not CNetwork then
 		return;
@@ -111,6 +118,10 @@ function EMS.D.InitCNetworkHandler()
 	
 	CNetwork.SetNetworkHandler("EMS.D.SpawnTroop", function (_name, _fromPlayer, _forPlayer, _x, _y, _leaderType)
 		EMS.D.SpawnTroop(_fromPlayer, _forPlayer, _x, _y, _leaderType);
+	end)
+	
+	CNetwork.SetNetworkHandler("EMS.D.CreateEntity", function (_name, _entity, _x, _y, _rot, _playerId)
+		EMS.D.CreateEntity(_entity, _x, _y, _rot, _playerId);
 	end)
 	
 	CNetwork.SetNetworkHandler("EMS.D.ClearTroops", function (_name, _fromPlayer)
