@@ -278,3 +278,110 @@ function MapTools.DestroyEntities(_type)
 	end
 end
 
+function MapTools.SetVillageCenterPlacesProvided(_buildingEntityType, _amountOfPlaces)
+	S5Hook.GetRawMem(9002416)[0][16][_buildingEntityType*8+2][44]:SetInt(_amountOfPlaces);
+end
+
+--[[function ex()
+	local buildingInfo =
+	{
+		SpawnInfo =
+		{
+			Type = Entities.PB_Tower3,
+			X = 50000,
+			Y = 60000,
+			Rotation = 0,
+			OwnerPlayer = 5, -- who owns the building on start
+		},
+		NeutralPlayer = 5,
+		Entity = 0, -- [optional] if entity is already on map. else its spawned.
+		RespawnCallback = function(_prevOwner, _newOwner)
+			Message("New owner player is " .. _newOwner);
+		end,
+		ConquerConditionCallback = function(_buildingInfo) -- returns the playerId that has the building conquered or false if neutral
+			local numEntities = 1;
+			local range = 3000;
+			local entities;
+			local entitiesInArea = {};
+			for playerId = 1,4 do
+				entities = {Logic.GetPlayerEntitiesInArea(playerId, 0, _buildingInfo.SpawnInfo.X, _buildingInfo.SpawnInfo.Y, range, numEntities)}
+				if entities[1] > 0 then
+					entitiesInArea[playerId] = true;
+				end
+			end
+			local t1 = entitiesInArea[1] and entitiesInArea[2];
+			local t2 = entitiesInArea[3] and entitiesInArea[4];
+			if t1 and t2 then
+				if entitiesInArea[1] then return 1 else return 2 end;
+			elseif t1 then
+				if entitiesInArea[3] then return 3 else return 4 end;
+			elseif t2 then
+				return 3;
+			end
+			return false;
+		end,
+		HealthThreshold = 150, -- health at which building can be conquered
+		RespawnHurtValue = 100, -- hp to hurt entity with after spawn
+	};
+	MapTools.AddConquerBuilding(buildingInfo);
+end]]
+
+MapTools.CB = {};
+function MapTools.AddConquerBuilding(_buildingInfo)
+	if not MapTools.ConquerBuildingSetupDone then
+		MapTools.ConquerBuildingSetup();
+	end
+	table.insert(MapTools.CB.BuildingInfos, _buildingInfo); 
+end
+
+function MapTools.ConquerBuildingSetup()
+	if MapTools.ConquerBuildingSetupDone then return; end
+	MapTools.ConquerBuildingSetupDone = true;
+	MapTools.CB.BuildingInfos = {};
+
+	StartSimpleJob("MapTools_ConquerBuildingController");
+end
+
+function MapTools_ConquerBuildingController()
+	local building;
+	local buildingInfo;
+	for i = 1, table.getn(MapTools.CB.BuildingInfos) do
+		buildingInfo = MapTools.CB.BuildingInfos[i];
+		building = buildingInfo.Entity;
+		if IsAlive(building) then
+			if Logic.GetEntityHealth(building) <= buildingInfo.HealthThreshold then
+				MapTools.CB.NewOwner(buildingInfo, buildingInfo.NeutralPlayer);
+				MapTools.CB.RespawnBuilding(buildingInfo);
+			elseif Logic.EntityGetPlayer(building) == buildingInfo.NeutralPlayer then
+				local newOwner = buildingInfo.ConquerConditionCallback(buildingInfo)
+				if newOwner then
+					MapTools.CB.NewOwner(buildingInfo, newOwner);
+					MapTools.CB.RespawnBuilding(buildingInfo);
+				end
+			end
+		else
+			MapTools.CB.RespawnBuilding(buildingInfo);
+		end
+	end
+end
+
+function MapTools.CB.NewOwner(_buildingInfo, _newOwner)
+	_buildingInfo.PreviousOwner = _buildingInfo.SpawnInfo.Owner;
+	_buildingInfo.SpawnInfo.Owner = _newOwner;
+end
+
+-- building has been conquered -> destroy and respawn
+function MapTools.CB.RespawnBuilding(_buildingInfo)
+	if IsAlive(_buildingInfo.Entity) then
+		DestroyEntity(_buildingInfo.Entity);
+	end
+	_buildingInfo.Entity = MapTools.CB.Spawn(_buildingInfo.SpawnInfo);
+	-- reduce health
+	Logic.HurtEntity(_buildingInfo.Entity, _buildingInfo.RespawnHurtValue);
+
+	_buildingInfo.RespawnCallback(_buildingInfo.PreviousOwner, _buildingInfo.SpawnInfo.Owner);
+end
+
+function MapTools.CB.Spawn(_spawnInfo)
+	return Logic.CreateEntity(_spawnInfo.Type, _spawnInfo.X, _spawnInfo.Y, _spawnInfo.Rotation, _spawnInfo.Owner);
+end
