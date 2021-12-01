@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1,
+	Version = 1.1,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -23,7 +23,8 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
  
 	Callback_OnMapStart = function()
-		AddPeriodicSummer(60);
+		AddPeriodicSummer(4*60);
+		AddPeriodicRain(30);
 		SetupHighlandWeatherGfxSet();
 		LocalMusic.UseSet = MEDITERANEANMUSIC;
 		
@@ -124,6 +125,9 @@ EMS_CustomMapConfig =
 	Cannon2 = 1,
 	Cannon3 = 1,
 	Cannon4 = 1,
+	
+	NumberOfHeroesForAll = 2,
+	Drake = 0,
 	
 	-- * TowerLevel
 	-- * 0 = Towers forbidden
