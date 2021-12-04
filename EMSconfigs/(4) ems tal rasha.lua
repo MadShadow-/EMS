@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.1,
+	Version = 1.2,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -162,8 +162,8 @@ function WT21.Setup()
 		NeutralPlayer = 5,
 		ConquerConditionCallback = WT21.DefaultConquerCondition,
 		RespawnCallback = WT21.ResourceHut_RespawnCallback,
-		HealthThreshold = 150, -- health at which building can be conquered
-		RespawnHurtValue = 100, -- hp to hurt entity with after spawn
+		HealthThresholdPercentage = 0.1, -- health at which building can be conquered
+		RespawnHurtPercentage = 0, -- hp to hurt entity with after spawn
 	};
 	MapTools.AddConquerBuilding(buildingInfoHut1);
 
@@ -180,8 +180,8 @@ function WT21.Setup()
 		NeutralPlayer = 5,
 		ConquerConditionCallback = WT21.DefaultConquerCondition,
 		RespawnCallback = WT21.ResourceHut_RespawnCallback,
-		HealthThreshold = 150, -- health at which building can be conquered
-		RespawnHurtValue = 100, -- hp to hurt entity with after spawn
+		HealthThresholdPercentage = 0.1, -- health at which building can be conquered
+		RespawnHurtPercentage = 0, -- hp to hurt entity with after spawn
 	};
 	MapTools.AddConquerBuilding(buildingInfoHut2);
 
@@ -199,11 +199,36 @@ function WT21.Setup()
 		NeutralPlayer = 5,
 		ConquerConditionCallback = WT21.DefaultConquerCondition,
 		RespawnCallback = WT21.Castle_RespawnCallback,
-		HealthThreshold = 150, -- health at which building can be conquered
-		RespawnHurtValue = 100, -- hp to hurt entity with after spawn
+		HealthThresholdPercentage = 0.1, -- health at which building can be conquered
+		RespawnHurtPercentage = 0, -- hp to hurt entity with after spawn
 	};
 	MapTools.AddConquerBuilding(buildingInfoCastle);
 	StartSimpleJob("WT21_ResourceSupplyJob");
+
+	WT21.SellBuilding = GUI.SellBuilding;
+	GUI.SellBuilding = function(_bId)
+		local bType = Logic.GetEntityType(_bId);
+		if bType == Entities.XD_WallStraight
+		or bType == Entities.XD_WallStraightGate
+		or bType == Entities.XD_WallStraightGate_Closed then
+			Sync.Call('WT21.DestroyWall', _bId);
+		end
+		WT21.SellBuilding(_bId);
+	end
+
+	if CNetwork then
+		CNetwork.SetNetworkHandler("WT21.DestroyWall", function(_name, _bId)
+			if CNetwork.IsAllowedToManipulatePlayer(_name, GetPlayer(_bId)) then
+				WT21.DestroyWall(_bId);
+			end
+		end);
+	end
+end
+
+function WT21.DestroyWall(_bId)
+	local pos = GetPosition(_bId);
+	Logic.CreateEffect(GGL_Effects.FXCrushBuilding, pos.X, pos.Y);
+	DestroyEntity(_bId);
 end
 
 function WT21.GetTeam(_Id)
@@ -241,15 +266,19 @@ function WT21.Castle_RespawnCallback(_prevOwner, _newOwner)
 	end
 end
 
-function WT21.DefaultConquerCondition(_buildingInfo) -- returns the playerId that has the building conquered or false if neutral
-	local numEntities = 1;
-	local range = 1500;
+function WT21.DefaultConquerCondition(_buildingInfo) -- returns the playerId that has the building conquered or false if no player yet conquers
+	local numEntities = 3;
+	local range = 3000;
 	local entities;
 	local entitiesInArea = {};
 	for playerId = 1,4 do
 		entities = {Logic.GetPlayerEntitiesInArea(playerId, 0, _buildingInfo.SpawnInfo.X, _buildingInfo.SpawnInfo.Y, range, numEntities)}
 		if entities[1] > 0 then
-			entitiesInArea[playerId] = true;
+			for i = 2, entities[1] + 1 do
+				if IsAlive(entities[i]) then
+					entitiesInArea[playerId] = true;
+				end
+			end
 		end
 	end
 	local t1 = entitiesInArea[1] or entitiesInArea[2];

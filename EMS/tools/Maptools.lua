@@ -320,8 +320,8 @@ end
 			end
 			return false;
 		end,
-		HealthThreshold = 150, -- health at which building can be conquered
-		RespawnHurtValue = 100, -- hp to hurt entity with after spawn
+		HealthThresholdPercentage = 10, -- health at which building can be conquered
+		RespawnHurtPercentage = 100, -- hp to hurt building in % of entity max health after (re)spawn
 	};
 	MapTools.AddConquerBuilding(buildingInfo);
 end]]
@@ -330,6 +330,16 @@ MapTools.CB = {};
 function MapTools.AddConquerBuilding(_buildingInfo)
 	if not MapTools.ConquerBuildingSetupDone then
 		MapTools.ConquerBuildingSetup();
+	end
+	if not _buildingInfo.MaxHealth then
+		if _buildingInfo.Entity then
+			_buildingInfo.MaxHealth = Logic.GetEntityMaxHealth(_buildingInfo.Entity);
+		else
+			_buildingInfo.MaxHealth = 0;
+		end
+	end
+	if not IsAlive(_buildingInfo.Entity) then
+		MapTools.CB.Spawn(_buildingInfo);
 	end
 	table.insert(MapTools.CB.BuildingInfos, _buildingInfo); 
 end
@@ -348,18 +358,17 @@ function MapTools_ConquerBuildingController()
 	for i = 1, table.getn(MapTools.CB.BuildingInfos) do
 		buildingInfo = MapTools.CB.BuildingInfos[i];
 		building = buildingInfo.Entity;
-		if IsAlive(building) then
-			if Logic.GetEntityHealth(building) <= buildingInfo.HealthThreshold then
-				MapTools.CB.NewOwner(buildingInfo, buildingInfo.NeutralPlayer);
-				MapTools.CB.RespawnBuilding(buildingInfo);
-			elseif Logic.EntityGetPlayer(building) == buildingInfo.NeutralPlayer then
-				local newOwner = buildingInfo.ConquerConditionCallback(buildingInfo)
-				if newOwner then
-					MapTools.CB.NewOwner(buildingInfo, newOwner);
-					MapTools.CB.RespawnBuilding(buildingInfo);
-				end
+		if not IsAlive(building) or Logic.GetEntityHealth(building) < (buildingInfo.HealthThresholdPercentage * buildingInfo.MaxHealth) then
+			if IsAlive(buildingInfo.Entity) then
+				DestroyEntity(buildingInfo.Entity);
 			end
-		else
+
+			local newOwner = buildingInfo.ConquerConditionCallback(buildingInfo)
+			if newOwner then
+				MapTools.CB.NewOwner(buildingInfo, newOwner);
+			else
+				MapTools.CB.NewOwner(buildingInfo,  buildingInfo.NeutralPlayer);
+			end
 			MapTools.CB.RespawnBuilding(buildingInfo);
 		end
 	end
@@ -372,16 +381,24 @@ end
 
 -- building has been conquered -> destroy and respawn
 function MapTools.CB.RespawnBuilding(_buildingInfo)
-	if IsAlive(_buildingInfo.Entity) then
-		DestroyEntity(_buildingInfo.Entity);
-	end
-	_buildingInfo.Entity = MapTools.CB.Spawn(_buildingInfo.SpawnInfo);
+	MapTools.CB.Spawn(_buildingInfo);
+
 	-- reduce health
-	Logic.HurtEntity(_buildingInfo.Entity, _buildingInfo.RespawnHurtValue);
+	_buildingInfo.MaxHealth = Logic.GetEntityMaxHealth(_buildingInfo.Entity) or 0;
+	local hurtValue = _buildingInfo.MaxHealth * _buildingInfo.RespawnHurtPercentage;
+	
+	if _buildingInfo.SpawnInfo.Owner == _buildingInfo.NeutralPlayer then
+		-- neutral respawn with low hp
+		Logic.HurtEntity(_buildingInfo.Entity, _buildingInfo.MaxHealth - _buildingInfo.MaxHealth * _buildingInfo.HealthThresholdPercentage);
+	else
+		Logic.HurtEntity(_buildingInfo.Entity, hurtValue);
+	end
+
 
 	_buildingInfo.RespawnCallback(_buildingInfo.PreviousOwner, _buildingInfo.SpawnInfo.Owner);
 end
 
-function MapTools.CB.Spawn(_spawnInfo)
-	return Logic.CreateEntity(_spawnInfo.Type, _spawnInfo.X, _spawnInfo.Y, _spawnInfo.Rotation, _spawnInfo.Owner);
+function MapTools.CB.Spawn(_buildingInfo)
+	local spawnInfo = _buildingInfo.SpawnInfo;
+	_buildingInfo.Entity = Logic.CreateEntity(spawnInfo.Type, spawnInfo.X, spawnInfo.Y, spawnInfo.Rotation, spawnInfo.Owner);
 end
