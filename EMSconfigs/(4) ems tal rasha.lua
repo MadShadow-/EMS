@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.4,
+	Version = 1.5,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -24,7 +24,7 @@ EMS_CustomMapConfig =
  
 	Callback_OnMapStart = function()
 		AddPeriodicSummer(4*60);
-		AddPeriodicRain(30);
+		--AddPeriodicRain(30); -- fuck rain
 		SetupHighlandWeatherGfxSet();
 		LocalMusic.UseSet = MEDITERANEANMUSIC;
 		
@@ -287,6 +287,10 @@ function WT21.Castle_RespawnCallback(_prevOwner, _newOwner)
 		WT21.VCGiver1 = Logic.CreateEntity(Entities.CB_SteamMashine, 200, 200, 0, newOwner1);
 		WT21.VCGiver2 = Logic.CreateEntity(Entities.CB_SteamMashine, 200, 200, 0, newOwner2);
 	end
+
+	local yourTeam = WT21.GetTeam(GUI.GetPlayerID());
+	local newTeam = WT21.GetTeam(_newOwner);
+
 	if _newOwner == WT21.BuildingNeutralPlayer then
 		return; -- this is currently spammed
 	else
