@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.2,
+	Version = 1.3,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -44,7 +44,7 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
 		StartSimpleJob("WT21_KerbeRevive");
-		EMS.T.StartCountdown( 60*60, WT21.TimeEnd, true );
+		WT21.CountdownId = EMS.T.StartCountdown( 60*60, WT21.TimeEnd, true );
 	end,
  
 	-- ********************************************************************************************
@@ -207,6 +207,38 @@ function WT21.Setup()
 end
 
 function WT21.TimeEnd()
+	WT21.LeadCounter = 30*60; -- max 60 more minutes
+	EMS.T.StopCountdown(WT21.CountdownId);
+	WT21.CountdownId = EMS.T.StartCountdown( WT21.LeadCounter, function() end, true );
+	if WT21.Has10kLead() then
+		WT21.EndTheGame();
+		return;
+	else
+		Message("@color:255,165,0 Kampf bis ein Team 10.000 Punkte Fortschritt hat!");
+	end
+	StartSimpleJob("WT21_Need10kLead");
+end
+
+function WT21.Has10kLead()
+	local dmgTeam1 = Raidboss.DamageTracker[1] + Raidboss.DamageTracker[2];
+	local dmgTeam2 = Raidboss.DamageTracker[3] + Raidboss.DamageTracker[4];
+	return math.abs(dmgTeam1-dmgTeam2) >= 10000;
+end
+
+function WT21_Need10kLead()
+	WT21.LeadCounter = WT21.LeadCounter - 1;
+	if WT21.LeadCounter <= 0 then
+		WT21.EndTheGame();
+		return true;
+	end
+	if WT21.Has10kLead() then
+		WT21.EndTheGame();
+		return true;
+	end
+end
+
+function WT21.EndTheGame()
+	EMS.T.StopCountdown(WT21.CountdownId);
 	WT21.Ended = true;
 	local dmgTeam1 = Raidboss.DamageTracker[1] + Raidboss.DamageTracker[2];
 	local dmgTeam2 = Raidboss.DamageTracker[3] + Raidboss.DamageTracker[4];
