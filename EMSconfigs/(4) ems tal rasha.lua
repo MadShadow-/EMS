@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.3,
+	Version = 1.4,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -40,7 +40,9 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
 		MapTools.SetVillageCenterPlacesProvided(Entities.CB_SteamMashine, 30);
-		for i = 1,4 do ForbidTechnology(Technologies.B_MasterBuilderWorkshop, i); end
+		for i = 1,4 do
+			 ForbidTechnology(Technologies.B_MasterBuilderWorkshop, i);
+		end
 	end,
  
 	-- ********************************************************************************************
@@ -48,7 +50,10 @@ EMS_CustomMapConfig =
 	-- * Called when the peacetime counter reaches zero
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
-		for i = 1,4 do AllowTechnology(Technologies.B_MasterBuilderWorkshop, i); end
+		for i = 1,4 do
+			 AllowTechnology(Technologies.B_MasterBuilderWorkshop, i);
+			 SetHostile(i,5);
+		end
 		MapTools.OpenWallGates();
 		WT21.PeacetimeOver = true;
 	end,
