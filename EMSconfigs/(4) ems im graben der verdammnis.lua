@@ -950,6 +950,9 @@ function Raidboss.PlaySound( _soundId, _pos)
     local x,y = GUI.Debug_GetMapPositionUnderMouse()
     local dis = math.sqrt(Raidboss.GetDistanceSq( _pos, {X = x, Y = y}))
     local factor = math.min(dis/Raidboss.MaxSoundRange, 1)
+	if factor == 1 then
+		return; -- playsound doesnt like 0
+	end
     Sound.PlayGUISound( _soundId, 100 * (1-factor))
 end
 
