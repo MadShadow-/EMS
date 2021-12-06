@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.2,
+	Version = 1.3,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -49,7 +49,8 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
 		for i = 1,4 do AllowTechnology(Technologies.B_MasterBuilderWorkshop, i); end
-		MapTools.OpenWallGates()
+		MapTools.OpenWallGates();
+		WT21.PeacetimeOver = true;
 	end,
  
  
@@ -143,8 +144,9 @@ EMS_CustomMapConfig =
 };
 
 WT21 = {};
-
+WT21.PeacetimeOver = false;
 function WT21.Setup()
+	WT21.BuildingNeutralPlayer = 5;
 	WT21.VCGiver1 = 0;
 	WT21.VCGiver2 = 0;
 	WT21.ResourceHutCounter = {[0]=0,[1]=0,[2]=0}; -- per team
@@ -157,9 +159,9 @@ function WT21.Setup()
 			X = 36800,
 			Y = 3600,
 			Rotation = 180,
-			Owner = 5,
+			Owner = WT21.BuildingNeutralPlayer,
 		},
-		NeutralPlayer = 5,
+		NeutralPlayer = WT21.BuildingNeutralPlayer,
 		ConquerConditionCallback = WT21.DefaultConquerCondition,
 		RespawnCallback = WT21.ResourceHut_RespawnCallback,
 		HealthThresholdPercentage = 0.1, -- health at which building can be conquered
@@ -175,9 +177,9 @@ function WT21.Setup()
 			X = 37000,
 			Y = 69700,
 			Rotation = 0,
-			Owner = 5,
+			Owner = WT21.BuildingNeutralPlayer,
 		},
-		NeutralPlayer = 5,
+		NeutralPlayer = WT21.BuildingNeutralPlayer,
 		ConquerConditionCallback = WT21.DefaultConquerCondition,
 		RespawnCallback = WT21.ResourceHut_RespawnCallback,
 		HealthThresholdPercentage = 0.1, -- health at which building can be conquered
@@ -194,9 +196,9 @@ function WT21.Setup()
 			X = 36800,
 			Y = 36800,
 			Rotation = 0,
-			Owner = 5,
+			Owner = WT21.BuildingNeutralPlayer,
 		},
-		NeutralPlayer = 5,
+		NeutralPlayer = WT21.BuildingNeutralPlayer,
 		ConquerConditionCallback = WT21.DefaultConquerCondition,
 		RespawnCallback = WT21.Castle_RespawnCallback,
 		HealthThresholdPercentage = 0.1, -- health at which building can be conquered
@@ -226,6 +228,9 @@ function WT21.Setup()
 end
 
 function WT21.DestroyWall(_bId)
+	if not WT21.PeacetimeOver then
+		return;
+	end
 	local pos = GetPosition(_bId);
 	Logic.CreateEffect(GGL_Effects.FXCrushBuilding, pos.X, pos.Y);
 	DestroyEntity(_bId);
@@ -246,6 +251,19 @@ end
 function WT21.ResourceHut_RespawnCallback(_prevOwner, _newOwner)
 	WT21.ResourceHutCounter[WT21.GetTeam(_newOwner)] = WT21.ResourceHutCounter[WT21.GetTeam(_newOwner)] + 1;
 	WT21.ResourceHutCounter[WT21.GetTeam(_prevOwner)] = WT21.ResourceHutCounter[WT21.GetTeam(_prevOwner)] - 1;
+
+	local yourTeam = WT21.GetTeam(GUI.GetPlayerID());
+	local prevTeam = WT21.GetTeam(_prevOwner);
+	local newTeam = WT21.GetTeam(_newOwner);
+	if _newOwner == WT21.BuildingNeutralPlayer then
+		return; -- this is currently spammed
+	else
+		if yourTeam == newTeam then
+			Message("@color:0,255,0 Dein Team hat eine Rohstoffhütte erobert!");
+		else
+			Message("@color:255,0,0 Das gegnerische Team hat eine Rohstoffhütte erobert!");
+		end
+	end
 end
 
 function WT21.Castle_RespawnCallback(_prevOwner, _newOwner)
@@ -263,6 +281,15 @@ function WT21.Castle_RespawnCallback(_prevOwner, _newOwner)
 		DestroyEntity(WT21.VCGiver2);
 		WT21.VCGiver1 = Logic.CreateEntity(Entities.CB_SteamMashine, 200, 200, 0, newOwner1);
 		WT21.VCGiver2 = Logic.CreateEntity(Entities.CB_SteamMashine, 200, 200, 0, newOwner2);
+	end
+	if _newOwner == WT21.BuildingNeutralPlayer then
+		return; -- this is currently spammed
+	else
+		if yourTeam == newTeam then
+			Message("@color:0,255,0 Dein Team hat das Schloss erobert!");
+		else
+			Message("@color:255,0,0 Das gegnerische Team hat das Schloss erobert!");
+		end
 	end
 end
 
