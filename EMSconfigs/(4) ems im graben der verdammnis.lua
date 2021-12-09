@@ -781,6 +781,8 @@ function Raidboss.CheckHookVersion()
     else
         Sound.PlayGUISound( Sounds.fanfare, 100)
         GUI.AddStaticNote("@color:255,0,0 mcbs hook was not found! This map will not work!")
+		GUI.AddStaticNote("This map will be closed in 15 seconds.")
+		StartSimpleJob("Raidboss_VersioncheckerKickJob")
         return
     end 
     local expectedVersion = 1.3001
@@ -788,7 +790,14 @@ function Raidboss.CheckHookVersion()
         Sound.PlayGUISound( Sounds.fanfare, 100)
         GUI.AddStaticNote("@color:255,0,0 mcbs hook is outdated! This map will not work!")
         GUI.AddStaticNote("Expected version: "..expectedVersion.."; Found version: "..version)
+		GUI.AddStaticNote("This map will be closed in 15 seconds.")
+		StartSimpleJob("Raidboss_VersioncheckerKickJob")
     end
+end
+function Raidboss_VersioncheckerKickJob()
+	if Counter.Tick2("Raidboss_KickPlayer", 15) then
+		QuitGame()
+	end
 end
 function Raidboss_ControlKerbe()
     local posKerbe = GetPosition(Raidboss.eId)
