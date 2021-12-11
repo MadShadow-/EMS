@@ -690,16 +690,19 @@ function EMS.RF.ActivateWeatherLockTimer(_time)
 	end
 	
 	EMS.RF.WLT.LockWeatherChange = function()
-		EMS.RF.WLT.Cooldown = EMS.RF.WLT.CooldownMax;
-		StartSimpleJob("EMS_RF_WLT_Counter");
+		if not EMS.RF.WLT.IsAlreadyActive then
+			EMS.RF.WLT.Cooldown = EMS.RF.WLT.CooldownMax;
+			StartSimpleJob("EMS_RF_WLT_Counter");
+			EMS.RF.WLT.IsAlreadyActive = true
+		end
 	end
-	
 	EMS_RF_WLT_Counter = function()
 		if EMS.RF.WLT.Cooldown > 0 then
 			EMS.RF.WLT.Cooldown = EMS.RF.WLT.Cooldown - 1;
 			return;
 		end
-		return true;
+		EMS.RF.WLT.IsAlreadyActive = false
+		return true;                
 	end
 	
 	EMS.RF.WLT.GUIUpdate_ChangeWeatherButtons = GUIUpdate_ChangeWeatherButtons;
