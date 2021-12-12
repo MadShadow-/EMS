@@ -12,7 +12,6 @@ EMS.CanChangeRules = false;
 
 function EMS.GL.Setup()
 	EMS.GL.MenuShown = false;
-
 	-- Load Sync mechanism
 	EMS.GL.ExternSyncMethod = Sync.CallNoSync;
 
@@ -64,6 +63,9 @@ function EMS.GL.Setup()
 	for i = 8, EMS.TotalPlayerCount+1, -1 do
 		XGUIEng.ShowWidget("EMSCCB"..i, 0);
 	end
+
+	-- hide color changer on map start
+	XGUIEng.ShowWidget("EMSColorChanger", 0);
 	
 	GUIAction_ToggleMenu = function( _menu, _state)
 		if XGUIEng.IsWidgetShown(XGUIEng.GetWidgetID("DiplomacyWindow")) == 0 then

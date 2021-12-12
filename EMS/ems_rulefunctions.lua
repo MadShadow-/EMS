@@ -255,7 +255,7 @@ function EMS.RF.ActivateBlessLimit()
 			XGUIEng.DisableButton(_Button, 1);
 		end
 	end
-	
+
 	EMS.RF.BlessLimit.GUIUpdate_BuildingButtons = GUIUpdate_BuildingButtons;
 	GUIUpdate_BuildingButtons = function(_Button, _Technology)
 		EMS.RF.BlessLimit.GUIUpdate_BuildingButtons(_Button, _Technology);
@@ -287,11 +287,10 @@ function EMS.RF.ActivateBlessLimit()
 	
 	EMS_RF_BlessLimitCounter = function()
 		for i = 1,5 do
-			if EMS.RF.BlessLimit[i] > 1 then
+			if EMS.RF.BlessLimit[i] > 0 then
 				EMS.RF.BlessLimit[i] = EMS.RF.BlessLimit[i] - 1
-			elseif EMS.RF.BlessLimit[i] == 1 then
+			elseif EMS.RF.BlessLimit[i] == 0 then
 				XGUIEng.DisableButton("BlessSettlers"..i, 0);
-				EMS.RF.BlessLimit[i] = 0;
 			end
 		end
 	end
@@ -484,7 +483,7 @@ end
 function EMS.RF.ActivateTowerLimit(_limit)
 	EMS.RF.TowerLimit = _limit;
 	EMS.RF.TowerLimit_LastCreated = {};
-	EMS.RF.TowerLimit_InUpgradeProgress = 0;
+	EMS.RF.TowerLimit_InUpgradeProgress = {};
 	EMS.RF.TowerLimitJob = 0;
 	EMS.RF.TowerLimit_BuildingsInUpgradeProgress = {}
 	
@@ -549,6 +548,9 @@ function EMS.RF.ActivateTowerLimit(_limit)
 	
 	EMS_RF_TowerLimit_EntityDestroyed = function()
 		local Id = Event.GetEntityID();
+		if EMS.RF.TowerLimit_InUpgradeProgress[Id] then
+			EMS.RF.TowerLimit_InUpgradeProgress[Id] = nil;
+		end
 		local pId = Logic.EntityGetPlayer(Id);
 		if not EMS.RF.IsTower(Id) or not EMS.PlayerList[pId] then
 			return;
@@ -571,12 +573,8 @@ function EMS.RF.ActivateTowerLimit(_limit)
 	
 	EMS.RF.GameCallback_OnBuildingUpgradeComplete_TL = GameCallback_OnBuildingUpgradeComplete;
 	GameCallback_OnBuildingUpgradeComplete = function(_oId, _nId)
-		if EMS.RF.IsLvl2Tower(_nId) then
-			if EMS.RF.TowerLimit_InUpgradeProgress > 0 then
-				EMS.RF.TowerLimit_InUpgradeProgress = EMS.RF.TowerLimit_InUpgradeProgress - 1;
-			else
-				EMS.RF.TowerLimit_InUpgradeProgress = 0;
-			end
+		if EMS.RF.TowerLimit_InUpgradeProgress[_oId] then
+			EMS.RF.TowerLimit_InUpgradeProgress[_oId] = nil;
 		end
 		if EMS.RF.TowerLimit_BuildingsInUpgradeProgress[_oId] then
 			EMS.RF.TowerLimit_BuildingsInUpgradeProgress[_oId] = nil;
@@ -587,12 +585,8 @@ function EMS.RF.ActivateTowerLimit(_limit)
 	EMS.RF.GUIAction_CancelUpgrade_TL = GUIAction_CancelUpgrade;
 	GUIAction_CancelUpgrade = function()
 		local sel = GUI.GetSelectedEntity();
-		if EMS.RF.IsLvl1Tower(sel) then
-			if EMS.RF.TowerLimit_InUpgradeProgress > 0 then
-				EMS.RF.TowerLimit_InUpgradeProgress = EMS.RF.TowerLimit_InUpgradeProgress - 1;
-			else
-				EMS.RF.TowerLimit_InUpgradeProgress = 0;
-			end
+		if EMS.RF.TowerLimit_InUpgradeProgress[sel] then
+			EMS.RF.TowerLimit_InUpgradeProgress[sel] = nil;
 		end
 		if EMS.RF.TowerLimit_BuildingsInUpgradeProgress[sel] then
 			EMS.RF.TowerLimit_BuildingsInUpgradeProgress[sel] = nil;
@@ -607,7 +601,11 @@ function EMS.RF.ActivateTowerLimit(_limit)
 			EMS.RF.GUIAction_UpgradeSelectedBuilding_TL();
 			return;
 		end
-		if (EMS.RF.TowerLimitCount[GUI.GetPlayerID()]+EMS.RF.TowerLimit_InUpgradeProgress) < EMS.RF.TowerLimit then
+		local inUpgradeCount = 0;
+		for k,v in pairs(EMS.RF.TowerLimit_InUpgradeProgress) do
+			inUpgradeCount = inUpgradeCount + 1;
+		end
+		if (EMS.RF.TowerLimitCount[GUI.GetPlayerID()]+inUpgradeCount) < EMS.RF.TowerLimit then
 			EMS.RF.GUIAction_UpgradeSelectedBuilding_TL();
 		end
 	end
@@ -624,8 +622,12 @@ function EMS.RF.ActivateTowerLimit(_limit)
 			else
 				return;
 			end
-			if (EMS.RF.TowerLimitCount[GUI.GetPlayerID()]+EMS.RF.TowerLimit_InUpgradeProgress) < EMS.RF.TowerLimit then
-				EMS.RF.TowerLimit_InUpgradeProgress = EMS.RF.TowerLimit_InUpgradeProgress + 1;
+			local inUpgradeCount = 0;
+			for k,v in pairs(EMS.RF.TowerLimit_InUpgradeProgress) do
+				inUpgradeCount = inUpgradeCount + 1;
+			end
+			if (EMS.RF.TowerLimitCount[GUI.GetPlayerID()]+inUpgradeCount) < EMS.RF.TowerLimit then
+				EMS.RF.TowerLimit_InUpgradeProgress[sel] = true;
 				EMS.RF.UpgradeSingleBuilding_TL(sel);
 			end
 			return;
@@ -661,7 +663,11 @@ function EMS.RF.ActivateTowerLimit(_limit)
 		else
 			return;
 		end
-		local currentBuildings = EMS.RF.TowerLimitCount[GUI.GetPlayerID()] + EMS.RF.TowerLimit_InUpgradeProgress;
+		local inUpgradeCount = 0;
+		for k,v in pairs(EMS.RF.TowerLimit_InUpgradeProgress) do
+			inUpgradeCount = inUpgradeCount + 1;
+		end
+		local currentBuildings = EMS.RF.TowerLimitCount[GUI.GetPlayerID()] + inUpgradeCount;
 		local color;
 		if currentBuildings < EMS.RF.TowerLimit or towerLvl == 2 then
 			color = " @color:0,255,0 ";
