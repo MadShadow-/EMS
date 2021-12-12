@@ -217,7 +217,7 @@ end
 function EMS.RF.ActivateBlessLimit()
 	EMS.RF.BlessLimit = {}
 	for i = 1,5 do
-		EMS.RF.BlessLimit[i] = 0
+		EMS.RF.BlessLimit[i] = -1
 	end
 	EMS.RF.BlessLimit.GUIAction_BlessSettlers = GUIAction_BlessSettlers;
 	GUIAction_BlessSettlers = function(_blessCategory)
@@ -227,7 +227,7 @@ function EMS.RF.ActivateBlessLimit()
 			EMS.RF.BlessLimit.GUIAction_BlessSettlers(_blessCategory);
 			return;
 		end
-		if EMS.RF.BlessLimit[_blessCategory] == 0 then
+		if EMS.RF.BlessLimit[_blessCategory] <= 0 then
 			EMS.RF.BlessLimit.GUIAction_BlessSettlers(_blessCategory);
 			if _blessCategory == 5 then
 				for i = 1,5 do
@@ -272,7 +272,7 @@ function EMS.RF.ActivateBlessLimit()
 	function GUITooltip_BlessSettlers(_DisabledTooltip,_NormalTooltip,_NotUsed, _ShortCut)
 		EMS.RF.BlessLimit.GUITooltip_BlessSettlers(_DisabledTooltip,_NormalTooltip,_NotUsed, _ShortCut);
 		local i = tonumber(string.sub(_NormalTooltip,30,30));
-		if EMS.RF.BlessLimit[i] == 0 then
+		if EMS.RF.BlessLimit[i] <= 0 then
 			return;
 		end
 		local oldToolTip = XGUIEng.GetStringTableText(_NormalTooltip);
