@@ -1249,7 +1249,7 @@ function EMS.GL.SetupCommands()
 	
 	EMS.GL.GameCallback_GUI_ChatStringInputDone = GameCallback_GUI_ChatStringInputDone;
 	GameCallback_GUI_ChatStringInputDone = function(_Message, _WidgetID)
-		local pos = string.find(_Message, "/", 1, true);
+		local pos = not string.find(_Message, "/send ",1, true) and string.find(_Message, "/", 1, true)
 		if pos == 1 then
 			if EMS.GL.Commands[_Message] then
 				EMS.GL.Commands[_Message]();
