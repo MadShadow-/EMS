@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.5,
+	Version = 1.6,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -263,10 +263,14 @@ function WT21.ResourceHut_RespawnCallback(_prevOwner, _newOwner)
 	if _newOwner == WT21.BuildingNeutralPlayer then
 		return; -- this is currently spammed
 	else
-		if yourTeam == newTeam then
-			Message("@color:0,255,0 Dein Team hat eine Rohstoffhütte erobert!");
-		else
-			Message("@color:255,0,0 Das gegnerische Team hat eine Rohstoffhütte erobert!");
+		if newTeam > 0 then
+			local p1,p2 = 1,2;
+			if newTeam == 2 then
+				p1,p2 = 3,4;
+			end
+			local p1Str = (EMS.PlayerList[p1] or {ColorName="Name1"}).ColorName;
+			local p2Str = (EMS.PlayerList[p2] or {ColorName="Name2"}).ColorName;
+			Message( p1Str .. " @color:255,255,255 und " .. p2Str .. " @color:255,255,255 haben eine Rohstoffhütte erobert!");
 		end
 	end
 end
@@ -294,10 +298,14 @@ function WT21.Castle_RespawnCallback(_prevOwner, _newOwner)
 	if _newOwner == WT21.BuildingNeutralPlayer then
 		return; -- this is currently spammed
 	else
-		if yourTeam == newTeam then
-			Message("@color:0,255,0 Dein Team hat das Schloss erobert!");
-		else
-			Message("@color:255,0,0 Das gegnerische Team hat das Schloss erobert!");
+		if newTeam > 0 then
+			local p1,p2 = 1,2;
+			if newTeam == 2 then
+				p1,p2 = 3,4;
+			end
+			local p1Str = (EMS.PlayerList[p1] or {ColorName="Name1"}).ColorName;
+			local p2Str = (EMS.PlayerList[p2] or {ColorName="Name2"}).ColorName;
+			Message(p1Str .. " @color:255,255,255 und " .. p2Str .. " @color:255,255,255 haben das Schloss erobert!");
 		end
 	end
 end
@@ -349,6 +357,9 @@ function WT21_ResourceSupplyJob()
 	end
 
 	WT21.SupplyCounter = 120;
+	if GUI.GetPlayerID() > 16 then
+		Message("@color:255,165,80 Die Rohstoffe der Rohstüffhütten werden verteilt!");
+	end
 	for i = 1,4 do
 		local team = WT21.GetTeam(i);
 		WT21.SupplyResources(i, WT21.ResourceHutCounter[team]);
@@ -358,6 +369,11 @@ end
 function WT21.SupplyResources(_pId, _factor)
 	if _pId == -1 then
 		return;
+	end
+	if _factor > 0 then
+		if GUI.GetPlayerID() == _pId then
+			Message("@color:255,165,80 Du hast ".._factor.."x Rohstoffe durch die Rohstoffhütte erhalten!")
+		end
 	end
 	local res =
 	{
