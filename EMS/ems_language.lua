@@ -217,7 +217,9 @@ EMS.L = {
 			VersionsDifferent = "Unterschiedliche Versionen!",
 			NoConfigFileFound = "Es wurde kein Konfigurationsskript für diese Karte gefunden! Stelle sicher dass sich im Karten Verzeichnis ../extra2/shr/maps/user ein Ordner mit dem Namen EMSConfigs befindet ist und darin eine Datei mit dem Namen @color:255,255,255 " .. Framework.GetCurrentMapName() .. ".lua @color:255,0,0 enthalten ist.",
 			PlayerIsAfkNow = " ist afk!",
-			PlayerNotAfkAnymore = " ist nicht mehr afk!"
+			PlayerNotAfkAnymore = " ist nicht mehr afk!",
+			NeedsCppLogic = "Der Hook von mcb muss für diese Karte aktiviert sein! Bitte starte den S5Updater und aktiviere den CppLogic hook!",
+			Player = "Spieler",
 		};
 
 function EMS.L.Setup()

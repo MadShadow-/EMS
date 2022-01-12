@@ -158,7 +158,7 @@ function EMS.RF.ActivateHQRushProtection()
 			if not EMS.PlayerList[playerId] then
 				return;
 			end
-			EMS.RF.HQRP.VillageCenters[playerId][buildingId] = true;
+			EMS.RF.HQRP.VillageCenters[playerId][entityId] = true;
 			EMS.RF.HQRP.Update(playerId);
 		end
 	end

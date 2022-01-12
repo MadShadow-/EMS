@@ -19,6 +19,7 @@ EMS.QoL = {}
 EMS.QoL.LeaderTypes = {}
 function EMS.QoL.Setup()
 	Input.KeyBindDown(Keys.Space, "EMS.QoL.RemoveWorkingSerfsInSelection()", 2);
+	Input.KeyBindDown(Keys.ModifierControl + Keys.Space, "EMS.QoL.RemoveSerfsAndScoutsInSelection()", 2);
 	Input.KeyBindDown(Keys.Enter, "EMS.QoL.ActivateOvertime()", 2);
 	for k,v in pairs(Entities) do
 		if string.find(k,"Leader") then
@@ -51,6 +52,22 @@ function EMS.QoL.Setup()
 	end
 	Input.KeyBindDown(Keys.Back, "GUI.SellBuilding(GUI.GetSelectedEntity())", 2);
 	EMS.QoL.InitSelectingIdleSerfs()
+
+	EMS.QoL.ClockHotkey = function()
+		if Logic.GetEntityType(GUI.GetSelectedEntity()) ~= Entities.PU_Serf then
+			return;
+		end
+		if Logic.IsTechnologyResearched(GUI.GetPlayerID(), Technologies.GT_Printing) == 0 then
+			return;
+		end
+		GUIAction_PlaceBuilding(UpgradeCategories.Beautification07);
+	end
+	if EMS.RD.AdditionalConfig.ActivateDebug then
+		 -- in debug mode, Q is already in use
+		 Input.KeyBindDown(Keys.ModifierControl + Keys.Y, "EMS.QoL.ClockHotkey()", 2);
+	else
+		Input.KeyBindDown(Keys.Q, "EMS.QoL.ClockHotkey()", 2);
+	end
 end
 -- Calls the  given func for all entities in selection
 -- During each call, only one entity is selected
@@ -99,6 +116,18 @@ function EMS.QoL.IsSerfInSelection()
 		if Logic.GetEntityType( v) == Entities.PU_Serf then return true end
 	end
 	return false
+end
+function EMS.QoL.RemoveSerfsAndScoutsInSelection()
+	local sel = {GUI.GetSelectedEntities()};
+	local tl, e;
+	local type;
+	for i = 1, table.getn(sel) do
+		type = Logic.GetEntityType(sel[i]);
+		if type == Entities.PU_Serf or 
+			type == Entities.PU_Scout then
+			GUI.DeselectEntity(sel[i])
+		end
+	end
 end
 function EMS.QoL.RemoveWorkingSerfsInSelection()
 	if not EMS.QoL.IsSerfInSelection() then

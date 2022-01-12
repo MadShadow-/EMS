@@ -21,6 +21,20 @@ function EMS.RD.Setup(_cfg)
 	end
 		
 	_cfg = _cfg or {};
+
+	if _cfg.NeedsCppLogic then
+		if not CppLogic then
+			EMS_RD_NO_CPP_LOGIC = function()
+				EMS.GL.Info("@color:255,0,0 " .. EMS.L.NeedsCppLogic);
+				if Counter.Tick2("EMS_RD_NO_CPP_LOGIC", 15) then
+					--Framework.CloseGame();
+				end
+				return true;
+			end
+			StartSimpleJob("EMS_RD_NO_CPP_LOGIC")
+		end
+	end
+
 	-- this config file defines rules directly
 	EMS.RD.Config = 
 	{
@@ -111,6 +125,11 @@ function EMS.RD.Setup(_cfg)
 		ConfigVersion = _cfg.Version or "No config",
 		
 		DontRemoveScriptEntities = _cfg.DontRemoveScriptEntities or false;
+
+		NeedsCppLogic = _cfg.NeedsCppLogic or false;
+		NeedsS5CommunityLib = _cfg.NeedsS5CommunityLib or false;
+
+		ActivateDebug = _cfg.ActivateDebug or false;
 	}
 	
 	EMS.RD.AdditionalConfig.AIPlayers = {};

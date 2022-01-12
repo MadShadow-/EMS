@@ -176,6 +176,11 @@ function EMS.GL.Setup()
 		if _senderID == -1 then
 			Sound.PlayGUISound(Sounds.Misc_Chat, 0);
 			GUI.AddNote( _msg );
+			if not string.find(_msg, "Spectator Marker", 1, true)
+			and not string.find(_msg, "Global Marker", 1, true)
+			and not soundMessage then
+				EMS.GL.ChatHistory.Add(_msg);
+			end
 			return;
 		end
 		

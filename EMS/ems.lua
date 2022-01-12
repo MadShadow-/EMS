@@ -7,7 +7,7 @@
 -- *                                                                                              * 
 -- ************************************************************************************************ 
 EMS = {};
-EMS.Version = 0.73;
+EMS.Version = 0.74;
 
 -- compability with MCS
 MCS = EMS;
@@ -127,10 +127,6 @@ function EMS.Setup()
 	EMS.GC.Setup();
 	-- Quality of Life
 	EMS.QoL.Setup();
-	-- Debug
-	if ems_debug then
-		EMS.D.Setup();
-	end
 	
 	EMS.T.SetupBugfixes();
 	
@@ -251,11 +247,18 @@ function EMS_Delayed()
 	return true;
 end
 
-EMS.VersionCheck = {};
+EMS.VersionCheck = {
+	C1 = " @color:125,250,255 ",
+	C2 = " @color:125,255,151 ",
+	C3 = " @color:231,255,125 ",
+	C4 = " @color:249,125,255 ",
+};
 function EMS.VersionCheck.Setup()
 	EMS.VersionCheck.Players = {};
 	EMS.VersionCheck.MyEMSVersion = EMS.Version;
 	EMS.VersionCheck.MyConfigVersion = EMS.RD.AdditionalConfig.ConfigVersion;
+	EMS.VersionCheck.MyCppLogicActive = CppLogic ~= nil;
+	EMS.VersionCheck.MyCommunityLibVersion = S5LibLastCommit or 0;
 	
 	EMS.VersionCheck.GetNetworkAdress = function()
 		if EMS.T.IsMultiplayer() then
@@ -265,27 +268,54 @@ function EMS.VersionCheck.Setup()
 		end
 	end
 	
-	EMS.VersionCheck.SetVersionForPlayer = function(_playerName, _emsVersion, _configVersion)
+	EMS.VersionCheck.SetVersionForPlayer = function(_playerName, _emsVersion, _configVersion, _cppLogicActive, _communityLibVersion)
 		EMS.VersionCheck.Players[_playerName] =
 		{
 			EMSVersion = _emsVersion,
 			ConfigVersion = _configVersion,
+			CppLogicActive = _cppLogicActive,
+			CommunityLibVersion = _communityLibVersion,
 		};
 		EMS.VersionCheck.CheckVersion();
 	end
 	
-	EMS.VersionCheck.VersionOutdated = function(_playerName, _version1, _version2)
-		return  " @color:255,255,255 " .. _playerName .. " - @color:255,72,53 " .. tostring(_version1) .. " / " .. tostring(_version2) .. " @cr ";
+	EMS.VersionCheck.VersionOutdated = function(_playerName, _ems, _config, _cppLogic, _s5Lib)
+		return  " @color:255,255,255 " .. _playerName .. " - "
+		 .. EMS.VersionCheck.C1 .. tostring(_ems) .. " @color:255,255,255 / " 
+		 .. EMS.VersionCheck.C2 .. tostring(_config) .. " @color:255,255,255 / " 
+		 .. EMS.VersionCheck.C3 .. tostring(_cppLogic) .. " @color:255,255,255 / " 
+		 .. EMS.VersionCheck.C4 .. tostring(_s5Lib) ..  " @cr ";
 	end
 	
 	EMS.VersionCheck.CheckVersion = function()
 		local versionDifference = false;
 		local breakMe = false;
+
+		local checkS5Lib = EMS.RD.AdditionalConfig.NeedsCppLogic or false;
+		local checkCppLogic = EMS.RD.AdditionalConfig.NeedsS5CommunityLib or false;
+
 		for PlayerIndex, VersionInfo in pairs(EMS.VersionCheck.Players) do
 			breakMe = false;
+			local conditionalVersionFailed = false;
 			for PlayerIndex2, VersionInfo2 in pairs(EMS.VersionCheck.Players) do
+				-- check S5Lib only if map requires it 
+				if checkS5Lib then
+					if VersionInfo.CommunityLibVersion ~= VersionInfo2.CommunityLibVersion then
+						conditionalVersionFailed = true;
+					end
+				end
+
+				-- check cpp logic active only if map requires it
+				if checkCppLogic then
+					if VersionInfo.CppLogicActive ~= VersionInfo2.CppLogicActive then
+						conditionalVersionFailed = true;
+					end
+				end
+
+				-- check if map requires hook active:
 				if VersionInfo.EMSVersion ~= VersionInfo2.EMSVersion
-				or VersionInfo.ConfigVersion ~= VersionInfo2.ConfigVersion then
+				or VersionInfo.ConfigVersion ~= VersionInfo2.ConfigVersion
+				or conditionalVersionFailed then
 					versionDifference = true;
 					breakMe = true;
 					break;
@@ -299,9 +329,17 @@ function EMS.VersionCheck.Setup()
 			return;
 		end
 
-		local versions = "";
+		local versions = EMS.L.Player .. " - "
+		.. EMS.VersionCheck.C1 .. "EMS @color:255,255,255 / " 
+		.. EMS.VersionCheck.C2 .. "Config @color:255,255,255 / " 
+		.. EMS.VersionCheck.C3 .. "CppLogic @color:255,255,255 / " 
+		.. EMS.VersionCheck.C4 .. "S5Lib @cr ";
 		for PlayerIndex, VersionInfo in pairs(EMS.VersionCheck.Players) do
-			versions = versions .. EMS.VersionCheck.VersionOutdated(PlayerIndex, VersionInfo.EMSVersion, VersionInfo.ConfigVersion);
+			versions = versions .. EMS.VersionCheck.VersionOutdated(PlayerIndex,
+				VersionInfo.EMSVersion,
+				VersionInfo.ConfigVersion,
+				VersionInfo.CppLogicActive,
+				VersionInfo.CommunityLibVersion);
 		end
 
 		EMS.GL.RuleOverviewSetCustom("@color:255,72,53 @center " .. EMS.L.VersionsDifferent, versions);
@@ -323,13 +361,15 @@ function EMS.VersionCheck.Setup()
 		local playerIndex = EMS.VersionCheck.GetNetworkAdress();
 		local emsVersion = EMS.VersionCheck.MyEMSVersion;
 		local configVersion = EMS.VersionCheck.MyConfigVersion;
+		local cppLogicActive = EMS.VersionCheck.MyCppLogicActive;
+		local communityLibVersion = EMS.VersionCheck.MyCommunityLibVersion;
 		
 		if EMS.T.IsLocalPlayerSpectator() then
 			-- spectators will only set their own version for them else - no one else cares about their version
-			EMS.VersionCheck.SetVersionForPlayer(playerIndex, emsVersion, configVersion);
+			EMS.VersionCheck.SetVersionForPlayer(playerIndex, emsVersion, configVersion, cppLogicActive, communityLibVersion);
 			return;
 		end
 		-- players will share their version with the others
-		Sync.CallNoSync("EMS.VersionCheck.SetVersionForPlayer", playerIndex, emsVersion, configVersion);
+		Sync.CallNoSync("EMS.VersionCheck.SetVersionForPlayer", playerIndex, emsVersion, configVersion, cppLogicActive, communityLibVersion);
 	end
 end
