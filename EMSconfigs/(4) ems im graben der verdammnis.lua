@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.4,
+	Version = 1.5,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -281,7 +281,13 @@ function WT21_KerbeRevive()
 		else
 			--S5Hook.GetEntityMem(Raidboss.eId)[31][3][5]:SetInt(11000)
 			--S5Hook.GetEntityMem(Raidboss.eId)[31][3][7]:SetInt(1)
-			CppLogic.Entity.Settler.HeroResurrect(Raidboss.eId);
+			local pos = GetPosition(Raidboss.eId);
+			--CppLogic.Entity.Settler.HeroResurrect(Raidboss.eId);
+			DestroyEntity(Raidboss.eId);
+			Raidboss.eId = Logic.CreateEntity(Entities.CU_BlackKnight, pos.X, pos.Y, 0, Raidboss.pId);
+			Logic.HurtEntity(Raidboss.eId, Raidboss.MaxHealth/2);
+			S5Hook.GetEntityMem( Raidboss.eId)[25]:SetFloat( Raidboss.Scale);
+			S5Hook.GetEntityMem( Raidboss.eId)[31][1][5]:SetFloat( Raidboss.MovementSpeed);
 			WT21.KerbeReviveCounter = WT21.KerbeReviveCounterMax;
 		end
 	end
@@ -1206,7 +1212,7 @@ function Raidboss_ReflectArrowOnHurt()
             local tPos = GetPosition(attacker)
 			--Raidboss.ReflectArrowRevengeAttack( attacker)
             --CppLogic.Effect.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, attacker, Raidboss.eId, GetPlayer(Raidboss.eId), nil, nil) 
-            CUtil.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, attacker, Raidboss.eId, GetPlayer(Raidboss.eId), nil, nil) 
+            CUtil.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, Raidboss.eId, attacker, GetPlayer(Raidboss.eId), nil, nil) 
 			return
         end
     end
