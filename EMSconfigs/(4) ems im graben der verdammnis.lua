@@ -1211,8 +1211,9 @@ function Raidboss_ReflectArrowOnHurt()
             local sPos = GetPosition(Raidboss.eId)
             local tPos = GetPosition(attacker)
 			--Raidboss.ReflectArrowRevengeAttack( attacker)
+
             --CppLogic.Effect.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, attacker, Raidboss.eId, GetPlayer(Raidboss.eId), nil, nil) 
-            CUtil.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, Raidboss.eId, attacker, GetPlayer(Raidboss.eId), nil, nil) 
+            CUtil.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, attacker, Raidboss.eId, GetPlayer(Raidboss.eId), nil, nil) 
 			return
         end
     end
