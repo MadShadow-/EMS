@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.3,
+	Version = 1.4,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
@@ -35,6 +35,14 @@ EMS_CustomMapConfig =
 		}
 		MapTools.SetMapResource(resourceTable);
 		WT21.Setup();
+		if 1 == 0 then
+			for i = 1, 4 do
+				ResearchAllUniversityTechnologies(i)
+				local ressAmount = 100000
+				Tools.GiveResouces(i, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount)
+				Game.GameTimeSetFactor(5)
+			end
+		end
 	end,
  
  
@@ -538,9 +546,11 @@ function WT21.InitDario()
 	WT21.DariosActive = {0,0}; -- number of darios that count into damage
 	WT21.DariosInConstruction = {};
 	WT21.Darios = {};
+	WT21.DarioEffects = {}
 	Trigger.RequestTrigger( Events.LOGIC_EVENT_ENTITY_CREATED, "", "WT21_Dario_OnEntityCreated", 1)
 	Trigger.RequestTrigger( Events.LOGIC_EVENT_ENTITY_DESTROYED, "", "WT21_Dario_OnEntityDestroyed", 1)
 	StartSimpleJob("WT21_DarioCompleteController");
+	StartSimpleHiResJob("WT21_DarioEffectHandler")
 end
 
 function WT21_Dario_OnEntityCreated()
@@ -562,10 +572,15 @@ function WT21_Dario_OnEntityDestroyed()
 		WT21.DariosInConstruction[entity] = nil;
 	end
 	if WT21.Darios[entity] then
-		Logic.DestroyEffect(WT21.Darios[entity].effect);
+		--Logic.DestroyEffect(WT21.Darios[entity].effect);
 		WT21.Darios[entity] = nil;
 		WT21.CalculateDarioBonus();
 	end 
+	for i = table.getn(WT21.DarioEffects), 1, -1 do
+		if WT21.DarioEffects[i].id == entity then 
+			table.remove(WT21.DarioEffects, i)
+		end
+	end
 end
 
 function WT21_DarioCompleteController()
@@ -573,13 +588,26 @@ function WT21_DarioCompleteController()
 	for entity,v in pairs(WT21.DariosInConstruction) do
 		if Logic.IsConstructionComplete(entity) == 1 then
 			local pos = GetPosition(entity);
-			WT21.Darios[entity] = {effect=Logic.CreateEffect(GGL_Effects.FXTemplarAltarEffect, pos.X, pos.Y, 0)};
+			WT21.Darios[entity] = true;
 			WT21.DariosInConstruction[entity] = nil;
+			table.insert(WT21.DarioEffects, {id = entity, lastPulseTime = 0, pos = pos})
 			needsUpdate = true;
 		end
 	end
 	if needsUpdate then
 		WT21.CalculateDarioBonus();
+	end
+end
+
+function WT21_DarioEffectHandler()
+	local currTime = Logic.GetTimeMs()
+	for i = table.getn(WT21.DarioEffects), 1, -1 do
+		-- if last pulse is very old => new pulse
+		if currTime - 10000 > WT21.DarioEffects[i].lastPulseTime then
+			WT21.DarioEffects[i].lastPulseTime = currTime
+			local pos = WT21.DarioEffects[i].pos
+			Logic.CreateEffect(GGL_Effects.FXDarioFear, pos.X, pos.Y, 0)
+		end
 	end
 end
 
@@ -776,7 +804,12 @@ function Raidboss.Init( _eId, _pId)
 end
 function Raidboss.CheckHookVersion()
     local version = "Not found"
-    if CppLogic then
+	if CppLogic then
+		GUI.AddStaticNote("@color:255,0,0 mcbs hook was found! You will get kicked in 15 seconds.")
+		StartSimpleJob("Raidboss_VersioncheckerKickJob")
+	end
+
+--[[     if CppLogic then
         version = CppLogic.Version
     else
         Sound.PlayGUISound( Sounds.fanfare, 100)
@@ -792,7 +825,7 @@ function Raidboss.CheckHookVersion()
         GUI.AddStaticNote("Expected version: "..expectedVersion.."; Found version: "..version)
 		GUI.AddStaticNote("This map will be closed in 15 seconds.")
 		StartSimpleJob("Raidboss_VersioncheckerKickJob")
-    end
+    end ]]
 end
 function Raidboss_VersioncheckerKickJob()
 	if Counter.Tick2("Raidboss_KickPlayer", 15) then
@@ -1171,10 +1204,42 @@ function Raidboss_ReflectArrowOnHurt()
         if v == leader then
             local sPos = GetPosition(Raidboss.eId)
             local tPos = GetPosition(attacker)
-            CppLogic.Effect.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, attacker, Raidboss.eId, GetPlayer(Raidboss.eId), nil, nil) 
-            return
+			--Raidboss.ReflectArrowRevengeAttack( attacker)
+            --CppLogic.Effect.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, attacker, Raidboss.eId, GetPlayer(Raidboss.eId), nil, nil) 
+            CUtil.CreateProjectile( GGL_Effects.FXKalaArrow, sPos.X, sPos.Y, tPos.X, tPos.Y, dmg, radius, attacker, Raidboss.eId, GetPlayer(Raidboss.eId), nil, nil) 
+			return
         end
     end
+end
+function Raidboss.ReflectArrowRevengeAttack( _attackerId)
+	if not (JobIsRunning(Raidboss.ReflectArrowRevengeJobID) == 1) then
+		Raidboss.ReflectArrowRevengeJobID = StartSimpleHiResJob("Raidboss_ReflectArrowRevengeAttackJob")
+		Raidboss.ReflectArrowRevengeAttackTable = {}
+	end
+	table.insert( Raidboss.ReflectArrowRevengeAttackTable, {attacker = _attackerId})
+end
+Raidboss.ReflectArrowLightningSound = {
+	{soundId = Sounds.OnKlick_PB_PowerPlant1, delay = 0},
+	{soundId = Sounds.Military_SO_CannonHit_rnd_1, delay = 0},
+	{soundId = Sounds.Military_SO_Bearman_rnd_1, delay = 0},
+	-- thunder
+	{soundId = Sounds.Military_SO_Rifleman_rnd_1, delay = 1},
+	{soundId = Sounds.OnKlick_PB_Tower3, delay = 2},
+	{soundId = Sounds.OnKlick_PB_Brickworks1, delay = 4},
+}
+function Raidboss_ReflectArrowRevengeAttackJob()
+	for i = 1, table.getn(Raidboss.ReflectArrowRevengeAttackTable) do
+		local eId = Raidboss.ReflectArrowRevengeAttackTable[i].attacker
+		if not IsDead(eId) then
+			local pos = GetPosition(eId)
+			Logic.Lightning( pos.X, pos.Y)
+			CEntity.DealDamageInArea( Raidboss.eId, pos.X, pos.Y, 10, Raidboss.AttackSchemes.ReflectArrows.damage)
+		end
+	end
+	if table.getn(Raidboss.ReflectArrowRevengeAttackTable) > 0 then
+		StaggeredSounds.PlayStaggered( Raidboss.ReflectArrowLightningSound, GetPosition(Raidboss.eId))
+	end
+	return true
 end
 function Raidboss.ReflectArrowDeactivateShield()
     EndJob(Raidboss.ReflectArrowTrigger)
@@ -1311,6 +1376,53 @@ Raidboss.AttackSchemes = {
         damage = 250 -- damage of each meteor
     }
 }
+
+StaggeredSounds = {}
+StaggeredSounds.JobId = -1
+StaggeredSounds.Data = {}
+-- sounds is a table
+-- each entry is a table itself of form
+-- {soundId = ..., delay = ...}
+function StaggeredSounds.PlayStaggered( sounds, pos)
+	if not (JobIsRunning(StaggeredSounds.JobId) == 1) then
+		StaggeredSounds.JobId = StartSimpleHiResJob("StaggeredSounds_Job")
+	end
+	table.insert( StaggeredSounds.Data, {sounds = sounds, pos = pos, counter = 0})
+end
+function StaggeredSounds_Job()
+	for i = table.getn(StaggeredSounds.Data), 1, -1 do
+		local t = StaggeredSounds.Data[i]
+		local isDone = true
+		for k,v in pairs(t.sounds) do
+			if v.delay == t.counter then
+				StaggeredSounds.PlaySound(v.soundId, t.pos)
+			elseif v.delay > t.counter then
+				isDone = false
+			end
+		end
+		t.counter = t.counter + 1
+		if isDone then
+			table.remove(StaggeredSounds.Data, i)
+		end
+	end
+	if table.getn(StaggeredSounds.Data) == 0 then return true end
+end
+function StaggeredSounds.PlaySound( _soundId, _pos)
+	if _pos == nil then
+		Sound.PlayGUISound( _soundId, 100)
+	else
+		local vol = StaggeredSounds.GetVolume( _pos)
+		if vol ~= 0 then 
+			Sound.PlayGUISound( _soundId, vol)
+		end
+	end
+end
+function StaggeredSounds.GetVolume(_pos)
+	local x,y = GUI.Debug_GetMapPositionUnderMouse()
+    local dis = math.sqrt(Raidboss.GetDistanceSq( _pos, {X = x, Y = y}))
+    local factor = math.min(dis/Raidboss.MaxSoundRange, 1)
+    return 100 * (1-factor)
+end
 
 MeteorSys = {}
 MeteorSys.Meteors = {}
