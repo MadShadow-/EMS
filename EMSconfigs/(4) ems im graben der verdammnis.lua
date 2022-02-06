@@ -11,8 +11,6 @@
 -- Make kerbe smarter WITH MARKOV CHAINS
 -- Use the damageFactorByType feature to create more interactive gameplay - WITH MARKOV CHAINS
 -- Resurrect kerbe with more power each time?
--- Make VCs immune to attacks
--- nerf armor shred?
 
 EMS_CustomMapConfig =
 {
@@ -41,14 +39,25 @@ EMS_CustomMapConfig =
 			{Entities.XD_Sulfur1, 4000}
 		}
 		MapTools.SetMapResource(resourceTable);
+		WT21.MakeVCsImmune()
 		WT21.Setup();
-		if 1 == 0 then
+		if 1 == 1 then
 			for i = 1, 4 do
 				ResearchAllUniversityTechnologies(i)
 				local ressAmount = 100000
 				Tools.GiveResouces(i, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount)
 				Game.GameTimeSetFactor(5)
 			end
+			createVCs = function()
+				for eId in S5Hook.EntityIterator(Predicate.OfType(Entities.XD_VillageCenter)) do
+					local pos = GetPosition(eId)
+					Logic.CreateEntity( Entities.PB_VillageCenter1, pos.X, pos.Y, 0, 2)
+				end
+			end	
+			SetHostile(1,2)
+			Tools.ExploreArea(1,1,900)
+			SW.SetSoldierMaxRange( Entities.PU_SoldierBow1, 3000)
+			SW.SetLeaderMaxRange( Entities.PU_LeaderBow1, 3000)
 		end
 	end,
  
@@ -60,6 +69,7 @@ EMS_CustomMapConfig =
 	Callback_OnGameStart = function()
 		StartSimpleJob("WT21_KerbeRevive");
 		WT21.CountdownId = EMS.T.StartCountdown( 60*60, WT21.TimeEnd, true );
+		--WT21.MakeVCsImmune() -- this does not work - for some reason
 	end,
  
 	-- ********************************************************************************************
@@ -297,6 +307,57 @@ function WT21_KerbeRevive()
 	end
 end
 
+function WT21.MakeVCsImmune()
+	WT21.VCData = {
+		{pos = {X = 23300, Y = 28300}, n =  {X = 1, Y = 1}},
+		{pos = {X = 23300, Y = 42200}, n =  {X = 1, Y = -1}},
+		{pos = {X = 47600, Y = 42200}, n =  {X = -1, Y = -1}},
+		{pos = {X = 47600, Y = 28300}, n =  {X = -1, Y = 1}}
+	}
+	Trigger.RequestTrigger( Events.LOGIC_EVENT_ENTITY_HURT_ENTITY, "", "WT21_ProtectVCs", 1)
+end
+
+function WT21_ProtectVCs()
+	local attacker = Event.GetEntityID1()
+	local attackee = Event.GetEntityID2()
+
+	-- dont care if anyone is dead
+	if IsDead(attacker) or IsDead(attackee) then return end
+
+	-- dont care if the attacker is not longrange or cannon
+	if Logic.IsEntityInCategory( attacker, EntityCategories.LongRange) == 0 and Logic.IsEntityInCategory( attacker, EntityCategories.Cannon) == 0 then
+		return
+	end
+
+	-- dont care if attackee is not village center
+	if Logic.IsEntityInCategory( attackee, EntityCategories.VillageCenter) == 0 then return end
+
+	-- all conditions are met, left to check: is this village center important?
+	local pos = GetPosition( attackee)
+	for k,v in pairs(WT21.VCData) do
+		-- is this village center important here?
+		if math.abs(v.pos.X - pos.X) + math.abs(v.pos.Y - pos.Y) < 100 then
+			--LuaDebugger.Log("Found matching VC")
+			-- left to check: is attacker in center?
+			local newPos = {X = pos.X + 1000 * v.n.X, Y = pos.Y + 1000 * v.n.Y}
+			local attackerPos = GetPosition(attacker)
+			-- now do some linear algebra / functional analysis
+			local dotProd = (attackerPos.X - newPos.X)*v.n.X + (attackerPos.Y - newPos.Y)*v.n.Y
+			-- we only care about the sign
+			--LuaDebugger.Log(dotProd)
+			if dotProd > 0 then
+				CEntity.HurtTrigger.SetDamage(0)
+				if Logic.IsLeader(attacker) == 1 and GetPlayer(attacker) == GUI.GetPlayerID() then
+					Message("DIESES DORFZENTRUM IST IMMUN.")
+				end
+				--LuaDebugger.Log(Logic.GetEntityHealth(attackee))
+			end
+			-- there is at most one vc that might be relevant
+			return
+		end
+	end
+end
+
 -- Test(GUI.Debug_GetMapPositionUnderMouse())
 Field = {};
 
@@ -459,10 +520,10 @@ function GUIUpdate_WT21_UpdateHealthBar() -- WHY IS THIS BUGGED?
 	local churchBonus = {"",""};
 	for i = 1,2 do
 		if WT21.DariosActive[i] > 0 then
-			churchBonus[i] = "@color:255,0,0 (+"..WT21.DariosActive[i]..")"
+			churchBonus[i] = " (+"..Raidboss.PlayerFlatDamage[i+1]..")"
 		end
 		if WT21.ChurchBonus[i] > 0 then
-			churchBonus[i] = churchBonus[i] .. " @color:255,131,0 (x"..(WT21.ChurchBonus[i]+1)..")";
+			churchBonus[i] = churchBonus[i] .. " (x"..(Raidboss.PlayerMultiplier[i+1])..")";
 		end
 	end
 
@@ -756,6 +817,7 @@ Raidboss.DamageMultipliers = {
     [EntityCategories.Spear] = 1,
     [EntityCategories.Sword] = 1
 }
+Raidboss.ECatByType = {}
 Raidboss.PlayerMultiplier = {}
 Raidboss.PlayerFlatDamage = {}
 -- multiplier if no appropriate ECategory was found
@@ -780,6 +842,7 @@ function Raidboss.Init( _eId, _pId)
         SW.SV.GreatReset()
         Framework_CloseGame_Orig()
     end
+	Raidboss.PrepECategoryTable()
     Raidboss.ApplyKerbeConfigChanges()
     Raidboss.Origin = GetPosition( _eId)
     Raidboss.pId = GetPlayer(_eId)
@@ -861,6 +924,30 @@ function Raidboss_VersioncheckerKickJob()
 	if Counter.Tick2("Raidboss_KickPlayer", 15) then
 		QuitGame()
 	end
+end
+function Raidboss.PrepECategoryTable()
+	local data = {
+		{EntityCategories.Bow, "Bow"},
+		{EntityCategories.Cannon, "Cannon"},
+		{EntityCategories.CavalryHeavy, "HeavyCavalry"},
+		--{EntityCategories.CavalryLight, "Bow"}, -- do this one by hand
+		{EntityCategories.Hero, "Hero"},
+		{EntityCategories.Rifle, "Rifle"},
+		{EntityCategories.Spear, "PoleArm"},
+		{EntityCategories.Sword, "Sword"}
+	}
+	for k,v in pairs(data) do
+		local cat = v[1]
+		for k2, v2 in pairs(Entities) do
+			if string.find(k2, v[2]) then
+				Raidboss.ECatByType[v2] = cat
+			end
+		end
+	end
+	Raidboss.ECatByType[Entities.PU_LeaderCavalry1] = EntityCategories.CavalryLight
+	Raidboss.ECatByType[Entities.PU_LeaderCavalry2] = EntityCategories.CavalryLight
+	Raidboss.ECatByType[Entities.PU_SoldierCavalry1] = EntityCategories.CavalryLight
+	Raidboss.ECatByType[Entities.PU_SoldierCavalry2] = EntityCategories.CavalryLight
 end
 function Raidboss_ControlKerbe()
     local posKerbe = GetPosition(Raidboss.eId)
@@ -983,13 +1070,18 @@ function Raidboss.ManipulateTrigger( _attackerId)
     local factor = Raidboss.FallbackMultiplier
     local factor2 = Raidboss.PlayerMultiplier[GetPlayer(_attackerId)]
     local flatDamage = Raidboss.PlayerFlatDamage[GetPlayer(_attackerId)]
-    for k,v in pairs(Raidboss.DamageMultipliers) do
-        if Logic.IsEntityInCategory( _attackerId, k) == 1 then
-            --LuaDebugger.Log("Attacker has ECategory"..k)
-            factor = v
-            break
-        end
-    end
+
+	local eType = Logic.GetEntityType( _attackerId)
+	if Raidboss.ECatByType[eType] then
+		factor = Raidboss.DamageMultipliers[Raidboss.ECatByType[eType]]
+	end
+    -- for k,v in pairs(Raidboss.DamageMultipliers) do
+    --     if Logic.IsEntityInCategory( _attackerId, k) == 1 then
+    --         --LuaDebugger.Log("Attacker has ECategory"..k)
+    --         factor = v
+    --         break
+    --     end
+    -- end
     --local newDamage = math.floor(rawDamage*factor*factor2 + flatDamage)
 	local newDamage = math.floor((flatDamage+rawDamage)*factor*factor2)
     --LuaDebugger.Log(factor)
@@ -1343,9 +1435,6 @@ function Raidboss_MeteorRainJob()
 end
 
 -- table concerning the attack schemes
--- attacks:
---  spawn adds
---  meteor shower, multiple meteors spawn
 Raidboss.AttackSchemes = {
     MeteorStrike = {
         -- determines the probability of using this attack next
