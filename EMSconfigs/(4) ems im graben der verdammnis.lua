@@ -7,6 +7,13 @@
 -- *                                                                                              *
 -- ************************************************************************************************
 
+-- TODO-List:
+-- Make kerbe smarter WITH MARKOV CHAINS
+-- Use the damageFactorByType feature to create more interactive gameplay - WITH MARKOV CHAINS
+-- Resurrect kerbe with more power each time?
+-- Make VCs immune to attacks
+-- nerf armor shred?
+
 EMS_CustomMapConfig =
 {
 	-- ********************************************************************************************
@@ -148,9 +155,6 @@ EMS_CustomMapConfig =
 
 };
 
--- kerberos abilities:
--- throws arrows when units are cursed
--- fire wave
 
 WT21 = {};
 
@@ -438,7 +442,7 @@ function WT21_ToggleBossBar()
 	XGUIEng.ShowWidget( "EMSMAWT21", WT21.IsBossBarVisible)
 end
 
-function GUIUpdate_WT21_UpdateHealthBar()
+function GUIUpdate_WT21_UpdateHealthBar() -- WHY IS THIS BUGGED?
 	if WT21.Ended then return true end
 	local barLengthTotal = 824; -- width defined by gui
 	local dmgTeam1 = Raidboss.DamageTracker[1] + Raidboss.DamageTracker[2];
@@ -539,10 +543,19 @@ function WT21.CalculateChurchBonus()
 			end
 		end
 	end
-	Raidboss.PlayerMultiplier[1] = WT21.ChurchBonus[1]+1;
-	Raidboss.PlayerMultiplier[2] = WT21.ChurchBonus[1]+1;
-	Raidboss.PlayerMultiplier[3] = WT21.ChurchBonus[2]+1;
-	Raidboss.PlayerMultiplier[4] = WT21.ChurchBonus[2]+1;
+	getFactor = function( _nChurches)
+		if _nChurches == 0 then
+			return 1
+		elseif _nChurches == 1 then
+			return 2
+		else
+			return 4
+		end
+	end
+	Raidboss.PlayerMultiplier[1] = getFactor(WT21.ChurchBonus[1]);
+	Raidboss.PlayerMultiplier[2] = getFactor(WT21.ChurchBonus[1]);
+	Raidboss.PlayerMultiplier[3] = getFactor(WT21.ChurchBonus[2]);
+	Raidboss.PlayerMultiplier[4] = getFactor(WT21.ChurchBonus[2]);
 	if not WT21.ArmyJob then
 		WT21.ArmyJob = StartSimpleJob("WT21_ArmyController");
 	end 
@@ -624,10 +637,21 @@ function WT21.CalculateDarioBonus()
 		teamId = WT21.GetTeam(GetPlayer(entity));
 		WT21.DariosActive[teamId] = WT21.DariosActive[teamId] + 1;
 	end
-	Raidboss.PlayerFlatDamage[1] = WT21.DariosActive[1];
-	Raidboss.PlayerFlatDamage[2] = WT21.DariosActive[1];
-	Raidboss.PlayerFlatDamage[3] = WT21.DariosActive[2];
-	Raidboss.PlayerFlatDamage[4] = WT21.DariosActive[2];
+
+	-- Give diminishing returns for statues:
+	--   	Bonusdmg = alpha /(1+exp(-beta x)) - alpha/2
+	--		where alpha/2 is the maximum bonus possible and alpha beta = 4
+	getBonusDamage = function( _nDario)
+		local alpha = 80 -- max damage bonus of 40 as alpha = 2xmaxDmg
+		local beta = 4 / alpha -- this important to guarantee that getBonusDamage(1) = 1 holds
+		local bonusDmg = alpha/(1+math.exp(-beta*_nDario)) - alpha/2
+		return math.ceil(bonusDmg)
+	end
+
+	Raidboss.PlayerFlatDamage[1] = getBonusDamage(WT21.DariosActive[1]);
+	Raidboss.PlayerFlatDamage[2] = getBonusDamage(WT21.DariosActive[1]);
+	Raidboss.PlayerFlatDamage[3] = getBonusDamage(WT21.DariosActive[2]);
+	Raidboss.PlayerFlatDamage[4] = getBonusDamage(WT21.DariosActive[2]);
 end
 
 function WT21.UnlimitedArmies()
@@ -897,7 +921,7 @@ function Raidboss.ApplyKerbeConfigChanges()
     SW.SetHeroAuraRecharge( Entities.CU_BlackKnight, 0)
     SW.SetHeroAuraRange( Entities.CU_BlackKnight, 3000)
     SW.SetHeroAuraDuration( Entities.CU_BlackKnight, 15)
-    SW.SetHeroAuraArmorMultiplier( Entities.CU_BlackKnight, -100)
+    SW.SetHeroAuraArmorMultiplier( Entities.CU_BlackKnight, -2)
 
     -- regen, attack range and attack damage
     SW.SetLeaderDamage( Entities.CU_BlackKnight, Raidboss.Damage)
@@ -966,7 +990,8 @@ function Raidboss.ManipulateTrigger( _attackerId)
             break
         end
     end
-    local newDamage = math.floor(rawDamage*factor*factor2 + flatDamage)
+    --local newDamage = math.floor(rawDamage*factor*factor2 + flatDamage)
+	local newDamage = math.floor((flatDamage+rawDamage)*factor*factor2)
     --LuaDebugger.Log(factor)
     --LuaDebugger.Log(newDamage)
     Raidboss.DamageTracker[GetPlayer(_attackerId)] = Raidboss.DamageTracker[GetPlayer(_attackerId)] + newDamage
