@@ -351,8 +351,7 @@ function PoisenReiterAttack(self)
             end
             self.giftreiter = 0
         else
-            self.giftreiter = self.giftreiter - 1
-        end
+            self.giftreiter = self.giftreiter + 1
         self.SpawnCounter = 60
     else
         self.SpawnCounter =  self.SpawnCounter - 1
