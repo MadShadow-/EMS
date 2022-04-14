@@ -10,6 +10,7 @@
 -- TODO-List:
 -- Make kerbe smarter WITH MARKOV CHAINS
 -- Use the damageFactorByType feature to create more interactive gameplay - WITH MARKOV CHAINS
+-- Show current status with that debug window
 -- Resurrect kerbe with more power each time?
 
 EMS_CustomMapConfig =
@@ -70,6 +71,7 @@ EMS_CustomMapConfig =
 		StartSimpleJob("WT21_KerbeRevive");
 		WT21.CountdownId = EMS.T.StartCountdown( 60*60, WT21.TimeEnd, true );
 		--WT21.MakeVCsImmune() -- this does not work - for some reason
+		StartSimpleJob("WT21_ChangeKerbeDamageFactors")
 	end,
  
 	-- ********************************************************************************************
@@ -358,6 +360,49 @@ function WT21_ProtectVCs()
 	end
 end
 
+WT21.KerbeDamageFactorStates = {
+	[1] = {
+		[EntityCategories.Bow] = 1,
+		[EntityCategories.CavalryHeavy] = 2.5,
+		[EntityCategories.CavalryLight] = 1,
+		[EntityCategories.Rifle] = 1,
+		[EntityCategories.Spear] = 5,
+		[EntityCategories.Sword] = 2.5,
+		label = "Normaler Schaden von Projektilen"
+	},
+	[2] = {
+		[EntityCategories.Bow] = 2,
+		[EntityCategories.CavalryHeavy] = 2.5,
+		[EntityCategories.CavalryLight] = 2,
+		[EntityCategories.Rifle] = 0,
+		[EntityCategories.Spear] = 5,
+		[EntityCategories.Sword] = 2.5,
+		label = "Immun gegen Kugeln @cr Schwach gegen Pfeile und Bolzen"
+	},
+	[3] = {
+		[EntityCategories.Bow] = 0,
+		[EntityCategories.CavalryHeavy] = 2.5,
+		[EntityCategories.CavalryLight] = 01,
+		[EntityCategories.Rifle] = 2,
+		[EntityCategories.Spear] = 5,
+		[EntityCategories.Sword] = 2.5,
+		label = "Immun gegen Pfeile und Bolzen @cr Schwach gegen Kugeln"
+	}
+}
+WT21.CurrentState = 1
+WT21.RemainingDuration = 60
+function WT21_ChangeKerbeDamageFactors()
+	WT21.RemainingDuration = WT21.RemainingDuration - 1
+	if WT21.RemainingDuration < 0 then
+		WT21.RemainingDuration = Raidboss.GetRandomExp(1 / 86.5617024) -- magic numbers fuck yeah, is ln(2) / 60
+		local newState = math.random( 1, 2) + WT21.CurrentState
+		if newState > 3 then newState = newState - 3 end
+		WT21.CurrentState = newState
+		for k,v in pairs(WT21.KerbeDamageFactorStates[WT21.CurrentState]) do
+			Raidboss.DamageMultipliers[k] = v
+		end
+	end
+end
 -- Test(GUI.Debug_GetMapPositionUnderMouse())
 Field = {};
 
@@ -894,6 +939,8 @@ function Raidboss.Init( _eId, _pId)
     end
     StartSimpleJob("Raidboss_ControlKerbe")
 
+	StartSimpleJob("Raidboss_DelayedInfoWidgetActivation")
+	Raidboss.ActivateKerbeInfoWidget()
 end
 function Raidboss.CheckHookVersion()
     local version = "Not found"
@@ -919,6 +966,41 @@ function Raidboss.CheckHookVersion()
 		GUI.AddStaticNote("This map will be closed in 15 seconds.")
 		StartSimpleJob("Raidboss_VersioncheckerKickJob")
     end ]]
+end
+function Raidboss_DelayedInfoWidgetActivation()
+	if Counter.Tick2("Raidboss_DelayedInfoWidget", 10) then
+		Raidboss.ActivateKerbeInfoWidget()
+		return true
+	end
+end
+function Raidboss.ActivateKerbeInfoWidget()
+	Raidboss.InfoWidgetShown = false
+	XGUIEng.SetWidgetPosition("DebugWindow", 5, 115)
+	StartSimpleJob("Raidboss_UpdateInfoWidget")
+	GUIUpdate_UpdateDebugInfo = function()
+		-- the state kerbe is currently in
+		local currState = WT21.KerbeDamageFactorStates[WT21.CurrentState].label
+		-- some information about the hp
+		local hpString = "Hitpoints: "..Logic.GetEntityHealth(Raidboss.eId).."/"..Raidboss.MaxHealth
+		-- information about the last attack, maybe later
+
+		-- collect it all
+		XGUIEng.SetText( "DebugWindow", "Informationen zu Kerberos: @cr "..currState.." @cr "..hpString)
+	end
+end
+function Raidboss_UpdateInfoWidget()
+	local mouseX, mouseY = GUI.Debug_GetMapPositionUnderMouse()
+	local dis = Raidboss.GetDistanceSq(GetPosition(Raidboss.eId), {X = mouseX, Y = mouseY})
+	-- LuaDebugger.Log(dis)
+	local showWidget = ( dis < 10000^2)
+	if showWidget ~= Raidboss.InfoWidgetShown then
+		Raidboss.InfoWidgetShown = showWidget
+		if showWidget then
+			XGUIEng.ShowWidget( "DebugWindow", 1)
+		else
+			XGUIEng.ShowWidget( "DebugWindow", 0)
+		end
+	end
 end
 function Raidboss_VersioncheckerKickJob()
 	if Counter.Tick2("Raidboss_KickPlayer", 15) then
@@ -1151,6 +1233,11 @@ function Raidboss.PlaySound( _soundId, _pos)
 		return; -- playsound doesnt like 0
 	end
     Sound.PlayGUISound( _soundId, 100 * (1-factor))
+end
+
+-- returns a single realisation of a random variable that is exponentially distributed with parameter _lambda
+function Raidboss.GetRandomExp( _lambda)
+	return - 1/_lambda * math.log(1 - math.random())
 end
 
 function Raidboss.DistanceEval( disSq)
