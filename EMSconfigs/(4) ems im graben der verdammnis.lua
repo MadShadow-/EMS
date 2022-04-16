@@ -42,24 +42,7 @@ EMS_CustomMapConfig =
 		MapTools.SetMapResource(resourceTable);
 		WT21.MakeVCsImmune()
 		WT21.Setup();
-		if 1 == 1 then
-			for i = 1, 4 do
-				ResearchAllUniversityTechnologies(i)
-				local ressAmount = 100000
-				Tools.GiveResouces(i, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount)
-				Game.GameTimeSetFactor(5)
-			end
-			createVCs = function()
-				for eId in S5Hook.EntityIterator(Predicate.OfType(Entities.XD_VillageCenter)) do
-					local pos = GetPosition(eId)
-					Logic.CreateEntity( Entities.PB_VillageCenter1, pos.X, pos.Y, 0, 2)
-				end
-			end	
-			SetHostile(1,2)
-			Tools.ExploreArea(1,1,900)
-			SW.SetSoldierMaxRange( Entities.PU_SoldierBow1, 3000)
-			SW.SetLeaderMaxRange( Entities.PU_LeaderBow1, 3000)
-		end
+		--WT21.EnterDebugMode(true)
 	end,
  
  
@@ -169,6 +152,33 @@ EMS_CustomMapConfig =
 
 
 WT21 = {};
+
+function WT21.EnterDebugMode( _showMap)
+	for i = 1, 4 do
+		ResearchAllUniversityTechnologies(i)
+		local ressAmount = 100000
+		Tools.GiveResouces(i, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount, ressAmount)
+		Game.GameTimeSetFactor(5)
+		for k,v in pairs(Technologies) do 
+			if string.find(k, "Armor") then 
+				ResearchTechnology(v, i) 
+			end 
+		end
+	end
+	createVCs = function()
+		for eId in S5Hook.EntityIterator(Predicate.OfType(Entities.XD_VillageCenter)) do
+			local pos = GetPosition(eId)
+			Logic.CreateEntity( Entities.PB_VillageCenter1, pos.X, pos.Y, 0, 2)
+		end
+	end	
+	SetHostile(1,2)
+	if _showMap then
+		Tools.ExploreArea(1,1,900)
+	end
+	SW.SetSoldierMaxRange( Entities.PU_SoldierBow1, 3000)
+	SW.SetLeaderMaxRange( Entities.PU_LeaderBow1, 3000)
+	SW.SetLeaderDamage( Entities.PU_LeaderBow1, 25000)
+end
 
 function WT21.Setup()
     if not CEntity then
@@ -295,18 +305,44 @@ function WT21_KerbeRevive()
 		if WT21.KerbeReviveCounter > 0 then
 			WT21.KerbeReviveCounter = WT21.KerbeReviveCounter - 1;
 		else
-			--S5Hook.GetEntityMem(Raidboss.eId)[31][3][5]:SetInt(11000)
-			--S5Hook.GetEntityMem(Raidboss.eId)[31][3][7]:SetInt(1)
-			local pos = GetPosition(Raidboss.eId);
-			--CppLogic.Entity.Settler.HeroResurrect(Raidboss.eId);
-			DestroyEntity(Raidboss.eId);
-			Raidboss.eId = Logic.CreateEntity(Entities.CU_BlackKnight, pos.X, pos.Y, 0, Raidboss.pId);
-			Logic.HurtEntity(Raidboss.eId, Raidboss.MaxHealth/2);
-			S5Hook.GetEntityMem( Raidboss.eId)[25]:SetFloat( Raidboss.Scale);
-			S5Hook.GetEntityMem( Raidboss.eId)[31][1][5]:SetFloat( Raidboss.MovementSpeed);
-			WT21.KerbeReviveCounter = WT21.KerbeReviveCounterMax;
+			WT21.ReviveKerberos()
 		end
 	end
+end
+WT21.NumOfKerbeRevives = 0
+function WT21.ReviveKerberos()
+	WT21.NumOfKerbeRevives = WT21.NumOfKerbeRevives + 1
+	WT21.IncreaseKerbeStrength()
+	--S5Hook.GetEntityMem(Raidboss.eId)[31][3][5]:SetInt(11000)
+	--S5Hook.GetEntityMem(Raidboss.eId)[31][3][7]:SetInt(1)
+	local pos = GetPosition(Raidboss.eId);
+	--CppLogic.Entity.Settler.HeroResurrect(Raidboss.eId);
+	DestroyEntity(Raidboss.eId);
+	Raidboss.eId = Logic.CreateEntity(Entities.CU_BlackKnight, pos.X, pos.Y, 0, Raidboss.pId);
+	--Logic.HurtEntity(Raidboss.eId, Raidboss.MaxHealth/2);
+	S5Hook.GetEntityMem( Raidboss.eId)[25]:SetFloat( Raidboss.Scale);
+	S5Hook.GetEntityMem( Raidboss.eId)[31][1][5]:SetFloat( Raidboss.MovementSpeed);
+	WT21.KerbeReviveCounter = WT21.KerbeReviveCounterMax;
+end
+function WT21.IncreaseKerbeStrength()
+	-- increase max health
+	Raidboss.MaxHealth = Raidboss.MaxHealth * 1.5
+	SW.SetSettlerMaxHealth( Entities.CU_BlackKnight, Raidboss.MaxHealth)
+
+	local schemes = Raidboss.AttackSchemes
+	-- make bomb more hard hitting and faster
+    SW.SetBombRange( Entities.XD_Bomb1, 600 + 200*WT21.NumOfKerbeRevives)
+	schemes.SummonBomb.explosionTime = math.max(4, 8 - 2*WT21.NumOfKerbeRevives)
+	-- make the localized meteor shower more deadly
+	schemes.MeteorStrike.randomSpread = 250 * (WT21.NumOfKerbeRevives + 2)
+	schemes.MeteorStrike.numMeteors = 5 * (WT21.NumOfKerbeRevives + 2)
+	-- fear inducing strike with less wind up time and faster follow up attack
+	schemes.FearInducingStrike.windUp = math.max(8 - 2*WT21.NumOfKerbeRevives, 2)
+	schemes.FearInducingStrike.duration = 2*math.max(8 - 2*WT21.NumOfKerbeRevives, 2)
+	-- reflect arrows lasts longer
+	schemes.ReflectArrows.curseDuration = 4 * (2 + WT21.NumOfKerbeRevives)
+	-- make the meteor rain more annoying, way more annoying :D
+	schemes.MeteorRain.numRotations = 2 + 2*WT21.NumOfKerbeRevives
 end
 
 function WT21.MakeVCsImmune()
@@ -389,16 +425,18 @@ WT21.KerbeDamageFactorStates = {
 		label = "Immun gegen Pfeile und Bolzen @cr Schwach gegen Kugeln"
 	}
 }
-WT21.CurrentState = 1
-WT21.RemainingDuration = 60
+WT21.DamageFactorsCurrentState = 1
+WT21.DamageFactorsRemainingDuration = 60
+WT21.DamageFactorsMeanDuration = 60 / math.log(2) -- Prob that Kerbe changes state in the next 60 sec is 1/2"
 function WT21_ChangeKerbeDamageFactors()
-	WT21.RemainingDuration = WT21.RemainingDuration - 1
-	if WT21.RemainingDuration < 0 then
-		WT21.RemainingDuration = Raidboss.GetRandomExp(1 / 86.5617024) -- magic numbers fuck yeah, is ln(2) / 60
-		local newState = math.random( 1, 2) + WT21.CurrentState
+	if IsDead(Raidboss.eId) then return end
+	WT21.DamageFactorsRemainingDuration = WT21.DamageFactorsRemainingDuration - 1
+	if WT21.DamageFactorsRemainingDuration < 0 then
+		WT21.DamageFactorsRemainingDuration = Raidboss.GetRandomExp(1 / WT21.DamageFactorsMeanDuration)
+		local newState = math.random( 1, 2) + WT21.DamageFactorsCurrentState
 		if newState > 3 then newState = newState - 3 end
-		WT21.CurrentState = newState
-		for k,v in pairs(WT21.KerbeDamageFactorStates[WT21.CurrentState]) do
+		WT21.DamageFactorsCurrentState = newState
+		for k,v in pairs(WT21.KerbeDamageFactorStates[WT21.DamageFactorsCurrentState]) do
 			Raidboss.DamageMultipliers[k] = v
 		end
 	end
@@ -983,16 +1021,17 @@ function Raidboss.ActivateKerbeInfoWidget()
 		-- some information about the hp
 		local hpString = "Hitpoints: "..Logic.GetEntityHealth(Raidboss.eId).."/"..Raidboss.MaxHealth
 		-- information about the last attack, maybe later
-
+		--local lastAttack = "Letzter Angriff: "..(Raidboss.AttackScheduler.lastAttack or "Keine")
 		-- collect it all
-		XGUIEng.SetText( "DebugWindow", "Informationen zu Kerberos: @cr "..currState.." @cr "..hpString)
+		XGUIEng.SetText( "DebugWindow", "Informationen zu Kerberos: @cr "..currState.." @cr "..hpString) --.." @cr "..lastAttack)
 	end
 end
 function Raidboss_UpdateInfoWidget()
 	local mouseX, mouseY = GUI.Debug_GetMapPositionUnderMouse()
-	local dis = Raidboss.GetDistanceSq(GetPosition(Raidboss.eId), {X = mouseX, Y = mouseY})
+	local dis = Raidboss.GetDistanceSq(Raidboss.Origin, {X = mouseX, Y = mouseY})
 	-- LuaDebugger.Log(dis)
-	local showWidget = ( dis < 10000^2)
+	local raidbossPos = GetPosition(Raidboss.eId)
+	local showWidget = ( dis < 10000^2) and (Logic.IsMapPositionExplored(GUI.GetPlayerID(), raidbossPos.X, raidbossPos.Y) == 1)
 	if showWidget ~= Raidboss.InfoWidgetShown then
 		Raidboss.InfoWidgetShown = showWidget
 		if showWidget then
@@ -1180,36 +1219,52 @@ function Raidboss_Job()
         Raidboss.TickScheduler()
     end
 end
+function Raidboss.GetNextAttack()
+	local t = Raidboss.AttackScheduler
+	if t.lastAttack == nil then
+		return Raidboss.GetNextAttack_DefaultBehavior()
+	end
+	if Raidboss.AttackSchemes[t.lastAttack].markovChainProbs == nil then
+		return Raidboss.GetNextAttack_DefaultBehavior()
+	end
+	local weightTable = Raidboss.AttackSchemes[t.lastAttack].markovChainProbs
+	local weightSum = 0
+	for k,v in pairs(weightTable) do
+		weightSum = weightSum + v
+	end
+	local randomVal = math.random() * weightSum
+	for k,v in pairs(weightTable) do
+		randomVal = randomVal - v
+		if randomVal <= 0 then
+			return k
+		end
+	end
+end
+function Raidboss.GetNextAttack_DefaultBehavior()
+	local totalWeight = 0
+	-- sum up all admissable weights
+	admissableScenarios = {}
+	for k,v in pairs(Raidboss.AttackSchemes) do
+		table.insert(admissableScenarios, {k = k, w = v.weight})
+		totalWeight = totalWeight + v.weight
+	end
+	local rndNumber = math.random(totalWeight)
+	for i = 1, table.getn(admissableScenarios) do
+		rndNumber = rndNumber - admissableScenarios[i].w
+		if rndNumber <= 0 then
+			return admissableScenarios[i].k
+		end
+	end
+end
 function Raidboss.TickScheduler()
-    t = Raidboss.AttackScheduler
+    local t = Raidboss.AttackScheduler
     t.timeToNextAttack = math.max(t.timeToNextAttack - 1,0)
     if t.timeToNextAttack == 0 then
         if table.getn(t.listOfScheduledAttacks) > 0 then -- is there already some command supposed to be executed?
             Raidboss.ExecuteAttack(t.listOfScheduledAttacks[1])
             table.remove(t, 1)
         else
-            local totalWeight = 0
-            local isLastAttackForbidden = false
-            if t.lastAttack ~= nil then
-                isLastAttackForbidden = Raidboss.AttackSchemes[t.lastAttack].disallowRepeatedCasting
-            end
-            -- sum up all admissable weights
-            admissableScenarios = {}
-            for k,v in pairs(Raidboss.AttackSchemes) do
-                if not( k == t.lastAttack and isLastAttackForbidden) then
-                    table.insert(admissableScenarios, {k = k, w = v.weight})
-                    totalWeight = totalWeight + v.weight
-                end
-            end
-            local rndNumber = math.random(totalWeight)
-            local attackName
-            for i = 1, table.getn(admissableScenarios) do
-                rndNumber = rndNumber - admissableScenarios[i].w
-                if rndNumber <= 0 then
-                    attackName = admissableScenarios[i].k
-                    break
-                end
-            end
+			local attackName = Raidboss.GetNextAttack()
             --LuaDebugger.Log("Selected "..attackName)
             Raidboss.ExecuteAttack( attackName)
         end
@@ -1525,7 +1580,7 @@ end
 Raidboss.AttackSchemes = {
     MeteorStrike = {
         -- determines the probability of using this attack next
-        weight = 35,
+        weight = 22,
         -- the function that will be called if this function was selected
         callback = Raidboss.MeteorStrike,
         -- the system assumes that this is the duration of the attack, e.g. the next attack will be selected after this time
@@ -1539,20 +1594,33 @@ Raidboss.AttackSchemes = {
         numMeteors = 10 -- number of meteors spawned
     },
     FearInducingStrike = {
-        weight = 15,
+        weight = 80,
         callback = Raidboss.FearStrike,
         duration = 16,
         disallowRepeatedCasting = true,
+		markovChainProbs = {
+			MeteorStrike = 20,
+			SummonBomb = 20,
+			ReflectArrows = 20,
+			MeteorRain = 20
+		},
         windUp = 8 -- wind up time for the fear in seconds
     },
     ArmorShred = {
-        weight = 15,
+        weight = 80,
         callback = Raidboss.ArmorShred,
         duration = 2,
+		-- weights that are used to determine the probabilities of the next attack
+		markovChainProbs = {
+			MeteorStrike = 20,
+			SummonBomb = 20,
+			ReflectArrows = 20,
+			MeteorRain = 20
+		},
         disallowRepeatedCasting = true
     },
     ReflectArrows = {
-        weight = 15,
+        weight = 22,
         callback = Raidboss.ReflectArrow,
         duration = 15,
         disallowRepeatedCasting = true,
@@ -1567,14 +1635,14 @@ Raidboss.AttackSchemes = {
         disallowRepeatedCasting = true
     },
     SummonBomb = { -- if you wish to change damage / radius, use SW.SetBombDamage/SW.SetBombRange
-        weight = 15,
+        weight = 22,
         callback = Raidboss.SummonBomb,
         duration = 3,
         disallowRepeatedCasting = true,
         explosionTime = 8 -- time in seconds until it explodes
     },
     MeteorRain = {
-        weight = 5,
+        weight = 12,
         callback = Raidboss.MeteorRain,
         duration = 10,
         disallowRepeatedCasting = true,
