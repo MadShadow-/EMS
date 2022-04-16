@@ -326,7 +326,7 @@ function WT21.ReviveKerberos()
 end
 function WT21.IncreaseKerbeStrength()
 	-- increase max health
-	Raidboss.MaxHealth = Raidboss.MaxHealth * 1.5
+	Raidboss.MaxHealth = math.floor(Raidboss.MaxHealth * 1.5)
 	SW.SetSettlerMaxHealth( Entities.CU_BlackKnight, Raidboss.MaxHealth)
 
 	local schemes = Raidboss.AttackSchemes
@@ -350,7 +350,7 @@ function WT21.MakeVCsImmune()
 		{pos = {X = 23300, Y = 28300}, n =  {X = 1, Y = 1}},
 		{pos = {X = 23300, Y = 42200}, n =  {X = 1, Y = -1}},
 		{pos = {X = 47600, Y = 42200}, n =  {X = -1, Y = -1}},
-		{pos = {X = 47600, Y = 28300}, n =  {X = -1, Y = 1}}
+		{pos = {X = 47600, Y = 28400}, n =  {X = -1, Y = 1}}
 	}
 	Trigger.RequestTrigger( Events.LOGIC_EVENT_ENTITY_HURT_ENTITY, "", "WT21_ProtectVCs", 1)
 end
@@ -377,7 +377,7 @@ function WT21_ProtectVCs()
 		if math.abs(v.pos.X - pos.X) + math.abs(v.pos.Y - pos.Y) < 100 then
 			--LuaDebugger.Log("Found matching VC")
 			-- left to check: is attacker in center?
-			local newPos = {X = pos.X + 1000 * v.n.X, Y = pos.Y + 1000 * v.n.Y}
+			local newPos = {X = pos.X + 500 * v.n.X, Y = pos.Y + 500 * v.n.Y}
 			local attackerPos = GetPosition(attacker)
 			-- now do some linear algebra / functional analysis
 			local dotProd = (attackerPos.X - newPos.X)*v.n.X + (attackerPos.Y - newPos.Y)*v.n.Y
@@ -1017,7 +1017,7 @@ function Raidboss.ActivateKerbeInfoWidget()
 	StartSimpleJob("Raidboss_UpdateInfoWidget")
 	GUIUpdate_UpdateDebugInfo = function()
 		-- the state kerbe is currently in
-		local currState = WT21.KerbeDamageFactorStates[WT21.CurrentState].label
+		local currState = WT21.KerbeDamageFactorStates[WT21.DamageFactorsCurrentState].label
 		-- some information about the hp
 		local hpString = "Hitpoints: "..Logic.GetEntityHealth(Raidboss.eId).."/"..Raidboss.MaxHealth
 		-- information about the last attack, maybe later
