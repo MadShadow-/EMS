@@ -19,7 +19,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.6,
+	Version = 1.7,
 	ActivateDebug = false,
  
 	-- ********************************************************************************************
