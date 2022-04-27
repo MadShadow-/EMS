@@ -691,24 +691,21 @@ function EMS.RF.ActivateWeatherLockTimer(_time)
 	
 	EMS.RF.WLT.GameCallback_SetWeather = GameCallback_SetWeather;
 	GameCallback_SetWeather = function(_weather)
+		if EMS.RF.WLT.Job == nil then
+			EMS.RF.WLT.Job = StartSimpleJob("EMS_RF_WLT_Counter");
+		end
+		if EMS.RF.WLT.Cooldown > 0 then return end;
 		EMS.RF.WLT.LockWeatherChange();
 		EMS.RF.WLT.GameCallback_SetWeather(_weather);
 	end
 	
 	EMS.RF.WLT.LockWeatherChange = function()
-		if not EMS.RF.WLT.IsAlreadyActive then
-			EMS.RF.WLT.Cooldown = EMS.RF.WLT.CooldownMax;
-			StartSimpleJob("EMS_RF_WLT_Counter");
-			EMS.RF.WLT.IsAlreadyActive = true
-		end
+		EMS.RF.WLT.Cooldown = EMS.RF.WLT.CooldownMax;	
 	end
 	EMS_RF_WLT_Counter = function()
 		if EMS.RF.WLT.Cooldown > 0 then
 			EMS.RF.WLT.Cooldown = EMS.RF.WLT.Cooldown - 1;
-			return;
 		end
-		EMS.RF.WLT.IsAlreadyActive = false
-		return true;                
 	end
 	
 	EMS.RF.WLT.GUIUpdate_ChangeWeatherButtons = GUIUpdate_ChangeWeatherButtons;
@@ -746,21 +743,7 @@ function EMS.RF.ActivateWeatherLockTimer(_time)
 		CNetwork.SetNetworkHandler("SetWeather", 
 			function(name, _playerID, _weatherType)
 				if CNetwork.IsAllowedToManipulatePlayer(name, _playerID) then
-					-- TODO check technology
-					local time = Logic.GetTime();
-					
-					Network_WeatherChange[_playerID] = Network_WeatherChange[_playerID] or (- EMS.RF.WLT.CooldownMax - 1);
-					
-					local timepassed = time - Network_WeatherChange[_playerID];
-						
-					if timepassed >= EMS.RF.WLT.CooldownMax then
-						SendEvent.SetWeather(_playerID, _weatherType);
-						Network_WeatherChange[_playerID] = time;
-						
-						if GUI.GetPlayerID() == _playerID then
-							EMS.RF.WLT.Cooldown = EMS.RF.WLT.CooldownMax;
-						end;
-					end;
+					SendEvent.SetWeather(_playerID, _weatherType);
 				end;
 			end
 		);
