@@ -1,147 +1,75 @@
 
-  function ActivateBandits()     
-       
-       
-       
-       bandit1 = UnlimitedArmy:New({					
-			-- benötigt
-			Player = 5,
-			Area = 4000,
-			-- optional
-			AutoDestroyIfEmpty = true,
-			TransitAttackMove = true,
-			Formation = UnlimitedArmy.Formations.Chaotic,
-			LeaderFormation = FormationFunktion,
-			AIActive = true,
-			AutoRotateRange = 100000,
-		})
+function ActivateBandits()    
+	
+	if CheckMode == 1 then
+       timeBandits = 40
+	elseif CheckMode == 2 then
+		timeBandits = 20
+	elseif CheckMode == 3 then
+		timeBandits = 10
+	end
 
-        --Patrol Queue
-        bandit1: AddCommandMove(GetPosition("id5_patrol_point1"), true);
-        bandit1:AddCommandWaitForIdle(true);
-        bandit1: AddCommandMove(GetPosition("spawn_tower1_id5"), true);
-        bandit1:AddCommandWaitForIdle(true);
-
-
-
-        bandit2 = UnlimitedArmy:New({					
-			-- benötigt
-			Player = 5,
-			Area = 4000,
-			-- optional
-			AutoDestroyIfEmpty = true,
-			TransitAttackMove = true,
-			Formation = UnlimitedArmy.Formations.Chaotic,
-			LeaderFormation = FormationFunktion,
-			AIActive = true,
-			AutoRotateRange = 100000,
-		})
-
-                --Patrol Queue
-                bandit2: AddCommandMove(GetPosition("id5_patrol_point2"), true);
-                bandit2:AddCommandWaitForIdle(true);
-                bandit2: AddCommandMove(GetPosition("spawn_tower2_id5"), true);
-                bandit2:AddCommandWaitForIdle(true);
-
-        bandit3 = UnlimitedArmy:New({					
-			-- benötigt
-			Player = 5,
-			Area = 4000,
-			-- optional
-			AutoDestroyIfEmpty = true,
-			TransitAttackMove = true,
-			Formation = UnlimitedArmy.Formations.Chaotic,
-			LeaderFormation = FormationFunktion,
-			AIActive = true,
-			AutoRotateRange = 100000,
-		})
-
-        --Patrol Queue
-        bandit3: AddCommandMove(GetPosition("id5_patrol_point3"), true);
-        bandit3:AddCommandWaitForIdle(true);
-        bandit3: AddCommandMove(GetPosition("spawn_tower3_id5"), true);
-        bandit3:AddCommandWaitForIdle(true);
-
-        bandit4 = UnlimitedArmy:New({					
-			-- benötigt
-			Player = 5,
-			Area = 4000,
-			-- optional
-			AutoDestroyIfEmpty = true,
-			TransitAttackMove = true,
-			Formation = UnlimitedArmy.Formations.Chaotic,
-			LeaderFormation = FormationFunktion,
-			AIActive = true,
-			AutoRotateRange = 100000,
-		})
-
-        --Patrol Queue
-        bandit4: AddCommandMove(GetPosition("id5_patrol_point4"), true);
-        bandit4:AddCommandWaitForIdle(true);
-        bandit4: AddCommandMove(GetPosition("spawn_tower4_id5"), true);
-        bandit4:AddCommandWaitForIdle(true);
-
-        SpawnerBanditen1 = UnlimitedArmySpawnGenerator:New(bandit1, {
-			-- benötigt:
-			Position = GetPosition("spawn_tower1_id5"), --position
-			ArmySize = 6, --armysize
- 			SpawnCounter = 20,  --spawncounter
-			SpawnLeaders = 6,   --spawnleaders
-			LeaderDesc = {
-				{LeaderType = Entities.CU_BanditLeaderSword1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-                {LeaderType = Entities.CU_BanditLeaderBow1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-			},
- 			-- optional:
- 			Generator = "tower1_id5",  --generator
- 		})
+		bandit1 = DefensiveArmy.new(5, GetPosition("id5_patrol_point1").X, GetPosition("id5_patrol_point1").Y, 5000, PlayerChunk_GetPlayerEnemyChunk(5), 600, true);
+		DefensiveArmy.AddTroopSpawn(bandit1, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower1_id5").X, GetPosition("spawn_tower1_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit1, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower1_id5").X, GetPosition("spawn_tower1_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit1, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower1_id5").X, GetPosition("spawn_tower1_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit1, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower1_id5").X, GetPosition("spawn_tower1_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit1, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower1_id5").X, GetPosition("spawn_tower1_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit1, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower1_id5").X, GetPosition("spawn_tower1_id5").Y, 0, math.random(1, 4));
+		
+		function StopBandit1()
+			if IsDestroyed("tower1_id5") then
+				DefensiveArmy.StopRespawn(bandit1)
+				return true;
+			end
+		end
 
 
-         SpawnerBanditen2 = UnlimitedArmySpawnGenerator:New(bandit2, {
-			-- benötigt:
-			Position = GetPosition("spawn_tower2_id5"), --position
-			ArmySize = 6, --armysize
- 			SpawnCounter = 20,  --spawncounter
-			SpawnLeaders = 6,   --spawnleaders
-			LeaderDesc = {
-				{LeaderType = Entities.CU_BanditLeaderSword1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-                {LeaderType = Entities.CU_BanditLeaderBow1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-			},
- 			-- optional:
- 			Generator = "tower2_id5",  --generator
- 		})
+		bandit2 = DefensiveArmy.new(5, GetPosition("id5_patrol_point2").X, GetPosition("id5_patrol_point2").Y, 5000, PlayerChunk_GetPlayerEnemyChunk(5), 600, true);
+		DefensiveArmy.AddTroopSpawn(bandit2, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower2_id5").X, GetPosition("spawn_tower2_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit2, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower2_id5").X, GetPosition("spawn_tower2_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit2, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower2_id5").X, GetPosition("spawn_tower2_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit2, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower2_id5").X, GetPosition("spawn_tower2_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit2, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower2_id5").X, GetPosition("spawn_tower2_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit2, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower2_id5").X, GetPosition("spawn_tower2_id5").Y, 0, math.random(1, 4));
+		
+		function StopBandit2()
+			if IsDestroyed("tower2_id5") then
+				DefensiveArmy.StopRespawn(bandit2)
+				return true;
+			end
+		end
 
 
-
-         SpawnerBanditen3 = UnlimitedArmySpawnGenerator:New(bandit3, {
-			-- benötigt:
-			Position = GetPosition("spawn_tower3_id5"), --position
-			ArmySize = 6, --armysize
- 			SpawnCounter = 20,  --spawncounter
-			SpawnLeaders = 6,   --spawnleaders
-			LeaderDesc = {
-				{LeaderType = Entities.CU_BanditLeaderSword1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-                {LeaderType = Entities.CU_BanditLeaderBow1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-			},
- 			-- optional:
- 			Generator = "tower3_id5",  --generator
- 		})
-
-
+		bandit3 = DefensiveArmy.new(5, GetPosition("id5_patrol_point3").X, GetPosition("id5_patrol_point3").Y, 10000, PlayerChunk_GetPlayerEnemyChunk(5), 600, true);
+		DefensiveArmy.AddTroopSpawn(bandit3, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower3_id5").X, GetPosition("spawn_tower3_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit3, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower3_id5").X, GetPosition("spawn_tower3_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit3, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower3_id5").X, GetPosition("spawn_tower3_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit3, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower3_id5").X, GetPosition("spawn_tower3_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit3, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower3_id5").X, GetPosition("spawn_tower3_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit3, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower3_id5").X, GetPosition("spawn_tower3_id5").Y, 0, math.random(1, 4));
+		
+		function StopBandit3()
+			if IsDestroyed("tower3_id5") then
+				DefensiveArmy.StopRespawn(bandit3)
+				return true;
+			end
+		end
 
 
-         SpawnerBanditen4 = UnlimitedArmySpawnGenerator:New(bandit4, {
-			-- benötigt:
-			Position = GetPosition("spawn_tower4_id5"), --position
-			ArmySize = 6, --armysize
- 			SpawnCounter = 20,  --spawncounter
-			SpawnLeaders = 6,   --spawnleaders
-			LeaderDesc = {
-				{LeaderType = Entities.CU_BanditLeaderSword1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-                {LeaderType = Entities.CU_BanditLeaderBow1, SoldierNum = 8 , SpawnNum = 2, Looped = true, Experience = 3},
-			},
- 			-- optional:
- 			Generator = "tower4_id5",  --generator
- 		})
+		bandit4 = DefensiveArmy.new(5, GetPosition("id5_patrol_point4").X, GetPosition("id5_patrol_point4").Y, 13000, PlayerChunk_GetPlayerEnemyChunk(5), 600, true);
+		DefensiveArmy.AddTroopSpawn(bandit4, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower4_id5").X, GetPosition("spawn_tower4_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit4, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower4_id5").X, GetPosition("spawn_tower4_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit4, timeBandits, Entities.CU_BanditLeaderSword1, 8, GetPosition("spawn_tower4_id5").X, GetPosition("spawn_tower4_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit4, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower4_id5").X, GetPosition("spawn_tower4_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit4, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower4_id5").X, GetPosition("spawn_tower4_id5").Y, 0, math.random(1, 4));
+		DefensiveArmy.AddTroopSpawn(bandit4, timeBandits, Entities.CU_BanditLeaderBow1, 4, GetPosition("spawn_tower4_id5").X, GetPosition("spawn_tower4_id5").Y, 0, math.random(1, 4));
+		
+		function StopBandit4()
+			if IsDestroyed("tower4_id5") then
+				DefensiveArmy.StopRespawn(bandit4)
+				return true;
+			end
+		end
 
-
-    end
+end

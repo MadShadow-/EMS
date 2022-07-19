@@ -56,9 +56,12 @@ AP{
     }
 
     briefing.finished = function()
-        Counter["counter2"].TickCount = 0
-        GUIQuestTools.UltimatumTime = EMS.RD.Rules.Peacetime.value*60
-        GUIQuestTools.UltimatumStartTime = Logic.GetTime()
+
+        Message("Bitte wählt eine @color:0,0,255 Schwierigkeitsstufe @color:255,255,255 um Tributmenü aus! @cr @cr")
+
+        -- Counter["counter2"].TickCount = 0
+        -- GUIQuestTools.UltimatumTime = EMS.RD.Rules.Peacetime.value*60
+        -- GUIQuestTools.UltimatumStartTime = Logic.GetTime()
         if table.getn(GetActivePlayers()) <= 2 then
             Message("@color:255,165,0 Ihr/Du spielst mit weniger als 3 Spielern. @cr Die Karte wird so nicht funktionieren. @cr @cr Sucht euch Freunde, Menschenskinder!")
         return true;

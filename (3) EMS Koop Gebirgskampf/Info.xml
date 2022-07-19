@@ -1,20 +1,20 @@
-<?xml version="1.1" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <root>
  <NameKey>Volcano</NameKey>
  <DescKey>Volcano</DescKey>
  <Name>(3) @color:135,205,255 EMS @color:0,100,0 Koop @color:255,255,255 Gebirgskampf</Name>
  <Desc>@color:139,0,0 Es erwartet euch ein spannender Kampf in der Hochebene von Mansuri. Nach einer langen Reise erreicht ihr mit euren Truppen die Ufer Mansuris und müsst euch geeignete Plätze zum siedeln suchen um gegen die Übermacht der Einwohner anzukommen. 
- @cr @cr @color:10,2,255 Made by Novator12  @cr @cr @color:43,255,250 Supported by schmeling und Ghoul @cr @cr @color:139,0,0 Hinweis: Die Farben @color:10,2,255 blau, @color:255,0,0 rot, @color:0,100,0 grün, @color:255,255,0 gelb, @color:0,255,255 türkis @color:139,0,0 sind vergeben. 
- @cr @cr @color:255,165,0 EMS-Regeln sind voreingestellt. Die Karte sollte mit diesen Regeln gespielt werden! @cr @cr Es wird benötigt: CppLogic v1.2 (neuer S5Hook von mcb)
+ @cr @cr @color:10,2,255 Made by Novator12  @cr @cr @color:43,255,250 Supported by schmeling, Ghoul und Roma @cr @cr @color:139,0,0 Hinweis: Die Farben @color:10,2,255 blau, @color:255,0,0 rot, @color:0,100,0 grün, @color:255,255,0 gelb, @color:0,255,255 türkis @color:139,0,0 sind vergeben. 
+ @cr @cr @color:255,165,0 EMS-Regeln sind voreingestellt. Die Karte sollte mit diesen Regeln gespielt werden! @cr @cr Wichtig: Cpp-Logic muss deaktiviert sein!
  @cr @cr @color:255,255,255 Viel Spaß beim Spielen wünscht Novator12</Desc>
  <SizeX>769</SizeX>
  <SizeY>769</SizeY>
  <MPFlag>true</MPFlag>
  <MPPlayerCount>3</MPPlayerCount>
  <MPGameOptionFlagSet>3</MPGameOptionFlagSet>
- <MiniMapTextureName>maps\user\(3) EMS Koop Gebirgskampf\(3) EMS Koop Gebirgskampf</MiniMapTextureName>
+ <MiniMapTextureName>maps\user\(3) EMS Koop Gebirgskampf\mappic</MiniMapTextureName>
  <Key>2</Key>
  <GUID>
-  <Data>0f88d97f-590f-488d-b501-5329653df5a1</Data>
+  <Data>39d75f79-d147-417c-bf3e-73a254c0c4e8</Data>
  </GUID>
 </root>

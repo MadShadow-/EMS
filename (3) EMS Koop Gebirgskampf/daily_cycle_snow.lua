@@ -9,7 +9,9 @@
   Display.GfxSetSetSnowEffectStatus(3, 0.0, 0.8, 1)
   Display.GfxSetSetFogParams(3, 0.0, 1.0, 1, 108,128,138, 3000,29500)
   Display.GfxSetSetLightParams(3,  0.0, 1.0, 40, -15, -50,  116,164,164, 255,234,202)
-
+  AddSnow = function(dauer)
+	Logic.AddWeatherElement(3, dauer, 0, 3, 5, 15)
+  end
 
     --Nacht mit Schnee
     Display.GfxSetSetSkyBox(16, 0.0, 1.0, "YSkyBox09")
@@ -18,8 +20,8 @@
     Display.GfxSetSetSnowEffectStatus(16, 0.0, 0.8, 1)
 	Display.GfxSetSetFogParams(16, 0.0, 1.0, 1, 52,82,92, 3500,32000)
 	Display.GfxSetSetLightParams(16,  0.0, 1.0, 40, -15, -50,  80,90,80,  1,1,1)
-    AddPeriodicNightSnow = function(dauer)
-		Logic.AddWeatherElement(3, dauer, 1, 16, 5, 15)
+    AddNightSnow = function(dauer)
+		Logic.AddWeatherElement(3, dauer, 0, 16, 5, 15)
 	end
  
 
@@ -31,8 +33,8 @@
 	 Display.GfxSetSetSnowEffectStatus(17, 0.0, 0.8, 1)	
 	 Display.GfxSetSetFogParams(17, 0.0, 1.0, 1, 215,70,0, 3500,29000)	
 	 Display.GfxSetSetLightParams(17,  0.0, 1.0, 40, 165, -50,  80,90,80,  175,70,0)	
-     AddPeriodicSunriseSnow = function(dauer)		
-		Logic.AddWeatherElement(3, dauer, 1, 17, 5, 15)		
+     AddSunriseSnow = function(dauer)		
+		Logic.AddWeatherElement(3, dauer, 0, 17, 5, 15)		
 	 end
    
 
@@ -44,8 +46,8 @@
 	 Display.GfxSetSetSnowEffectStatus(18, 0.0, 0.8, 1)	
 	 Display.GfxSetSetFogParams(18, 0.0, 1.0, 1, 165,70,70, 3500,29000)	
 	 Display.GfxSetSetLightParams(18,  0.0, 1.0, 40, 115, -50,  80,90,80,  135,70,60)	
-     AddPeriodicTransitionSunriseSnow = function(dauer)		
-		Logic.AddWeatherElement(3, dauer, 1, 18, 5, 15)		
+     AddTransitionSunriseSnow = function(dauer)		
+		Logic.AddWeatherElement(3, dauer, 0, 18, 5, 15)		
 	 end
   
 

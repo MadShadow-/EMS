@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.1,
+	Version = 1.3,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -50,17 +50,14 @@ EMS_CustomMapConfig =
 	Callback_OnMapStart = function()
 		-- Der Pfad für die fertige Version
 		gvBasePath = "maps\\user\\"..Framework.GetCurrentMapName().."\\";
-		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua");
 
-		mcbPacker.Paths={{"maps\\user\\EMS\\tools\\", ".lua"}}
-		mcbPacker.require("s5CommunityLib/lib/UnlimitedArmy")
-        mcbPacker.require("s5CommunityLib/lib/UnlimitedArmySpawnGenerator")
-		
+		Script.Load(gvBasePath.. "kimichurasdefarmy.lua");
+		Script.Load(gvBasePath.. "spawnarmy.lua");
+		Script.Load(gvBasePath.. "filter.lua");
 		Script.Load(gvBasePath.. "briefings.lua");
 		Script.Load(gvBasePath.. "daily_cycle.lua");
 		Script.Load(gvBasePath.. "daily_cycle_rain.lua");
 		Script.Load(gvBasePath.. "daily_cycle_snow.lua");
-		Script.Load(gvBasePath.. "PoisenReiter.lua");
 		Script.Load(gvBasePath.. "army_id5_banditen.lua");
 		Script.Load(gvBasePath.. "army_id5_nebelvolk.lua");
 		Script.Load(gvBasePath.. "army_id6.lua");
@@ -76,33 +73,12 @@ EMS_CustomMapConfig =
 		Script.Load(gvBasePath.. "army_id8_wave3.lua");
 		Script.Load(gvBasePath.. "army_id8_wave4.lua");
 		Script.Load(gvBasePath.. "MainMapScript.lua");
-		TriggerFix.AllScriptsLoaded()
 
 
 		SetupHighlandWeatherGfxSet();
 
-		--Sommertage
-
-		for i=1,2,1 do
-		AddPeriodicSummer(4*60);
-		AddPeriodicTransitionSunrise(60);
-		AddPeriodicSunrise(60)
-		AddPeriodicNight(4*60);
-		AddPeriodicSunrise(60)
-		AddPeriodicTransitionSunrise(60);
-		end
-
-		--Regentage
-
-		AddPeriodicRain(4*60);
-		AddPeriodicTransitionSunriseRain(60);
-		AddPeriodicSunriseRain(60)
-		AddPeriodicNightRain(4*60);
-		AddPeriodicSunriseRain(60)
-		AddPeriodicTransitionSunriseRain(60);
-
-
-
+		
+		AddPeriodicSummer(10)
 	
 
 		LocalMusic.UseSet = MEDITERANEANMUSIC;

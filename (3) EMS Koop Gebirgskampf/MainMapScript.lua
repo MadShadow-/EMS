@@ -1,6 +1,51 @@
 -- Hier kommen meine Funktionen rein, die nach den Regeleinstellungen ausgeführt
 -- werden sollen. Sind Regeln fest, dann wird es sofort ausgeführt.
+
+
+
+function Debug1()
+    Tools.ExploreArea(-1,-1,13000)
+    ReplaceEntity("gate_id1", Entities.XD_PalisadeGate2);
+    DestroyEntity("barrier1_id6")
+        DestroyEntity("barrier2_id6")
+        DestroyEntity("barrier3_id6")
+        DestroyEntity("barrier4_id6")
+        DestroyEntity("barrier5_id6")
+        for i=1,23,1 do
+            ReplaceEntity("w1_gate"..i, Entities.XD_DarkWallStraightGate);
+        end
+        for i=1,18,1 do
+            ReplaceEntity("x"..i, Entities.XD_DarkWallStraightGate)
+        end
+        for i=1,3,1 do
+            ReplaceEntity("z"..i, Entities.XD_DarkWallStraightGate)
+        end
+        for i=1,4,1 do
+            ReplaceEntity("y"..i, Entities.XD_DarkWallStraightGate)
+        end
+        for i=1,6,1 do
+            ReplaceEntity("boss"..i, Entities.XD_DarkWallStraightGate)
+        end
+        ReplaceEntity("endfight1", Entities.XD_DarkWallStraightGate)
+        ReplaceEntity("endfight2", Entities.XD_DarkWallStraightGate)
+
+        
+end
+
+function Debug2()
+    DestroyEntity("barrier1_id5")
+    DestroyEntity("barrier2_id5")
+    DestroyEntity("barrier3_id5")
+    DestroyEntity("barrier4_id5")
+    DestroyEntity("barrier5_id5")
+    DestroyEntity("barrier6_id5")
+end
+
+
+-----------Funktion zum Spielstart
+
 function OnGameStart()
+
 
     StartCountdown(1,AnfangsBriefing,false)
     CreateWoodPile( "woodpile1", 1000000 )
@@ -8,66 +53,188 @@ function OnGameStart()
     CreateWoodPile( "woodpile3", 1000000 )
 
 
+    ---Aktiviere Waypoints für army
+    StartSimpleJob("WaypointsFunc")
+
+    --Wetteraktivierung
+    weatherTimer = 0
+
+    SummerJob = StartSimpleJob("WeatherNormalTimer")
+    
     counterCastle = 0;
     diplomacy()
-    ActivateBandits()     
-  
-  --------Starttruppen Spieler 1  
-  
- 
-    CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp1_id1"),"help1_id1")
-	CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp2_id1"),"help2_id1")
-	CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp3_id1"),"help3_id1")
-	CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp4_id1"),"help4_id1")
-    CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp1_id1"),"help5_id1")
-	CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp2_id1"),"help6_id1")
-	CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp3_id1"),"help7_id1")
-	CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp4_id1"),"help8_id1")
-    CreateMilitaryGroup(1,Entities.PU_Serf,0,GetPosition("start_trupp5_id1"),"serf_id1")
-    ForbidTechnology( Technologies.B_Village, 1 )
-    ForbidTechnology( Technologies.B_Residence, 1 )
-    ForbidTechnology( Technologies.B_Farm, 1 )
-    ForbidTechnology( Technologies.B_University, 1 )
-    ForbidTechnology( Technologies.B_Claymine, 1 )
-    ForbidTechnology( Technologies.B_PowerPlant, 1 )
+    ReadyPlayer_1 = 0
+    ReadyPlayer_2 = 0
+    ReadyPlayer_3 = 0
+
+    Logic.SetPlayerPaysLeaderFlag(1, 0)
+    Logic.SetPlayerPaysLeaderFlag(2, 0)
+    Logic.SetPlayerPaysLeaderFlag(3, 0)
+
+ ----------Schwierigkeitsauswahl------------------------------------------------------
+ checkmode = 0;
+ TickPeace = StartSimpleJob("TickPeacetime")
+ StopPayday1 = StartSimpleJob("ResetGoldTillStart1")
+ StopPayday2 = StartSimpleJob("ResetGoldTillStart2")
+ StopPayday3 = StartSimpleJob("ResetGoldTillStart3")
+ ResourcesCompleted1 = StartSimpleJob("ResourcesPlayer1")
+ ResourcesCompleted2 = StartSimpleJob("ResourcesPlayer2")
+ ResourcesCompleted3 = StartSimpleJob("ResourcesPlayer3")
+ Tribut1()
+ Tribut2()
+ Tribut3()
     
 
+    --Stadtwachenfix
+    GameCallback_OnTechnologyResearchedOriginal = GameCallback_OnTechnologyResearched
+    function GameCallback_OnTechnologyResearched( _PlayerID, _TechnologyType )
+        GameCallback_OnTechnologyResearchedOriginal( _PlayerID,_TechnologyType)
+        if _TechnologyType == Technologies.T_TownGuard then
+        Logic.SetTechnologyState(_PlayerID,Technologies.T_CityGuard, 3)
+        end
+    end
+    --
 
 
-    --------Starttruppen Spieler 2  
-    CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp1_id2"),"help1_id2")
-	CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp2_id2"),"help2_id2")
-	CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp3_id2"),"help3_id2")
-	CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp4_id2"),"help4_id2")
-    CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp1_id2"),"help5_id2")
-	CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp2_id2"),"help6_id2")
-	CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp3_id2"),"help7_id2")
-	CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp4_id2"),"help8_id2")
-    CreateMilitaryGroup(2,Entities.PU_Serf,0,GetPosition("start_trupp5_id2"),"serf_id2")
-    ForbidTechnology( Technologies.B_Village, 2 )
-    ForbidTechnology( Technologies.B_Residence, 2 )
-    ForbidTechnology( Technologies.B_Farm, 2 )
-    ForbidTechnology( Technologies.B_University, 2 )
-    ForbidTechnology( Technologies.B_Claymine, 2 )
-    ForbidTechnology( Technologies.B_PowerPlant, 2 )
+--##################################################################--
+--################ Cannon / Serf Heal by P4F #######################--
+--##################################################################--
 
+function ComfortsStart()
+	SerfTablePlayer1={}
+	CannonTablePlayer1={}
+	Trigger.RequestTrigger(Events.LOGIC_EVENT_ENTITY_CREATED,"","EV_ON_ENTITY_CREATED",1)
+	StartSimpleJob("SJ_Refresh_Hp_Of_Serfs_And_Cannons_Player1")
+	--
+	if XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID(2) == 1 then
+	SerfTablePlayer2={}
+	CannonTablePlayer2={}
+	StartSimpleJob("SJ_Refresh_Hp_Of_Serfs_And_Cannons_Player2")
+	end
+    if XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID(3) == 1 then
+        SerfTablePlayer3={}
+        CannonTablePlayer3={}
+        StartSimpleJob("SJ_Refresh_Hp_Of_Serfs_And_Cannons_Player3")
+        end
+end
 
-    --------Starttruppen Spieler 2  
-    CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp1_id3"),"help1_id3")
-    CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp2_id3"),"help2_id3")
-    CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp3_id3"),"help3_id3")
-    CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp4_id3"),"help4_id3")
-    CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp1_id3"),"help5_id3")
-    CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp2_id3"),"help6_id3")
-    CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp3_id3"),"help7_id3")
-    CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp4_id3"),"help8_id3")
-    CreateMilitaryGroup(3,Entities.PU_Serf,0,GetPosition("start_trupp5_id3"),"serf_id3")
-    ForbidTechnology( Technologies.B_Village, 3 )
-    ForbidTechnology( Technologies.B_Residence, 3 )
-    ForbidTechnology( Technologies.B_Farm, 3 )
-    ForbidTechnology( Technologies.B_University, 3 )
-    ForbidTechnology( Technologies.B_Claymine, 3 )
-    ForbidTechnology( Technologies.B_PowerPlant, 3 )
+-- Player 1
+function SJ_Refresh_Hp_Of_Serfs_And_Cannons_Player1()
+	for i = table.getn(SerfTablePlayer1), 1, -1 do
+		if IsAlive(SerfTablePlayer1[i]) then
+			if GetHealth(SerfTablePlayer1[i]) < 100 then
+				SetHealth(SerfTablePlayer1[i], GetHealth(SerfTablePlayer1[i]) + 1 )
+			end
+		else
+			table.remove(SerfTablePlayer1, i)
+		end
+	end
+
+	for i = table.getn(CannonTablePlayer1), 1, -1 do
+		if IsAlive(CannonTablePlayer1[i]) then
+			if GetHealth(CannonTablePlayer1[i]) < 100 then
+				SetHealth(CannonTablePlayer1[i], GetHealth(CannonTablePlayer1[i]) + 1 )
+			end
+		else
+			table.remove(CannonTablePlayer1, i)
+		end
+	end
+end
+-- Player 2
+function SJ_Refresh_Hp_Of_Serfs_And_Cannons_Player2()
+	for i = table.getn(SerfTablePlayer2), 1, -1 do
+		if IsAlive(SerfTablePlayer2[i]) then
+			if GetHealth(SerfTablePlayer2[i]) < 100 then
+				SetHealth(SerfTablePlayer2[i], GetHealth(SerfTablePlayer2[i]) + 1 )
+			end
+		else
+			table.remove(SerfTablePlayer2, i)
+		end
+	end
+
+	for i = table.getn(CannonTablePlayer2), 1, -1 do
+		if IsAlive(CannonTablePlayer2[i]) then
+			if GetHealth(CannonTablePlayer2[i]) < 100 then
+				SetHealth(CannonTablePlayer2[i], GetHealth(CannonTablePlayer2[i]) + 1 )
+			end
+		else
+			table.remove(CannonTablePlayer2, i)
+		end
+	end
+end
+
+-- Player 3
+function SJ_Refresh_Hp_Of_Serfs_And_Cannons_Player3()
+	for i = table.getn(SerfTablePlayer3), 1, -1 do
+		if IsAlive(SerfTablePlayer3[i]) then
+			if GetHealth(SerfTablePlayer3[i]) < 100 then
+				SetHealth(SerfTablePlayer3[i], GetHealth(SerfTablePlayer3[i]) + 1 )
+			end
+		else
+			table.remove(SerfTablePlayer3, i)
+		end
+	end
+
+	for i = table.getn(CannonTablePlayer3), 1, -1 do
+		if IsAlive(CannonTablePlayer3[i]) then
+			if GetHealth(CannonTablePlayer3[i]) < 100 then
+				SetHealth(CannonTablePlayer3[i], GetHealth(CannonTablePlayer3[i]) + 1 )
+			end
+		else
+			table.remove(CannonTablePlayer3, i)
+		end
+	end
+end
+
+function EV_ON_ENTITY_CREATED()
+	local ent_ID = Event.GetEntityID()
+	local ent_typ = Logic.GetEntityTypeName(Logic.GetEntityType(ent_ID))
+	local ent_P = GetPlayer(ent_ID)
+		
+	if ent_P == 1 then
+		if ent_typ == "PU_Serf" then
+		table.insert(SerfTablePlayer1,ent_ID)
+		elseif ent_typ == "PV_Cannon1" or ent_typ == "PV_Cannon2" or ent_typ == "PV_Cannon3" or ent_typ == "PV_Cannon4" then
+		table.insert(CannonTablePlayer1,ent_ID)
+		end
+	end
+
+	if XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID(2) == 1 then
+		if ent_P == 2 then
+			if ent_typ == "PU_Serf" then
+			table.insert(SerfTablePlayer2,ent_ID)
+			elseif ent_typ == "PV_Cannon1" or ent_typ == "PV_Cannon2" or ent_typ == "PV_Cannon3" or ent_typ == "PV_Cannon4" then
+			table.insert(CannonTablePlayer2,ent_ID)
+			end
+		end
+	end
+
+    if XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID(3) == 1 then
+		if ent_P == 3 then
+			if ent_typ == "PU_Serf" then
+			table.insert(SerfTablePlayer3,ent_ID)
+			elseif ent_typ == "PV_Cannon1" or ent_typ == "PV_Cannon2" or ent_typ == "PV_Cannon3" or ent_typ == "PV_Cannon4" then
+			table.insert(CannonTablePlayer3,ent_ID)
+			end
+		end
+	end
+end
+
+--##################################################################--
+--##################################################################--
+
+function GetHealth( _entity )
+    local entityID = GetEntityId( _entity )
+    if not Tools.IsEntityAlive( entityID ) then
+        return 0
+    end
+    local MaxHealth = Logic.GetEntityMaxHealth( entityID )
+    local Health = Logic.GetEntityHealth( entityID )
+    return ( Health / MaxHealth ) * 100
+end
+
+--##################################################################--
+--##################################################################--
 
 
 
@@ -75,16 +242,26 @@ function OnGameStart()
             GameCallback_OnBuildingConstructionCompleteOld2=GameCallback_OnBuildingConstructionComplete
             function GameCallback_OnBuildingConstructionComplete(_BuildingID2,_PlayerID2)
             GameCallback_OnBuildingConstructionCompleteOld2(_BuildingID2,_PlayerID2)
-            if _BuildingID2 == lighthouseID  then
-                StartSimpleHiResJob("SetLighthouse")
-                
+                if _BuildingID2 == lighthouseID  then
+                    StartSimpleHiResJob("SetLighthouse")
+                end
+                if Logic.GetPlayerEntities(1, Entities.PB_VillageCenter1, 1) == 1 then
+                    Logic.SetPlayerPaysLeaderFlag(1, 1)
+                    EndJob(StopPayday1)
+                end
+                if Logic.GetPlayerEntities(2, Entities.PB_VillageCenter1, 1) == 1 then
+                    Logic.SetPlayerPaysLeaderFlag(2, 1)
+                    EndJob(StopPayday2)
+                end
+                if Logic.GetPlayerEntities(3, Entities.PB_VillageCenter1, 1) == 1 then
+                    Logic.SetPlayerPaysLeaderFlag(3, 1)
+                    EndJob(StopPayday3)
+                end
             end
-            end
 
 
 
 
-    serfCheck = StartSimpleJob("StartSerfCheck");
     StartSimpleJob("castleCheck");
     StartSimpleJob("DefeatBedingung");
     StartSimpleJob("gateCastle1");
@@ -123,9 +300,447 @@ function OnGameStart()
 
 
 
-
+    StartSimpleJob("VillageCenterIsBuild_ID1")
+    StartSimpleJob("VillageCenterIsBuild_ID2")
+    StartSimpleJob("VillageCenterIsBuild_ID3")
 
 end
+
+
+
+ function ResourcesPlayer1()
+    if CheckMode == 1 and ReadyPlayer_1 == 1 then
+        -- Initial Resources
+        local InitGoldRaw 		= 1800
+        local InitClayRaw 		= 2500
+        local InitWoodRaw 		= 2500
+        local InitStoneRaw 		= 2000
+        local InitIronRaw 		= 450
+        local InitSulfurRaw		= 250
+
+        
+        --Add Players Resources
+        Tools.GiveResouces(1, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+        EndJob(ResourcesCompleted1)
+    elseif CheckMode == 2 and ReadyPlayer_1 == 1 then
+         -- Initial Resources
+         local InitGoldRaw 		= 1200
+         local InitClayRaw 		= 1500
+         local InitWoodRaw 		= 1500
+         local InitStoneRaw 	= 1000
+         local InitIronRaw 		= 150
+         local InitSulfurRaw	= 50
+ 
+         
+         --Add Players Resources
+
+        Tools.GiveResouces(1, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+        EndJob(ResourcesCompleted1)
+    elseif CheckMode == 3 and ReadyPlayer_1 == 1 then
+         -- Initial Resources
+         local InitGoldRaw 		= 900
+         local InitClayRaw 		= 800
+         local InitWoodRaw 		= 800
+         local InitStoneRaw 	= 800
+         local InitIronRaw 		= 0
+         local InitSulfurRaw	= 0
+ 
+         
+         --Add Players Resources
+
+         Tools.GiveResouces(1, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+         EndJob(ResourcesCompleted1)
+    end
+
+ end
+
+ function ResourcesPlayer2()
+    if CheckMode == 1 and ReadyPlayer_2 == 1 then
+        -- Initial Resources
+        local InitGoldRaw 		= 1800
+        local InitClayRaw 		= 2500
+        local InitWoodRaw 		= 2500
+        local InitStoneRaw 		= 2000
+        local InitIronRaw 		= 450
+        local InitSulfurRaw		= 250
+
+        
+        --Add Players Resources
+        Tools.GiveResouces(2, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+        EndJob(ResourcesCompleted2)
+    elseif CheckMode == 2 and ReadyPlayer_2 == 1 then
+         -- Initial Resources
+         local InitGoldRaw 		= 1200
+         local InitClayRaw 		= 1500
+         local InitWoodRaw 		= 1500
+         local InitStoneRaw 	= 1000
+         local InitIronRaw 		= 150
+         local InitSulfurRaw	= 50
+ 
+         
+         --Add Players Resources
+
+        Tools.GiveResouces(2, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+        EndJob(ResourcesCompleted2)
+    elseif CheckMode == 3 and ReadyPlayer_2 == 1 then
+         -- Initial Resources
+         local InitGoldRaw 		= 900
+         local InitClayRaw 		= 800
+         local InitWoodRaw 		= 800
+         local InitStoneRaw 	= 800
+         local InitIronRaw 		= 0
+         local InitSulfurRaw	= 0
+ 
+         
+         --Add Players Resources
+
+         Tools.GiveResouces(2, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+         EndJob(ResourcesCompleted2)
+    end
+
+ end
+
+
+ function ResourcesPlayer3()
+    if CheckMode == 1 and ReadyPlayer_3 == 1 then
+        -- Initial Resources
+        local InitGoldRaw 		= 1800
+        local InitClayRaw 		= 2500
+        local InitWoodRaw 		= 2500
+        local InitStoneRaw 		= 2000
+        local InitIronRaw 		= 450
+        local InitSulfurRaw		= 250
+
+        
+        --Add Players Resources
+        Tools.GiveResouces(3, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+        EndJob(ResourcesCompleted3)
+    elseif CheckMode == 2 and ReadyPlayer_3 == 1 then
+         -- Initial Resources
+         local InitGoldRaw 		= 1200
+         local InitClayRaw 		= 1500
+         local InitWoodRaw 		= 1500
+         local InitStoneRaw 	= 1000
+         local InitIronRaw 		= 150
+         local InitSulfurRaw	= 50
+ 
+         
+         --Add Players Resources
+
+        Tools.GiveResouces(3, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+        EndJob(ResourcesCompleted3)
+    elseif CheckMode == 3 and ReadyPlayer_3 == 1 then
+         -- Initial Resources
+         local InitGoldRaw 		= 900
+         local InitClayRaw 		= 800
+         local InitWoodRaw 		= 800
+         local InitStoneRaw 	= 800
+         local InitIronRaw 		= 0
+         local InitSulfurRaw	= 0
+ 
+         
+         --Add Players Resources
+
+         Tools.GiveResouces(3, InitGoldRaw , InitClayRaw,InitWoodRaw, InitStoneRaw,InitIronRaw,InitSulfurRaw)
+         EndJob(ResourcesCompleted3)
+    end
+
+ end
+
+
+
+ function TickPeacetime()
+    EMS.T.StopCountdown(Peacetime)
+ end
+
+ function ResetGoldTillStart1()
+    if CheckMode == 0 then
+        gold1 = Logic.GetPlayersGlobalResource(1, ResourceType.GoldRaw)
+        Logic.SubFromPlayersGlobalResource(1, ResourceType.Gold, gold1)
+    end
+end
+
+function ResetGoldTillStart2()
+    if CheckMode == 0 then
+        gold2 = Logic.GetPlayersGlobalResource(2, ResourceType.GoldRaw)
+        Logic.SubFromPlayersGlobalResource(2, ResourceType.Gold, gold2)
+    end
+end
+
+function ResetGoldTillStart3()
+    if CheckMode == 0 then
+        gold3 = Logic.GetPlayersGlobalResource(3, ResourceType.GoldRaw)
+        Logic.SubFromPlayersGlobalResource(3, ResourceType.Gold, gold3)
+    end
+end
+
+---------------------------------Schwierigkeiten
+
+---Easy
+function Tribut1()
+    local TrMod1 =  {}
+    TrMod1.pId = 1
+    TrMod1.text = "Spielmodus @color:57,245,26 <<Kooperation/Leicht>>! "
+    TrMod1.cost = { Gold = 0 }
+    TrMod1.Callback = Mode1
+    TMod1 = AddTribute(TrMod1)
+end
+
+function Mode1()
+
+      --------Starttruppen Spieler 1  
+  
+ 
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp1_id1"),"help1_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp2_id1"),"help2_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp3_id1"),"help3_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp4_id1"),"help4_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp1_id1"),"help5_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp2_id1"),"help6_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp3_id1"),"help7_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp4_id1"),"help8_id1")
+      CreateMilitaryGroup(1,Entities.PU_Serf,0,GetPosition("start_trupp5_id1"),"serf_id1")
+      ForbidTechnology( Technologies.B_Village, 1 )
+      ForbidTechnology( Technologies.B_Residence, 1 )
+      ForbidTechnology( Technologies.B_Farm, 1 )
+      ForbidTechnology( Technologies.B_University, 1 )
+      ForbidTechnology( Technologies.B_Claymine, 1 )
+      ForbidTechnology( Technologies.B_PowerPlant, 1 )
+      
+  
+  
+  
+      --------Starttruppen Spieler 2  
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp1_id2"),"help1_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp2_id2"),"help2_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp3_id2"),"help3_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp4_id2"),"help4_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp1_id2"),"help5_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp2_id2"),"help6_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp3_id2"),"help7_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp4_id2"),"help8_id2")
+      CreateMilitaryGroup(2,Entities.PU_Serf,0,GetPosition("start_trupp5_id2"),"serf_id2")
+      ForbidTechnology( Technologies.B_Village, 2 )
+      ForbidTechnology( Technologies.B_Residence, 2 )
+      ForbidTechnology( Technologies.B_Farm, 2 )
+      ForbidTechnology( Technologies.B_University, 2 )
+      ForbidTechnology( Technologies.B_Claymine, 2 )
+      ForbidTechnology( Technologies.B_PowerPlant, 2 )
+  
+  
+      --------Starttruppen Spieler 2  
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp1_id3"),"help1_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp2_id3"),"help2_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp3_id3"),"help3_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp4_id3"),"help4_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp1_id3"),"help5_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp2_id3"),"help6_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp3_id3"),"help7_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp4_id3"),"help8_id3")
+      CreateMilitaryGroup(3,Entities.PU_Serf,0,GetPosition("start_trupp5_id3"),"serf_id3")
+      ForbidTechnology( Technologies.B_Village, 3 )
+      ForbidTechnology( Technologies.B_Residence, 3 )
+      ForbidTechnology( Technologies.B_Farm, 3 )
+      ForbidTechnology( Technologies.B_University, 3 )
+      ForbidTechnology( Technologies.B_Claymine, 3 )
+      ForbidTechnology( Technologies.B_PowerPlant, 3 )
+
+      serfCheck = StartSimpleJob("StartSerfCheck");
+
+    CheckMode = 1
+    Message("Schwierigkeit: @color:57,245,26 LEICHT @color:255,255,255 wurde gewaehlt!")
+    Logic.RemoveTribute(1,TMod1)
+    Logic.RemoveTribute(1,TMod2)
+    Logic.RemoveTribute(1,TMod3)
+    GUIAction_ToggleMenu( gvGUI_WidgetID.TradeWindow,0)
+    nv_helper = 12
+    ActivateBandits()
+    
+    StartSimpleJob("StopBandit1")
+    StartSimpleJob("StopBandit2")
+    StartSimpleJob("StopBandit3")
+    StartSimpleJob("StopBandit4")
+
+
+   EndJob(TickPeace)
+   EMS.T.SetPeacetime(90*60 )
+end
+
+
+---Normal
+function Tribut2()
+    local TrMod2 =  {}
+    TrMod2.pId = 1
+    TrMod2.text = "Spielmodus @color:255,136,0 <<Kooperation/Normal>>! "
+    TrMod2.cost = { Gold = 0 }
+    TrMod2.Callback = Mode2
+    TMod2 = AddTribute(TrMod2)
+end
+
+function Mode2()
+
+      --------Starttruppen Spieler 1  
+  
+ 
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp1_id1"),"help1_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp2_id1"),"help2_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp3_id1"),"help3_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp4_id1"),"help4_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp1_id1"),"help5_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp2_id1"),"help6_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp3_id1"),"help7_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp4_id1"),"help8_id1")
+      CreateMilitaryGroup(1,Entities.PU_Serf,0,GetPosition("start_trupp5_id1"),"serf_id1")
+      ForbidTechnology( Technologies.B_Village, 1 )
+      ForbidTechnology( Technologies.B_Residence, 1 )
+      ForbidTechnology( Technologies.B_Farm, 1 )
+      ForbidTechnology( Technologies.B_University, 1 )
+      ForbidTechnology( Technologies.B_Claymine, 1 )
+      ForbidTechnology( Technologies.B_PowerPlant, 1 )
+      
+  
+  
+  
+      --------Starttruppen Spieler 2  
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp1_id2"),"help1_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp2_id2"),"help2_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp3_id2"),"help3_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp4_id2"),"help4_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp1_id2"),"help5_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp2_id2"),"help6_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp3_id2"),"help7_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp4_id2"),"help8_id2")
+      CreateMilitaryGroup(2,Entities.PU_Serf,0,GetPosition("start_trupp5_id2"),"serf_id2")
+      ForbidTechnology( Technologies.B_Village, 2 )
+      ForbidTechnology( Technologies.B_Residence, 2 )
+      ForbidTechnology( Technologies.B_Farm, 2 )
+      ForbidTechnology( Technologies.B_University, 2 )
+      ForbidTechnology( Technologies.B_Claymine, 2 )
+      ForbidTechnology( Technologies.B_PowerPlant, 2 )
+  
+  
+      --------Starttruppen Spieler 2  
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp1_id3"),"help1_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp2_id3"),"help2_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp3_id3"),"help3_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp4_id3"),"help4_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp1_id3"),"help5_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp2_id3"),"help6_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp3_id3"),"help7_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp4_id3"),"help8_id3")
+      CreateMilitaryGroup(3,Entities.PU_Serf,0,GetPosition("start_trupp5_id3"),"serf_id3")
+      ForbidTechnology( Technologies.B_Village, 3 )
+      ForbidTechnology( Technologies.B_Residence, 3 )
+      ForbidTechnology( Technologies.B_Farm, 3 )
+      ForbidTechnology( Technologies.B_University, 3 )
+      ForbidTechnology( Technologies.B_Claymine, 3 )
+      ForbidTechnology( Technologies.B_PowerPlant, 3 )
+
+      serfCheck = StartSimpleJob("StartSerfCheck");
+    nv_helper = math.random(10, 12)
+    CheckMode = 2
+    Message("Schwierigkeit: @color:255,136,0 NORMAL @color:255,255,255 wurde gewaehlt!")
+    Logic.RemoveTribute(1,TMod1)
+    Logic.RemoveTribute(1,TMod2)
+    Logic.RemoveTribute(1,TMod3)
+    GUIAction_ToggleMenu( gvGUI_WidgetID.TradeWindow,0)
+
+    ActivateBandits() 
+
+    StartSimpleJob("StopBandit1")
+    StartSimpleJob("StopBandit2")
+    StartSimpleJob("StopBandit3")
+    StartSimpleJob("StopBandit4")
+
+
+   EndJob(TickPeace)
+   EMS.T.SetPeacetime(70*60 )
+end
+
+---Hard
+function Tribut3()
+    local TrMod3 =  {}
+    TrMod3.pId = 1
+    TrMod3.text = "Spielmodus @color:255,0,0 <<Kooperation/Schwer>>! "
+    TrMod3.cost = { Gold = 0 }
+    TrMod3.Callback = Mode3
+    TMod3 = AddTribute(TrMod3)
+end
+
+function Mode3()
+
+      --------Starttruppen Spieler 1  
+  
+ 
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp1_id1"),"help1_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp2_id1"),"help2_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp3_id1"),"help3_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword3,8,GetPosition("start_trupp4_id1"),"help4_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp1_id1"),"help5_id1")
+      CreateMilitaryGroup(1,Entities.PU_LeaderSword4,8,GetPosition("start_trupp2_id1"),"help6_id1")
+      CreateMilitaryGroup(1,Entities.PU_Serf,0,GetPosition("start_trupp5_id1"),"serf_id1")
+      ForbidTechnology( Technologies.B_Village, 1 )
+      ForbidTechnology( Technologies.B_Residence, 1 )
+      ForbidTechnology( Technologies.B_Farm, 1 )
+      ForbidTechnology( Technologies.B_University, 1 )
+      ForbidTechnology( Technologies.B_Claymine, 1 )
+      ForbidTechnology( Technologies.B_PowerPlant, 1 )
+      
+  
+  
+  
+      --------Starttruppen Spieler 2  
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp1_id2"),"help1_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp2_id2"),"help2_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp3_id2"),"help3_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow3,8,GetPosition("start_trupp4_id2"),"help4_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp1_id2"),"help5_id2")
+      CreateMilitaryGroup(2,Entities.PU_LeaderBow4,8,GetPosition("start_trupp2_id2"),"help6_id2")
+      CreateMilitaryGroup(2,Entities.PU_Serf,0,GetPosition("start_trupp5_id2"),"serf_id2")
+      ForbidTechnology( Technologies.B_Village, 2 )
+      ForbidTechnology( Technologies.B_Residence, 2 )
+      ForbidTechnology( Technologies.B_Farm, 2 )
+      ForbidTechnology( Technologies.B_University, 2 )
+      ForbidTechnology( Technologies.B_Claymine, 2 )
+      ForbidTechnology( Technologies.B_PowerPlant, 2 )
+  
+  
+      --------Starttruppen Spieler 2  
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp1_id3"),"help1_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp2_id3"),"help2_id3")
+      CreateMilitaryGroup(3,Entities.PV_Cannon3,0,GetPosition("start_trupp3_id3"),"help3_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp1_id3"),"help5_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp2_id3"),"help6_id3")
+      CreateMilitaryGroup(3,Entities.PU_LeaderRifle1,4,GetPosition("start_trupp3_id3"),"help7_id3")
+      CreateMilitaryGroup(3,Entities.PU_Serf,0,GetPosition("start_trupp5_id3"),"serf_id3")
+      ForbidTechnology( Technologies.B_Village, 3 )
+      ForbidTechnology( Technologies.B_Residence, 3 )
+      ForbidTechnology( Technologies.B_Farm, 3 )
+      ForbidTechnology( Technologies.B_University, 3 )
+      ForbidTechnology( Technologies.B_Claymine, 3 )
+      ForbidTechnology( Technologies.B_PowerPlant, 3 )
+
+      serfCheck = StartSimpleJob("StartSerfCheck");
+    nv_helper = math.random(8, 12)
+    CheckMode = 3
+    Message("Schwierigkeit: @color:255,0,06 SCHWER @color:255,255,255 wurde gewaehlt!")
+    Logic.RemoveTribute(1,TMod1)
+    Logic.RemoveTribute(1,TMod2)
+    Logic.RemoveTribute(1,TMod3)
+    GUIAction_ToggleMenu( gvGUI_WidgetID.TradeWindow,0)
+    ActivateBandits() 
+
+    StartSimpleJob("StopBandit1")
+    StartSimpleJob("StopBandit2")
+    StartSimpleJob("StopBandit3")
+    StartSimpleJob("StopBandit4")
+
+    
+   EndJob(TickPeace)
+   EMS.T.SetPeacetime(55*60 )
+end
+
+
 
 -- Hier kommen die Funktionen rein, die nach Ende der Friedenszeit ausgeführt
 -- werden sollen. Gibt es keine Friedenszeit wird es sofort ausgeführt, sobald
@@ -146,6 +761,52 @@ function OnPeacetimeOver()
    Logic.AddQuest(2, 2, MAINQUEST_OPEN, "Das Nebelvolk", "Gut gemacht meine Mitstreiter, @cr Ihr habt es geschafft florierende Burgen zu errichten. Ab sofort greift jedoch das Nebelvolk an. Besiegt es @cr um den Sumpf zu passieren und die Belagerer @cr von Mansuri zu beseitigen. ", 1)
    Logic.AddQuest(3, 2, MAINQUEST_OPEN, "Das Nebelvolk", "Gut gemacht meine Mitstreiter, @cr Ihr habt es geschafft florierende Burgen zu errichten. Ab sofort greift jedoch das Nebelvolk an. Besiegt es @cr um den Sumpf zu passieren und die Belagerer @cr von Mansuri zu beseitigen. ", 1)
 end
+
+---------------------------------------Weather-----------------------------------
+
+function WeatherNormalTimer()
+    if weatherTimer == 0 then
+        AddSummer(4*60)
+    elseif weatherTimer == 240 then
+        AddTransitionSunrise(60)
+    elseif weatherTimer == 300 then
+        AddSunrise(60)
+    elseif weatherTimer == 360 then
+        AddNight(4*60)
+    elseif weatherTimer == 600 then
+        AddSunrise(60)
+    elseif weatherTimer == 660 then
+        AddTransitionSunrise(60);
+    elseif weatherTimer == 720 then
+        AddRain(4*60)
+    elseif weatherTimer == 960 then
+        AddTransitionSunriseRain(60);
+    elseif weatherTimer == 1020 then
+        AddSunriseRain(60)
+    elseif weatherTimer == 1080 then
+        AddNightRain(4*60)
+    elseif weatherTimer == 1320 then
+        AddSunriseRain(60)
+    elseif weatherTimer == 1380 then
+        AddTransitionSunriseRain(60)
+    elseif weatherTimer == 1440 then
+        AddSummer(4*60)
+    elseif weatherTimer == 1680 then
+        AddTransitionSunrise(60)
+    elseif weatherTimer == 1740 then
+        AddSunrise(60)
+    elseif weatherTimer == 1800 then
+        AddNight(4*60)
+    elseif weatherTimer == 2040 then
+        AddSunrise(60)
+    elseif weatherTimer == 2100 then
+        AddTransitionSunrise(60);
+    elseif weatherTimer == 2160 then
+        weatherTimer = -1
+    end
+    weatherTimer = weatherTimer +1;
+end
+
 
 ------------------------General Setup--------------------------------------------------------------------
 function diplomacy()
@@ -227,12 +888,7 @@ function castleCheck()
             AllowTechnology( Technologies.B_Farm, v )
             AllowTechnology( Technologies.B_University, v )
             AllowTechnology( Technologies.B_Claymine, v )
-            Logic.AddToPlayersGlobalResource(v, ResourceType.Gold, 1500)
-            Logic.AddToPlayersGlobalResource(v, ResourceType.Clay, 1500)
-            Logic.AddToPlayersGlobalResource(v, ResourceType.Wood, 1500)
-            Logic.AddToPlayersGlobalResource(v, ResourceType.Stone, 800)
-            Logic.AddToPlayersGlobalResource(v, ResourceType.Iron, 150)
-            Logic.AddToPlayersGlobalResource(v, ResourceType.Sulfur, 150)
+            _G["ReadyPlayer_"..v] = 1
             counterCastle = counterCastle+1;
             if counterCastle == table.getn(GetActivePlayers()) then
                 EndJob(serfCheck);
@@ -250,23 +906,35 @@ end
 
 
 ----------------------------------------Nebelvolk----------------------------------------------------------
+nv_counter = 0
+
+function NVBuildingCheck0()
+    if IsDestroyed("burg_id5") then
+        nv_counter = nv_counter +1
+        return true;
+    end
+end
+StartSimpleJob("NVBuildingCheck0")
+
+for i=1,12,1 do
+    local j = i
+    _G["NVBuildingCheck"..j] = function()
+        if IsDestroyed("nebel"..j.."_id5") then
+            nv_counter = nv_counter +1
+            return true;
+        end
+    end
+end
+
+for i=1,12,1 do
+    StartSimpleJob("NVBuildingCheck"..i)
+end
+
+
 
 function wave1barriers()
-    if IsDestroyed("burg_id5") 
-    and IsDestroyed("nebel1_id5")
-    and IsDestroyed("nebel2_id5")
-    and IsDestroyed("nebel3_id5")
-    and IsDestroyed("nebel4_id5")
-    and IsDestroyed("nebel5_id5")
-    and IsDestroyed("nebel6_id5")
-    and IsDestroyed("nebel7_id5")
-    and IsDestroyed("nebel8_id5")
-    and IsDestroyed("nebel9_id5")
-    and IsDestroyed("nebel10_id5")
-    and IsDestroyed("nebel11_id5")
-    and IsDestroyed("nebel12_id5") then
 
-
+        if nv_counter == nv_helper then
         ------Aktivierung Welle1
 
         DestroyEntity("barrier1_id6")
@@ -304,51 +972,40 @@ end
 
 ----------------------------------------------------Wetterwechsel/ Wettermaschine-----------------------------------------------
 function StartSnow()
-
-    --Schneetagezyklus
-        CppLogic.Logic.ClearWeatherQueueAndAddInitial(3, 60*4, 1, 3, 10)
-		AddPeriodicTransitionSunriseSnow(60);
-		AddPeriodicSunriseSnow(60)
-		AddPeriodicNightSnow(4*60);
-		AddPeriodicSunriseSnow(60)
-		AddPeriodicTransitionSunriseSnow(60);
-
-    
+    EndJob(SummerJob)
+    snowTimer = 0
+    SnowJob = StartSimpleJob("WeatherSnowTimer")
     if not checkWeatherMachine then
         checkWeatherMachine = StartSimpleJob("WeatherPlant")
     end
 end
 
+function WeatherSnowTimer()
+    --Schneetagezyklus
+
+    if snowTimer == 0 then
+        AddSnow(4*60)
+    elseif snowTimer == 240 then
+        AddTransitionSunriseSnow(60)
+    elseif snowTimer == 300 then
+        AddSunriseSnow(60)
+    elseif snowTimer == 360 then
+        AddNightSnow(4*60)
+    elseif snowTimer == 600 then
+        AddSunriseSnow(60)
+    elseif snowTimer == 660 then
+        AddTransitionSunriseSnow(60)
+    elseif snowTimer == 720 then
+        snowTimer = -1
+    end
+    snowTimer = snowTimer +1
+end
+
 function WeatherPlant()
     if IsDestroyed(lighthouseID) then
-
-    	--Sommertag 1
-
-		CppLogic.Logic.ClearWeatherQueueAndAddInitial(1, 60*4, 1, 1, 10)
-		AddPeriodicTransitionSunrise(60);
-		AddPeriodicSunrise(60)
-		AddPeriodicNight(4*60);
-		AddPeriodicSunrise(60)
-		AddPeriodicTransitionSunrise(60);
-		
-        --Sommertag 2
-
-        AddPeriodicSummer(4*60);
-		AddPeriodicTransitionSunrise(60);
-		AddPeriodicSunrise(60)
-		AddPeriodicNight(4*60);
-		AddPeriodicSunrise(60)
-		AddPeriodicTransitionSunrise(60);
-
-		--Regentage
-
-		AddPeriodicRain(4*60);
-		AddPeriodicTransitionSunriseRain(60);
-		AddPeriodicSunriseRain(60)
-		AddPeriodicNightRain(4*60);
-		AddPeriodicSunriseRain(60)
-		AddPeriodicTransitionSunriseRain(60);
-
+    EndJob(SnowJob)
+    weatherTimer = 0
+    SummerJob = StartSimpleJob("WeatherNormalTimer")
     StartSimpleJob("BuildWeatherPlant");
     return true;
     end
@@ -728,4 +1385,4 @@ function DestroyWoodPile( _piletable, _index )
     table.remove( gvWoodPiles, _index )
 end
 
----------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------
