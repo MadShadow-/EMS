@@ -1,15 +1,20 @@
 --[[
 	Custom Text Input
 	Author: MadShadow
-	Version: 2.0
 
-	Beispiel:
-	
-	textInput = 
+	Example:
+	local widgetInfo = 
 	{
-		
+		Widget = "XYZ", -- name of the button that receives the output updates
+		Before = "@center ",
+		NumbersOnly=true,
+		MaxLength=3,
+		Callback=EMS.GL.CustomTextInputCallback,
+		..,
+		... see below for all customizable options.
 	}
-	CTI.New({Widget="EMSPUGF2Value", Before = "@center "})
+	
+	ctiObject = CTI.New(widgetInfo)
 ]]
 
 
@@ -50,6 +55,8 @@ function CTI.New(_data)
 		OpenCallback = _data.OpenCallback or function() end,
 		MaxLength = _data.MaxLength or 1000,
 		NumbersOnly = _data.NumbersOnly or false,
+		AllowNegativeNumbers = _data.AllowNegativeNumbers or false,
+		AllowFloatingPointNumbers = _data.AllowFloatingPointNumbers or false,
 		EditMode = _data.EditMode or false,
 		CursorChar = _data.CursorChar or "|",
 		Before = _data.Before or "",
@@ -224,6 +231,11 @@ function CTI.CharTrigger(charAsNum)
 				CTI.Active:ResetAndClose();
 				return;
 			end
+			-- check for valid numbers
+			if CTI.Active.NumbersOnly and tonumber(CTI.Active.Text) == nil then
+				CTI.Active:ResetAndClose();
+				return;
+			end
 		end
 		XGUIEng.SetText(CTI.Active.Widget, CTI.Active.Before .. CTI.Active.Text .. CTI.Active.After);
 		CTI.Active:Close();
@@ -249,6 +261,21 @@ function CTI.CharTrigger(charAsNum)
 		return;
 	elseif CTI.Active.NumbersOnly then
 		local num = charAsNum - 48;
+
+		if CTI.Active.AllowFloatingPointNumbers
+		and (charAsNum == string.byte(".") or charAsNum == string.byte(",")) then
+			-- only append one .
+			if not string.find(CTI.Active.Text, ".", 1, true) then
+				CTI.Active.Text = CTI.Active.Text .. ".";
+			end
+		end
+		if CTI.Active.AllowNegativeNumbers
+		and (charAsNum == string.byte("-")) then
+			-- only append a minus, if its the first character.
+			if string.len(CTI.Active.Text) <= 0 then
+				CTI.Active.Text = CTI.Active.Text .. "-";
+			end
+		end
 		if num < 0 or num > 9 then
 			return;
 		end
