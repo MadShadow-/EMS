@@ -69,6 +69,10 @@ EMS.GV.PlayerColorsRGB = {
 	{255,150,214},
 };
 
+EMS.GV.Pages = {
+	"EMSPagesMain",
+};
+
 function EMS.GV.Setup()
 	-- general
 	EMS.GV.GameStarted = false;
