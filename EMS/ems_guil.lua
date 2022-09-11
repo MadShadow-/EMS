@@ -287,6 +287,7 @@ function EMS.GL.Setup()
 		["TowerLimit"] = EMS.GL.GUIUpdate_Text,
 		["PredefinedRuleset"] = EMS.GL.GUIUpdate_TextToggleButton,
 		["GameMode"] = EMS.GL.GUIUpdate_TextToggleButton,
+		["CurrentPage"] = EMS.GL.GUIUpdate_Text,
 	};
 	for i = 1, 8 do
 		EMS.GL.GUIUpdate["NumberOfHeroesForPlayer"..i] = EMS.GL.GUIUpdate_TextHero;
@@ -338,6 +339,7 @@ function EMS.GL.Setup()
 		["NumberOfHeroesForPlayer9"] = "EMSPUH9Value";
 		["PredefinedRuleset"] = "EMSPUGF11Value",
 		["GameMode"] = "EMSPUGF12Value",
+		["CurrentPage"] = {"EMSPUSCDown"}
 	};
 	for i = 1, 12 do
 		EMS.GL.MapRuleToGUIWidget[heroes[i]] = "EMSPH"..i.."N";
@@ -351,6 +353,8 @@ function EMS.GL.Setup()
 		["EMSPUGF5Value"] = "TradeLimit",
 		["EMSPUGF4Value"] = "TowerLimit",
 		["EMSPUH9Value"] = "NumberOfHeroesForAll",
+		["EMSPUSCDown"] = "CurrentPage",
+		["EMSPUSCUp"] = "CurrentPage",
 	};
 	
 	EMS.GL.GameInformation_IsHumanPlayerAttachedToPlayerID = XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID;
@@ -806,11 +810,15 @@ function EMS.GL.SetValue(_rule, _value)
 	EMS.GL.TrySync("EMS.GL.SetValueSynced", _rule, _value);
 end
 
-function EMS.GL.Toggle(_rule)
+function EMS.GL.Toggle(_rule, _reverse)
 	if not EMS.CanChangeRules then
 		return;
 	end
-	EMS.GL.GetRule(_rule):Increase();
+	if not _reverse then
+		EMS.GL.GetRule(_rule):Increase();
+	else
+		EMS.GL.GetRule(_rule):Decrease();
+	end
 	EMS.GL.TrySync("EMS.GL.SetValueSynced", _rule, EMS.GL.GetRule(_rule):GetValue());
 end
 
@@ -900,6 +908,12 @@ function EMS.GL.GUIUpdate_Text(_rule)
 	if value <= 0 then
 		value = "-";
 	end
+	XGUIEng.SetText(widget[1], "@center "..value);
+end
+
+function EMS.GL.GUIUpdate_Number(_rule)
+	local widget = EMS.GL.MapRuleToGUIWidget[_rule];
+	local value = EMS.GL.GetRule(_rule):GetRepresentative();
 	XGUIEng.SetText(widget[1], "@center "..value);
 end
 
