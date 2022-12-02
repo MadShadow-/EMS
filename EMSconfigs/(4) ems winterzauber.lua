@@ -355,19 +355,19 @@ function WT.Setup()
 	
 	if CNetwork then
 		CNetwork.SetNetworkHandler("WT.AddRespawnTroop", function(name, _troopType, _playerId)
-			if CNetwork.isAllowedToManipulatePlayer(name, _playerId) then
+			if CNetwork.IsAllowedToManipulatePlayer(name, _playerId) then
 				WT.AddRespawnTroop(_troopType, _playerId);
 			end
 		end)
 
 		CNetwork.SetNetworkHandler("WT.SlotButton_Synced", function(name, _index, _playerId)
-			if CNetwork.isAllowedToManipulatePlayer(name, _playerId) then
+			if CNetwork.IsAllowedToManipulatePlayer(name, _playerId) then
 				WT.SlotButton_Synced(_index, _playerId);
 			end
 		end)
 
 		CNetwork.SetNetworkHandler("WT.OptionButton_Synced", function(name, _index, _playerId)
-			if CNetwork.isAllowedToManipulatePlayer(name, _playerId) then
+			if CNetwork.IsAllowedToManipulatePlayer(name, _playerId) then
 				WT.OptionButton_Synced(_index, _playerId);
 			end
 		end)
@@ -686,6 +686,7 @@ function WT.TroopButton(_troopType)
 end
 
 function WT.UpdateTroopTooltip(_troopType)
+	XGUIEng.ShowWidget("EMSMAWTooltip", 1)
 	local costs = WT.GetTroopCosts(_troopType, WT.GetPlayersAI(GUI.GetPlayerID()));
 	XGUIEng.SetText("EMSMAWTooltip", WT.GetCostString(costs, GUI.GetPlayerID()));
 end
@@ -1585,7 +1586,7 @@ end
 
 function WT.Sync(...)
 	if CNetwork then
-		CNetwork.send_command(unpack(arg));
+		CNetwork.SendCommand(unpack(arg));
 	else
 		Sync.Call(unpack(arg));
 	end
