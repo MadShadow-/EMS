@@ -1942,7 +1942,7 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.InitGenerationData()
 	
-	RandomMapGenerator.GenerationData = { DebugMode = true, }
+	RandomMapGenerator.GenerationData = { DebugMode = false, }
 	
 	Score.Player[0] = {buildings=0, all=0}
 	
