@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.26,
+	Version = 1.27,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -22,15 +22,18 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
  
 	Callback_OnMapStart = function()
-		TriggerFix_mode = "Xpcall"
+		--TriggerFix_mode = "Xpcall"
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua")
-		mcbPacker.mainPath="maps\\user\\EMS\\tools\\"
-		mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight")
-		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua")
-		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\\comfort\\player\\AddTribute.lua")
-		S5HookLoader.Init()
-		EntityIdChangedHelper.Init()
-		LuaDebugger.Log = function()end
+		mcbPacker.Paths = {{"data/maps/user/ems/tools/",".lua"}}
+		--mcbPacker.mainPath="maps\\user\\EMS\\tools\\"
+		--mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight")
+		--Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua")
+		mcbPacker.require("s5CommunityLib/lib/UnlimitedArmySpawnGenerator")
+		mcbPacker.require("s5CommunityLib/comfort/player/AddTribute")
+		TriggerFix.AllScriptsLoaded()
+		--S5HookLoader.Init()
+		--EntityIdChangedHelper.Init()
+		--LuaDebugger.Log = function()end
 		--ActivateDebug = true
 		--TriggerFix.xpcallTimeMsg = false
 		Logic.SetPlayerRawName(5, "Highport")
@@ -960,7 +963,7 @@ end
 
 function CreateArmies()
 	local spawnpos = {}
-	NVAttackKeberosUA = UnlimitedArmy:New({
+	NVAttackKeberosUA = LazyUnlimitedArmy:New({
 				Player = 6,
 				Area = 3800,
 				AutoDestroyIfEmpty = true,
@@ -968,8 +971,9 @@ function CreateArmies()
 				Formation = UnlimitedArmy.Formations.Chaotic,
 				AutoRotateRange = true,
 				DoNotNormalizeSpeed = false,
-				IgnoreFleeing = false
-				})
+				--IgnoreFleeing = false
+				HiResJob = true,
+				},2,13)
 	NVAttackKeberosUA:AddCommandSetSpawnerStatus(false,false)
 	spawnpos[1] = GetPosition("NVBarracksSpawn1")
 	spawnpos[1].Generator = "NVBarracksSpawn1Generator"
@@ -988,7 +992,7 @@ function CreateArmies()
 											RandomizeSpawnPoint = true
 											})
 	
-	NVDef1UA = UnlimitedArmy:New({
+	NVDef1UA = LazyUnlimitedArmy:New({
 				Player = 6,
 				Area = 3500,
 				AutoDestroyIfEmpty = true,
@@ -996,8 +1000,9 @@ function CreateArmies()
 				Formation = UnlimitedArmy.Formations.Chaotic,
 				AutoRotateRange = true,
 				DoNotNormalizeSpeed = false,
-				IgnoreFleeing = false
-				})
+				--IgnoreFleeing = false
+				HiResJob = true,
+				},3,13)
 	NVDef1UA:AddCommandSetSpawnerStatus(false,false)
 	local spawnpos1 = {}
 	spawnpos1[1] = GetPosition("NVBarracksSpawn1")
@@ -1014,7 +1019,7 @@ function CreateArmies()
 											{LeaderType = Entities.CU_Evil_LeaderSkirmisher1, SoldierNum = 16, SpawnNum = 2, Looped = true, Experience = 3}
 											},
 											})
-	NVDef2UA = UnlimitedArmy:New({
+	NVDef2UA = LazyUnlimitedArmy:New({
 				Player = 6,
 				Area = 3500,
 				AutoDestroyIfEmpty = true,
@@ -1022,8 +1027,9 @@ function CreateArmies()
 				Formation = UnlimitedArmy.Formations.Chaotic,
 				AutoRotateRange = true,
 				DoNotNormalizeSpeed = false,
-				IgnoreFleeing = false
-				})
+				--IgnoreFleeing = false
+				HiResJob = true,
+				},4,13)
 	NVDef2UA:AddCommandSetSpawnerStatus(false,false)
 	local spawnpos2 = {}
 	spawnpos2[1] = GetPosition("NVBarracksSpawn2")
@@ -1041,7 +1047,7 @@ function CreateArmies()
 											},
 											})
 	
-	NVAttackPlayerUA = UnlimitedArmy:New({
+	NVAttackPlayerUA = LazyUnlimitedArmy:New({
 				Player = 6,
 				Area = 3800,
 				AutoDestroyIfEmpty = true,
@@ -1049,11 +1055,12 @@ function CreateArmies()
 				Formation = UnlimitedArmy.Formations.Chaotic,
 				AutoRotateRange = true,
 				DoNotNormalizeSpeed = false,
-				IgnoreFleeing = false
-				})
+				--IgnoreFleeing = false
+				HiResJob = true,
+				},5,13)
 	NVAttackPlayerUA:AddCommandSetSpawnerStatus(false,false)
 	
-	KerberosAttackNVUA = UnlimitedArmy:New({
+	KerberosAttackNVUA = LazyUnlimitedArmy:New({
 					Player = 5,
 					Area = 3800,
 					AutoDestroyIfEmpty = true,
@@ -1062,8 +1069,9 @@ function CreateArmies()
 					LeaderFormation = FormationFunktion,
 					AutoRotateRange = true,
 					DoNotNormalizeSpeed = false,
-					IgnoreFleeing = false
-					})
+					--IgnoreFleeing = false
+					HiResJob = true,
+					},6,13)
 	KerberosAttackNVUA:AddCommandSetSpawnerStatus(false,false)
 	local spawnpos3 = {}
 	spawnpos3[1] = GetPosition("KeberosUACollectingDefPoint")
@@ -1087,7 +1095,7 @@ function CreateArmies()
 												RandomizeSpawn = false
 												})
 	
-	KerberosDef1UA = UnlimitedArmy:New({
+	KerberosDef1UA = LazyUnlimitedArmy:New({
 					Player = 5,
 					Area = 3800,
 					AutoDestroyIfEmpty = true,
@@ -1096,8 +1104,9 @@ function CreateArmies()
 					LeaderFormation = FormationFunktion,
 					AutoRotateRange = true,
 					DoNotNormalizeSpeed = false,
-					IgnoreFleeing = false
-					})
+					--IgnoreFleeing = false
+					HiResJob = true,
+					},7,13)
 	KerberosDef1UA:AddCommandSetSpawnerStatus(false,false)
 	local spawnpos4 = {}
 	spawnpos4[1] = GetPosition("KeberosUACollectingDefPoint")
@@ -1120,7 +1129,7 @@ function CreateArmies()
 									})
 									
 	
-	KerberosDef2UA = UnlimitedArmy:New({
+	KerberosDef2UA = LazyUnlimitedArmy:New({
 					Player = 5,
 					Area = 3800,
 					AutoDestroyIfEmpty = true,
@@ -1129,8 +1138,9 @@ function CreateArmies()
 					LeaderFormation = FormationFunktion,
 					AutoRotateRange = true,
 					DoNotNormalizeSpeed = false,
-					IgnoreFleeing = false
-					})
+					--IgnoreFleeing = false
+					HiResJob = true,
+					},8,13)
 	KerberosDef2UA:AddCommandSetSpawnerStatus(false,false)
 	local spawnpos5 = {}
 	spawnpos5[1] = GetPosition("KeberosUACollectingDefPoint")
@@ -1152,7 +1162,7 @@ function CreateArmies()
 									},
 									})
 	
-	KerberosAttackPlayerUA = UnlimitedArmy:New({
+	KerberosAttackPlayerUA = LazyUnlimitedArmy:New({
 					Player = 5,
 					Area = 4000,
 					AutoDestroyIfEmpty = true,
@@ -1161,8 +1171,9 @@ function CreateArmies()
 					LeaderFormation = FormationFunktion,
 					AutoRotateRange = true,
 					DoNotNormalizeSpeed = false,
-					IgnoreFleeing = false
-					})
+					--IgnoreFleeing = false
+					HiResJob = true,
+					},9,13)
 	KerberosAttackPlayerUA:AddCommandSetSpawnerStatus(false,false)
 --[[spawnpos[1] = GetPosition("KeberosUACollectingDefPoint")
 	spawnpos[1].Generator = {"KeberosUASpawnGenerator2","KeberosUASpawnGenerator1"}
@@ -1184,25 +1195,27 @@ function CreateArmies()
 										}
 										})]]
 	
-	BarbarsTopRightUA = UnlimitedArmy:New({
+	BarbarsTopRightUA = LazyUnlimitedArmy:New({
 					Player = 7,
 					Area = 3000,
 					AutoDestroyIfEmpty = false,
 					TransitAttackMove = true,
 					Formation = UnlimitedArmy.Formations.Chaotic,
 					DoNotNormalizeSpeed = true,
-					IgnoreFleeing = false
-					})
+					--IgnoreFleeing = false
+					HiResJob = true,
+					},11,13)
 					
-	BarbarsBottomLeftUA = UnlimitedArmy:New({
+	BarbarsBottomLeftUA = LazyUnlimitedArmy:New({
 					Player = 7,
 					Area = 3000,
 					AutoDestroyIfEmpty = false,
 					TransitAttackMove = true,
 					Formation = UnlimitedArmy.Formations.Chaotic,
 					DoNotNormalizeSpeed = true,
-					IgnoreFleeing = false,
-					})
+					--IgnoreFleeing = false,
+					HiResJob = true,
+					},12,13)
 					
 end
 
