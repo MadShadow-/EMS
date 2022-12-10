@@ -9,7 +9,8 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 1,
+	-- version is set by the generator
+	Version = 0,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -25,7 +26,7 @@ EMS_CustomMapConfig =
 		SetupNormalWeatherGfxSet();
 		LocalMusic.UseSet = MEDITERANEANMUSIC;
 		
-		Script.Load("maps\\user\\EMS\\tools\\rmg.lua")
+		Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg.lua")
 	end,
 	
 	-- ********************************************************************************************
@@ -34,6 +35,7 @@ EMS_CustomMapConfig =
 	-- * and after the 10 seconds of countdown
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
+		RandomMapGenerator.Callback_OnGameStart()
 	end,
 	
 	-- ********************************************************************************************

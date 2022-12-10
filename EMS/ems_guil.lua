@@ -206,6 +206,7 @@ function EMS.GL.Setup()
 	end
 	
 	EMS.GL.CurrentPage = "";
+	EMS.GL.CurrentRulePage = 1;
 	
 	EMS.GL.MainMenuButtons = {
 		["Restart"] = function()
@@ -287,7 +288,6 @@ function EMS.GL.Setup()
 		["TowerLimit"] = EMS.GL.GUIUpdate_Text,
 		["PredefinedRuleset"] = EMS.GL.GUIUpdate_TextToggleButton,
 		["GameMode"] = EMS.GL.GUIUpdate_TextToggleButton,
-		["CurrentPage"] = EMS.GL.GUIUpdate_Text,
 	};
 	for i = 1, 8 do
 		EMS.GL.GUIUpdate["NumberOfHeroesForPlayer"..i] = EMS.GL.GUIUpdate_TextHero;
@@ -339,7 +339,6 @@ function EMS.GL.Setup()
 		["NumberOfHeroesForPlayer9"] = "EMSPUH9Value";
 		["PredefinedRuleset"] = "EMSPUGF11Value",
 		["GameMode"] = "EMSPUGF12Value",
-		["CurrentPage"] = {"EMSPUSCDown"}
 	};
 	for i = 1, 12 do
 		EMS.GL.MapRuleToGUIWidget[heroes[i]] = "EMSPH"..i.."N";
@@ -353,8 +352,6 @@ function EMS.GL.Setup()
 		["EMSPUGF5Value"] = "TradeLimit",
 		["EMSPUGF4Value"] = "TowerLimit",
 		["EMSPUH9Value"] = "NumberOfHeroesForAll",
-		["EMSPUSCDown"] = "CurrentPage",
-		["EMSPUSCUp"] = "CurrentPage",
 	};
 	
 	EMS.GL.GameInformation_IsHumanPlayerAttachedToPlayerID = XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID;
@@ -791,6 +788,19 @@ function EMS.GL.ShowPage(_page, _flag)
 	XGUIEng.ShowWidget("EMSPagesBG", flag);
 	XGUIEng.ShowWidget("EMSInvisibleClickCatcher", flag);
 	EMS.GL.CurrentPage = _page;
+end
+
+function EMS.GL.ToggleRulePage(_value)
+	_value = _value or 1
+	XGUIEng.ShowWidget(EMS.GV.Pages[EMS.GL.CurrentRulePage], 0)
+	_value = EMS.GL.CurrentRulePage + _value
+	if _value < 1 then
+		_value = table.getn(EMS.GV.Pages)
+	elseif _value > table.getn(EMS.GV.Pages) then
+		_value = 1
+	end
+	XGUIEng.ShowWidget(EMS.GV.Pages[_value], 1)
+	EMS.GL.CurrentRulePage = _value
 end
 
 function EMS.GL.TrySync(...)

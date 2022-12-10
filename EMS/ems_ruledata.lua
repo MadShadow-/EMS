@@ -923,36 +923,6 @@ function EMS.RD.Rules.Peacetime:Evaluate()
 end
 
 -- ************************************************************************************************ --
--- *	Current Page
--- *
-
-EMS.RD.Rules.CurrentPage = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-EMS.RD.Rules.CurrentPage.value = 1;
-
-function EMS.RD.Rules.CurrentPage:SetValue(_value)
-	EMS.RD.Rules.PredefinedRuleset:SoftCustomize()
-	if _value < 1 then
-		_value = table.getn(EMS.GV.Pages)
-	elseif _value > table.getn(EMS.GV.Pages) then
-		_value = 1
-	end
-	XGUIEng.ShowWidget(EMS.GV.Pages[self.value], 0)
-	XGUIEng.ShowWidget(EMS.GV.Pages[_value], 1)
-	self.value = _value
-end
-
-function EMS.RD.Rules.CurrentPage:GetTitle()
-	return "Seite"
-end
-
-function EMS.RD.Rules.CurrentPage:GetDescription(_id)
-	if _id == 1 then
-		return "Springt zur nächsten Regel-Seite."
-	end
-	return "Springt zur vorherigen Regel-Seite."
-end
-
--- ************************************************************************************************ --
 -- *	Predefined Ruleset
 -- *
 

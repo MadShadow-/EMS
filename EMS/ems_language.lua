@@ -220,6 +220,9 @@ EMS.L = {
 			PlayerNotAfkAnymore = " ist nicht mehr afk!",
 			NeedsCppLogic = "Der Hook von mcb muss für diese Karte aktiviert sein! Bitte starte den S5Updater und aktiviere den CppLogic hook!",
 			Player = "Spieler",
+			
+			RulePageUp = "Springt zur nächsten Regel-Seite.",
+			RulePageDown = "Springt zur vorherigen Regel-Seite.",
 		};
 
 function EMS.L.Setup()
