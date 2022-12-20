@@ -23,7 +23,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 3.1,
+	Version = 3.2,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -568,24 +568,10 @@ function MusicIts() -- Dombausieg erreichbar
 	LocalMusic.SongLength =  Logic.GetTime() + 177
 end
 --
-function MusicCheckSpecial()
-    if GUI.GetPlayerID() == 17 then return false end
-    if string.find( string.lower(UserTool_GetPlayerName(GUI.GetPlayerID())), 'roma') then return false end
-    local numSerf, someSerf = Logic.GetPlayerEntities( GUI.GetPlayerID(), Entities.PU_Serf, 1)
-    if numSerf == 0 then return false end
-    local pos = GetPosition(someSerf)
-    return math.mod( pos.X, 333) < 111 
-end
---
 function MusicRtwI() -- Mapstart + 30 min
-    Message("@color:200,0,0 Musik: @color:0,155,155 Rome total war - Main menu music")
-    if not MusicCheckSpecial() then
-        Sound.StartMusic("data\\maps\\externalmap\\rtwintro.mp3", 130)
-        LocalMusic.SongLength =  Logic.GetTime() + 181
-    else
-        Sound.StartMusic("data\\maps\\externalmap\\theriver.mp3", 130)
-        LocalMusic.SongLength =  Logic.GetTime() + 87
-    end
+	Message("@color:200,0,0 Musik: @color:0,155,155 Rome total war - Main menu music")
+	Sound.StartMusic("data\\maps\\externalmap\\rtwintro.mp3", 130)
+	LocalMusic.SongLength =  Logic.GetTime() + 181
 end
 --##--
 
