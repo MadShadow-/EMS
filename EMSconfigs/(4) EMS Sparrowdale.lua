@@ -34,6 +34,12 @@ EMS_CustomMapConfig = {
         Display.SetPlayerColorMapping(7, 14);
         Display.SetPlayerColorMapping(8, 14);
 
+        for i= 1, 4 do
+            VictoryConditionQuestDomincance(i);
+            VictoryConditionQuestTactical(i);
+            VictoryConditionQuestThievery(i);
+        end
+
         -- Deliver resource to the players
         function GameCallback_User_OutpostProduceResource(_ScriptName, _SpawnPoint, _OwningTeam, _ResourceType, _Amount)
             local Sender = WT2022.Outpost.Teams[_OwningTeam].Deliverer;
@@ -363,11 +369,46 @@ function RemoveBlockRocksToMakePlayersAccessEachother()
 end
 
 function OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
-
+    -- TODO (will propably never be done...)
 end
 
 function OnOutpostUpgradeFinished(_ScriptName, _UpgradeType, _NewUpgradeLevel)
+    -- TODO (will propably never be done...)
+end
 
+function VictoryConditionQuestDomincance(_PlayerID)
+    local Title = "Siegbedingung: AUSLÖSCHUNG";
+    local Text  = "Das Team dem es gelingt, das gegnerische Team zu "..
+                  "vernichten, hat gewonnen. @cr @cr Hinweise: @cr @cr "..
+                  "1) Ob schnelle Siege wie z.B. durch Rush möglich sind "..
+                  "oder nicht, hängt von den EMS-Einstellungen ab.";
+    Logic.AddQuest(_PlayerID, 1, MAINQUEST_OPEN, Title, Text, 1);
+end
+
+function VictoryConditionQuestTactical(_PlayerID)
+    local Title = "Siegbedingung: MONOPOL";
+    local Text  = "Das Team dem es gelingt, alle Außenposten zu erobern "..
+                  "und 5 Minuten zu halten, hat gewonnen."..
+                  " @cr @cr Hinweise: @cr @cr "..
+                  "1) Außenposten werden beansprucht, in dem sie zu einem "..
+                  " gewissen Grad beschädigt werden. @cr "..
+                  "2) Außenposten produzieren veredelbare Rohstoffe und"..
+                  " können durch Upgrades verbessert werden. @cr "..
+                  "3) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn "..
+                  "der Teampartner bereits verloren hat).";
+    Logic.AddQuest(_PlayerID, 2, MAINQUEST_OPEN, Title, Text, 1);
+end
+
+function VictoryConditionQuestThievery(_PlayerID)
+    local Title = "Siegbedingung: DIEBESKUNST";
+    local Text  = "Das Team dem es gelingt, Warenlieferungen von 10000 "..
+                  "Einheiten zu erbeuten, hat gewonnen."..
+                  " @cr @cr Hinweise: @cr @cr "..
+                  "1) Diebe können Handelskarren angreifen, wodurch diese "..
+                  "den Besitzer und ihr Ziel wechseln. @cr "..
+                  "2) Eine Lieferung umfasst 250 Rohstoffe (oder 500 wenn "..
+                  "der Teampartner bereits verloren hat).";
+    Logic.AddQuest(_PlayerID, 3, MAINQUEST_OPEN, Title, Text, 1);
 end
 
 ---
@@ -661,12 +702,13 @@ function WT2022.Outpost:InitiateUpgrade(_ScriptName, _Type, _Duration)
         end
         -- Logic
         local Costs = self:GetUpgradeCosts(_ScriptName, _Type);
+        local PlayerID = Logic.EntityGetPlayer(GetID(_ScriptName));
         self.Outposts[_ScriptName].IsUpgrading = true;
         self.Outposts[_ScriptName].UpgradeType = _Type;
         self.Outposts[_ScriptName].UpgradeDuration = _Duration;
         self.Outposts[_ScriptName].UpgradeStarted = Logic.GetTime();
-        self:DisplayUpgradeStartMessage(_ScriptName, GetPlayer(_ScriptName));
-        RemoveResourcesFromPlayer(GetPlayer(_ScriptName), Costs);
+        self:DisplayUpgradeStartMessage(_ScriptName, PlayerID);
+        RemoveResourcesFromPlayer(PlayerID, Costs);
         GameCallback_GUI_SelectionChanged();
         if GameCallback_User_OutpostUpgradeStarted then
             local Level = self.Outposts[_ScriptName].Upgrades[_Type].Level +1;
@@ -855,20 +897,32 @@ function WT2022.Outpost:OverwriteCommonCallbacks()
 	WT2022.Outpost.GameCallback_OnBuildingConstructionComplete = GameCallback_OnBuildingConstructionComplete;
 	GameCallback_OnBuildingConstructionComplete = function(_EntityID, _PlayerID)
 		WT2022.Outpost.GameCallback_OnBuildingConstructionComplete(_EntityID, _PlayerID);
-        WT2022.Outpost:DisplayChuirchMenu(_EntityID);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
 	end
 
 	WT2022.Outpost.GameCallback_OnBuildingUpgradeComplete = GameCallback_OnBuildingUpgradeComplete;
 	GameCallback_OnBuildingUpgradeComplete = function(_EntityIDOld, _EntityIDNew)
 		WT2022.Outpost.GameCallback_OnBuildingUpgradeComplete(_EntityIDOld, _EntityIDNew);
-        WT2022.Outpost:DisplayChuirchMenu(_EntityIDNew);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
 	end
 
 	WT2022.Outpost.GameCallback_OnTechnologyResearched = GameCallback_OnTechnologyResearched;
 	GameCallback_OnTechnologyResearched = function(_PlayerID, _Technology, _EntityID)
 		WT2022.Outpost.GameCallback_OnTechnologyResearched(_PlayerID, _Technology, _EntityID);
-        WT2022.Outpost:DisplayChuirchMenu(_EntityID);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
 	end
+
+    WT2022.Outpost.GameCallback_OnCannonConstructionComplete = GameCallback_OnCannonConstructionComplete;
+    GameCallback_OnCannonConstructionComplete = function(_BuildingID, _null)
+        WT2022.Outpost.GameCallback_OnCannonConstructionComplete(_BuildingID, _null);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
+    end
+
+    WT2022.Outpost.GameCallback_OnTransactionComplete = GameCallback_OnTransactionComplete;
+    GameCallback_OnCannonConstructionComplete = function(_BuildingID, _null)
+        WT2022.Outpost.GameCallback_OnTransactionComplete(_BuildingID, _null);
+        WT2022.Outpost:DisplayChuirchMenu(GUI.GetSelectedEntity());
+    end
 
 	WT2022.Outpost.Mission_OnSaveGameLoaded = Mission_OnSaveGameLoaded;
 	Mission_OnSaveGameLoaded = function()
@@ -1426,7 +1480,7 @@ function Delivery_Internal_OnEverySecond()
                 local Position = GetPosition(v.Destination);
                 Logic.MoveSettler(GetID(k), Position.X, Position.Y);
             end
-            if IsNear(k, v.Destination, 100) then
+            if IsNear(k, v.Destination, 300) then
                 WT2022.Delivery:ConcludeDelivery(v);
                 DestroyEntity(k);
             end
@@ -1568,6 +1622,7 @@ function WT2022.Victory:Setup(_T1P1, _T1P2, _DP1, _T2P1, _T2P2, _DP2)
         self.HeroRespawnJobID = JobID;
     end
     self:OverwriteTechraceInterface();
+    self:OverwriteSelfDestruct();
 end
 
 function WT2022.Victory:Victory(_WinningTeam)
@@ -1700,8 +1755,8 @@ function WT2022.Victory:DisplayFavoredTeam()
     local ResourceMax = self.StohlenResource.VictoryThreshold;
 
     self:HideAllPointRatios();
-    self:DisplayPointRation(1, "Eroberte Provinzen", Provinces1, Provinces2, OutpostMax);
-    self:DisplayPointRation(2, "Gestohlene Rohstoffe", Resources1, Resources2, ResourceMax);
+    self:DisplayPointRatio(1, "Eroberte Provinzen", Provinces1, Provinces2, OutpostMax);
+    self:DisplayPointRatio(2, "Gestohlene Rohstoffe", Resources1, Resources2, ResourceMax);
 end
 
 function WT2022.Victory:OverwriteTechraceInterface()
@@ -1728,17 +1783,17 @@ function WT2022.Victory:HideAllPointRatios()
     end
 end
 
-function WT2022.Victory:DisplayPointRation(_Index, _Name, _Value1, _Value2, _Max)
+function WT2022.Victory:DisplayPointRatio(_Index, _Name, _Value1, _Value2, _Max)
     local Screen = {GUI.GetScreenSize()}
-    local XRation = (1024/Screen[1]);
-    local YRation = (768/Screen[2]);
-    local ScreenX = Screen[1] * XRation;
-    local ScreenY = Screen[2] * YRation;
-    local W = 800 * XRation;
-    local H = 35 * YRation;
-    local H1 = 15 * YRation;
+    local XRatio = (1024/Screen[1]);
+    local YRatio = (768/Screen[2]);
+    local ScreenX = Screen[1] * XRatio;
+    local ScreenY = Screen[2] * YRatio;
+    local W = 500 * XRatio;
+    local H = 25 * YRatio;
+    local H1 = 10 * YRatio;
     local X = (ScreenX/2) - (W/2);
-    local Y = 85 + ((40*YRation) * (_Index-1));
+    local Y = 95 + ((30*YRatio) * (_Index-1));
     local X1 = 0;
     local W1 = W * (_Value1/_Max);
     local W2 = W * (_Value2/_Max);
@@ -1769,6 +1824,19 @@ function WT2022.Victory:GetTeamOfPlayer(_PlayerID)
         end
     end
     return 0;
+end
+
+-- -------------------------------------------------------------------------- --
+
+function WT2022.Victory:OverwriteSelfDestruct()
+    if Network_Handler_Diplomacy_Self_Destruct_Helper then
+        Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022 = Network_Handler_Diplomacy_Self_Destruct_Helper;
+        Network_Handler_Diplomacy_Self_Destruct_Helper = function(pid, type)
+            if type ~= Entities.CB_Bastille1 then
+                Network_Handler_Diplomacy_Self_Destruct_Helper_Orig_WT2022(pid, type)
+            end
+        end
+    end
 end
 
 -- -------------------------------------------------------------------------- --
