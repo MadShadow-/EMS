@@ -288,6 +288,28 @@ function EMS.RD.Rules.RMG_NoiseFactorXY:GetRepresentative()
 end
 
 -- ************************************************************************************************ --
+-- *	Forest Density
+-- *
+
+EMS.RD.Rules.RMG_ForestDensity = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_ForestDensity:GetTitle()
+	return "Walddichte"
+end
+
+function EMS.RD.Rules.RMG_ForestDensity:GetDescription()
+	return "Je höher der Wert, um so mehr Bäume und Sträucher werden generiert."
+end
+
+function EMS.RD.Rules.RMG_ForestDensity:SetValue(_value)
+	self.value = _value
+end
+
+function EMS.RD.Rules.RMG_ForestDensity:GetRepresentative()
+	return self.value .. "%"
+end
+
+-- ************************************************************************************************ --
 -- *	ThresholdPike
 -- *
 
