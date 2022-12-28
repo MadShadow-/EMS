@@ -35,6 +35,7 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.CustomTextInputs["RMG_WaterBaseHeight"]		= CTI.New({Widget="RMG2F2Value", Before = "@center ", NumbersOnly=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_NoiseFactorZ"]			= CTI.New({Widget="RMG2F3Value", Before = "@center ", NumbersOnly=true, MaxLength=3, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_NoiseFactorXY"]		= CTI.New({Widget="RMG2F4Value", Before = "@center ", NumbersOnly=true, MaxLength=3, Callback=EMS.GL.CustomTextInputCallback});
+	EMS.GL.CustomTextInputs["RMG_ForestDensity"]		= CTI.New({Widget="RMG2F5Value", Before = "@center ", NumbersOnly=true, MaxLength=3, Callback=EMS.GL.CustomTextInputCallback});
 	
 	EMS.GL.CustomTextInputs["RMG_ThresholdPike"]		= CTI.New({Widget="RMG3F2Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_ThresholdMountain"]	= CTI.New({Widget="RMG3F4Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
@@ -89,6 +90,7 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.GUIUpdate["RMG_WaterBaseHeight"]			= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_NoiseFactorZ"]			= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_NoiseFactorXY"]			= EMS.GL.GUIUpdate_Number
+	EMS.GL.GUIUpdate["RMG_ForestDensity"]			= EMS.GL.GUIUpdate_Number
 	
 	EMS.GL.GUIUpdate["RMG_ThresholdPike"]			= EMS.GL.GUIUpdate_Threshold
 	EMS.GL.GUIUpdate["RMG_ThresholdMountain"]		= EMS.GL.GUIUpdate_Threshold
@@ -145,6 +147,7 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapRuleToGUIWidget["RMG_WaterBaseHeight"]		= {"RMG2F2Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_NoiseFactorZ"]			= {"RMG2F3Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_NoiseFactorXY"]			= {"RMG2F4Value"}
+	EMS.GL.MapRuleToGUIWidget["RMG_ForestDensity"]			= {"RMG2F5Value"}
 	
 	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdPike"]			= {"RMG3F2Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdMountain"]		= {"RMG3F4Value"}
@@ -201,6 +204,7 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapWidgetToRule["RMG2F2Value"]	= "RMG_WaterBaseHeight"
 	EMS.GL.MapWidgetToRule["RMG2F3Value"]	= "RMG_NoiseFactorZ"
 	EMS.GL.MapWidgetToRule["RMG2F4Value"]	= "RMG_NoiseFactorXY"
+	EMS.GL.MapWidgetToRule["RMG2F5Value"]	= "RMG_ForestDensity"
 	
 	EMS.GL.MapWidgetToRule["RMG3F1Value"]	= "RMG_ThresholdSea"
 	EMS.GL.MapWidgetToRule["RMG3F2Value"]	= "RMG_ThresholdPike"
