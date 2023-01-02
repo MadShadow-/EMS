@@ -12,7 +12,7 @@ EMS_CustomMapConfig = {
     -- * Configuration File Version
     -- * A version check will make sure every player has the same version of the configuration file
     -- ********************************************************************************************
-    Version = 4,
+    Version = 5,
 
     -- ********************************************************************************************
     -- * Callback_OnMapStart
@@ -397,34 +397,34 @@ function RemoveBlockRocksToMakeOutpostsAccessable()
     DestroyEntity("RockBlock1_3");
     DestroyEntity("RockBlock1_5");
     DestroyEntity("RockBlock1_6");
-    DestroyEntity("RockBlock2_1");
+    DestroyEntity("RockBlock2_2");
     DestroyEntity("RockBlock2_3");
     DestroyEntity("RockBlock2_4");
     DestroyEntity("RockBlock2_5");
     DestroyEntity("RockBlock3_1");
     DestroyEntity("RockBlock3_2");
-    DestroyEntity("RockBlock3_5");
     DestroyEntity("RockBlock3_4");
+    DestroyEntity("RockBlock3_5");
     DestroyEntity("RockBlock4_1");
-    DestroyEntity("RockBlock4_2");
-    DestroyEntity("RockBlock4_6");
+    DestroyEntity("RockBlock4_3");
     DestroyEntity("RockBlock4_5");
+    DestroyEntity("RockBlock4_6");
 end
 
 function RemoveBlockRocksToMakePlayersAccessEachother()
     DestroyEntity("RockBlock0_1");
     DestroyEntity("RockBlock0_2");
     DestroyEntity("RockBlock1_1");
-    DestroyEntity("RockBlock3_6");
     DestroyEntity("RockBlock2_1");
+    DestroyEntity("RockBlock3_6");
     DestroyEntity("RockBlock4_2");
 end
 
 function RemoveBlockRocksToOpenCenter()
-    DestroyEntity("RockBlock2_6");
-    DestroyEntity("RockBlock4_4");
-    DestroyEntity("RockBlock3_3");
     DestroyEntity("RockBlock1_4");
+    DestroyEntity("RockBlock2_6");
+    DestroyEntity("RockBlock3_3");
+    DestroyEntity("RockBlock4_4");
 end
 
 function OnOutpostUpgradeStarted(_ScriptName, _UpgradeType, _NextUpgradeLevel)
