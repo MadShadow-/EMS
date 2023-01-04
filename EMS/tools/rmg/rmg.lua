@@ -6,7 +6,7 @@
 -- mirror rivers
 -- do generation before countdown starts
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-EMS_CustomMapConfig.Version = 1.5
+EMS_CustomMapConfig.Version = 1.6
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua" )
@@ -1933,20 +1933,23 @@ function RandomMapGenerator.AddToLowThreshold(_val)
 	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdLowFlatland", EMS.RD.Rules.RMG_ThresholdLowFlatland:GetValue());
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.SetRandomSeed()
+function RandomMapGenerator.GetRandomSeed(_value)
 	
-	local value = EMS.RD.Rules.RMG_Seed:GetValue() + 9876543210 + Game.RealTimeGetMs() + Game.RealTimeGetMs() * 100000
+	_value = _value or 0
+	local seed = _value + 9876543210 + Game.RealTimeGetMs() + Game.RealTimeGetMs() * 100000
 	
-	while value >= 1000000000 do
-		value = value - 1000000000
+	while seed >= 1000000000 do
+		seed = seed - 1000000000
 	end
 	
-	EMS.GL.SetValueSynced("RMG_Seed", value)
+	return seed
+	--EMS.GL.SetValueSynced("RMG_Seed", value)
+	--oder einfach math.randomseed?
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.InitGenerationData()
 	
-	RandomMapGenerator.GenerationData = { DebugMode = false, }
+	RandomMapGenerator.GenerationData = { DebugMode = true, }
 	
 	Score.Player[0] = {buildings=0, all=0}
 	
@@ -1965,32 +1968,6 @@ function RandomMapGenerator.InitGenerationData()
 		Display.SetRenderInvisibleObjects(1);
 		
 		--for k,v in pairs(Technologies) do ResearchTechnology(v) end
-		--[[
-		
-		for ID = 1, 16 do
-			Display.GfxSetSetSkyBox(ID, 0.0, 1.0, "YSkyBox02")
-			Display.GfxSetSetSnowEffectStatus(ID, 0.0, 0.8, 0)
-			Display.GfxSetSetFogParams(ID, 0.0, 1.0, 1, 58, 48, 38, 100000, 200000)
-			Display.GfxSetSetLightParams(ID,  0.0, 1.0, 40, -15, -50,  180,160,140,  225,224,200)
-	
-			if ID == 2 then
-				Display.GfxSetSetRainEffectStatus(ID, 0.0, 1.0, 1)
-			else
-				Display.GfxSetSetRainEffectStatus(ID, 0.0, 1.0, 0)
-			end
-			
-			if ID == 3 then
-				Display.GfxSetSetSnowStatus(ID, 0.0, 1.0, 1)
-			else
-				Display.GfxSetSetSnowStatus(ID, 0.0, 1.0, 0)
-			end
-		end]]
-		
-		--gvWorldSize = 512 * 100
-		--Logic.WorldGetSize = function()
-			--return gvWorldSize
-		--end
-		
 	end
 	-- DBG only --
 	
@@ -2054,7 +2031,7 @@ function RandomMapGenerator.InitGenerationData()
 	local amountSulfurPile	= EMS.RD.Rules.RMG_AmountSulfurPile:GetValue()
 	local contentSulfurPile	= EMS.RD.Rules.RMG_ContentSulfurPile:GetValue()
 	local amountWoodPile	= EMS.RD.Rules.RMG_AmountWoodPile:GetValue()
-	--local contentWoodPile	= EMS.RD.Rules.RMG_ContentWoodPile:GetValue()
+	local contentWoodPile	= EMS.RD.Rules.RMG_ContentWoodPile:GetValue()
 	local amountVillageCenter = EMS.RD.Rules.RMG_AmountVC:GetValue()
 	
 	local exploreres = EMS.RD.Rules.RMG_ShowResources:GetValue()
@@ -2066,72 +2043,25 @@ function RandomMapGenerator.InitGenerationData()
  	RandomMapGenerator.GenerationData.Entities = {}
 
 	-- get number of players and number of teams
-	local nteams = 0
-	local teams = {}
-	local nplayers = 0
-	local players = {}
+	--local nplayers, players, nteams, teams = RandomMapGenerator.GetPlayersAndTeams()
+	--local nplayers, players, nteams = RandomMapGenerator.GetPlayersAndTeams()
+	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	local nplayers, players, nteams = config[1], config[2], config[3]
 	
-	if XNetwork.Manager_DoesExist() == 1 then
-	
-		for p = 1, 16 do
-			if Logic.PlayerGetGameState(p) == 1 then
-				nplayers = nplayers + 1
-				
-				local team = XNetwork.GameInformation_GetLogicPlayerTeam(p)
-				local isIn = false
-		
-				for k,v in pairs(teams) do
-					if v == team then
-						isIn = true
-						break
-					end
-				end
-		
-				if not isIn then
-					nteams = nteams + 1
-					teams[nteams] = team
-				end
-			
-				players[nplayers] = {id = p, team = team}
-			end
-		end
- 
-	else
-		-- just some testing in SP
-		nplayers = 2
-		players[1] = {id = 1, team = 1}
-		players[2] = {id = 2, team = 2}
-		players[3] = {id = 3, team = 1}
-		players[4] = {id = 4, team = 2}
-		players[5] = {id = 5, team = 1}
-		players[6] = {id = 6, team = 2}
-		players[7] = {id = 7, team = 1}
-		players[8] = {id = 8, team = 2}
-		nteams = 2
-		teams[1] = 1
-		teams[2] = 2
-		--teams[3] = 3
-		--teams[4] = 4
-	end
-  
 	RandomMapGenerator.GenerationData.Players = {}
 	RandomMapGenerator.GenerationData.NumberOfPlayers = nplayers
-
 	RandomMapGenerator.GenerationData.NumberOfTeams = nteams
  
-	-- sort players by team
-	table.sort(teams,
-    function(e, e2)
-        return e < e2;
-    end
-	);
-	
-	for t = 1, nteams do
+	--[[for t = 1, nteams do
 		for p = 1, nplayers do
 			if players[p].team == teams[t] then
 				table.insert(RandomMapGenerator.GenerationData.Players, {id = players[p].id, team = teams[t]})
 			end
 		end
+	end]]
+	
+	for p = 1, nplayers do
+		table.insert(RandomMapGenerator.GenerationData.Players, {id = players[p].id, team = players[p].team, ishuman = players[p].ishuman})
 	end
 	
 	RandomMapGenerator.GenerationData.PlayerRadian = math.rad(360 / RandomMapGenerator.GenerationData.NumberOfPlayers) -- 180° = pi
@@ -2442,7 +2372,7 @@ function RandomMapGenerator.InitGenerationData()
 				Data = {
 					Blocking = 12,
 					Entities = {
-						{Type = Entities.PB_Headquarters1,},
+						{Type = Entities.PB_Headquarters1, SkipDummy = true},
 						--{Type = Entities.PU_Serf, RelativX = -900, RelativY = -300, Rotation = 180,},
 						--{Type = Entities.PU_Serf, RelativX = -900, RelativY = -100, Rotation = 180,},
 						--{Type = Entities.PU_Serf, RelativX = -900, RelativY =  100, Rotation = 180,},
@@ -2461,259 +2391,265 @@ function RandomMapGenerator.InitGenerationData()
 	}
 	
 	RandomMapGenerator.GenerationData.PlayerDistanceToMiddle = 0.667 -- in percent
-	RandomMapGenerator.GenerationData.PlayerClearance = 35 -- distance to team border
+	RandomMapGenerator.GenerationData.PlayerClearance = 15 -- distance to team border
+	
+	if RandomMapGenerator.GenerationData.RandomPlayerPosition then
+		RandomMapGenerator.GenerationData.PlayerClearance = 0
+	end
 	
 	local resmax = 90 -- highest distance
 	local resfac = ((Logic.WorldGetSize() / 100) * RandomMapGenerator.GenerationData.PlayerDistanceToMiddle * math.cos(math.rad((180 - 360 / nplayers) / 2)) / 2 - RandomMapGenerator.GenerationData.PlayerClearance) / resmax -- involves triangle opration for two equal sides, the rest is 
 	local resoff = 5
 	local resdist = {}
 	
+	do -- player resources and vc
 	-- vc
-	for i = 1, amountVillageCenter do
-	
-		local dist = math.random(30 * resfac, 90 * resfac)
+		for i = 1, amountVillageCenter do
+		
+			local dist = math.random(30 * resfac, 90 * resfac)
 
-		local child = {
-			Placement = {
-				AreaMin = dist - resoff,
-				AreaMax = dist + resoff,
-				Noise = RandomMapGenerator.GenerationData.ThresholdRoad,
-				NoiseMin = noiseMin,
-				NoiseMax = noiseMax,
-			},
-			Data = RandomMapGenerator.StructureSets.NeutralVillageCenter,
-		}
-		if i == 1 then
-			child.Childs = {{Data = {Entities = {{Type = Entities.PB_VillageCenter1}}}}}
+			local child = {
+				Placement = {
+					AreaMin = dist - resoff,
+					AreaMax = dist + resoff,
+					Noise = RandomMapGenerator.GenerationData.ThresholdRoad,
+					NoiseMin = noiseMin,
+					NoiseMax = noiseMax,
+				},
+				Data = RandomMapGenerator.StructureSets.NeutralVillageCenter,
+			}
+			if i == 1 then
+				child.Childs = {{Data = {Entities = {{Type = Entities.PB_VillageCenter1, SkipDummy = true}}}}}
+			end
+
+			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
 		end
-
-		table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
-	end
-	
-	-- wood
-	for i = 1, amountWoodPile do
 		
-		local dist = math.random(50 * resfac, 70 * resfac)
-		
-		local child = {
-			Placement = {
-				AreaMin = dist - resoff,
-				AreaMax = dist + resoff,
-				Noise = RandomMapGenerator.GenerationData.ThresholdRoad,
-				NoiseMin = noiseMin,
-				NoiseMax = noiseMax,
-			},
-			Data = RandomMapGenerator.StructureSets.WoodPileExplored,
-		}
-
-		table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
-	end
-	
-	-- clay
-	if amountClayPit > 0 then
-		local amountPiles, amountPilesLeft = math.floor(amountClayPile / amountClayPit), math.mod(amountClayPile, amountClayPit)
-		for i = 1, amountClayPit do
-		
+		-- wood
+		for i = 1, amountWoodPile do
+			
 			local dist = math.random(50 * resfac, 70 * resfac)
-	
-			local child = {
-				Placement = {
-					AreaMin = dist - resoff,
-					AreaMax = dist + resoff,
-					Noise = RandomMapGenerator.GenerationData.ThresholdCoast,
-					NoiseMin = noiseMin,
-					NoiseMax = noiseMax,
-					Grid = 4,
-				},
-				Data = RandomMapGenerator.StructureSets.ClayPit,
-				Childs = {},
-			}
-
-			local n = 1
-			if i <= amountPilesLeft then
-				n = 0
-			end
-			for j = n, amountPiles do
-				table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.ClayPile,})
-			end
-
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
-		end
-	else
-		for i = 1, amountClayPile do
-		
-			local dist = math.random(50 * resfac, 70 * resfac)
-	
-			local child = {
-				Placement = {
-					AreaMin = dist - resoff,
-					AreaMax = dist + resoff,
-					Noise = RandomMapGenerator.GenerationData.ThresholdCoast,
-					NoiseMin = noiseMin,
-					NoiseMax = noiseMax,
-					Grid = 4,
-				},
-				Data = RandomMapGenerator.StructureSets.ClayPileExplored,
-				Childs = {},
-			}
 			
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
-		end
-	end
-	
-	-- stone
-	if amountStonePit > 0 then
-		amountPiles, amountPilesLeft = math.floor(amountStonePile / amountStonePit), math.mod(amountStonePile, amountStonePit)
-		for i = 1, amountStonePit do
-		
-			local dist = math.random(60 * resfac, 80 * resfac)
-
 			local child = {
 				Placement = {
 					AreaMin = dist - resoff,
 					AreaMax = dist + resoff,
-					Noise = RandomMapGenerator.GenerationData.ThresholdHill,
+					Noise = RandomMapGenerator.GenerationData.ThresholdRoad,
 					NoiseMin = noiseMin,
 					NoiseMax = noiseMax,
-					Grid = 4,
 				},
-				Data = RandomMapGenerator.StructureSets.StonePit,
-				Childs = {},
+				Data = RandomMapGenerator.StructureSets.WoodPileExplored,
 			}
-
-			local n = 1
-			if i <= amountPilesLeft then
-				n = 0
-			end
-			for j = n, amountPiles do
-				table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.StonePile,})
-			end
 
 			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
 		end
-	else
-		for i = 1, amountStonePile do
 		
-			local dist = math.random(60 * resfac, 80 * resfac)
-	
-			local child = {
-				Placement = {
-					AreaMin = dist - resoff,
-					AreaMax = dist + resoff,
-					Noise = RandomMapGenerator.GenerationData.ThresholdHill,
-					NoiseMin = noiseMin,
-					NoiseMax = noiseMax,
-					Grid = 4,
-				},
-				Data = RandomMapGenerator.StructureSets.StonePileExplored,
-				Childs = {},
-			}
+		-- clay
+		if amountClayPit > 0 then
+			local amountPiles, amountPilesLeft = math.floor(amountClayPile / amountClayPit), math.mod(amountClayPile, amountClayPit)
+			for i = 1, amountClayPit do
 			
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
-		end
-	end
-	
-	-- iron
-	if amountIronPit > 0 then
-		amountPiles, amountPilesLeft = math.floor(amountIronPile / amountIronPit), math.mod(amountIronPile, amountIronPit)
-		for i = 1, amountIronPit do
+				local dist = math.random(50 * resfac, 70 * resfac)
 		
-			local dist = math.random(70 * resfac, 90 * resfac)
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = RandomMapGenerator.GenerationData.ThresholdCoast,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.ClayPit,
+					Childs = {},
+				}
 
-			local child = {
-				Placement = {
-					AreaMin = dist - resoff,
-					AreaMax = dist + resoff,
-					Noise = noiseIron,
-					NoiseMin = noiseMin,
-					NoiseMax = noiseMax,
-					Grid = 4,
-				},
-				Data = RandomMapGenerator.StructureSets.IronPit,
-				Childs = {},
-			}
+				local n = 1
+				if i <= amountPilesLeft then
+					n = 0
+				end
+				for j = n, amountPiles do
+					table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.ClayPile,})
+				end
 
-			local n = 1
-			if i <= amountPilesLeft then
-				n = 0
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
 			end
-			for j = n, amountPiles do
-				table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.IronPile,})
-			end
-
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
-		end
-	else
-		for i = 1, amountIronPile do
-		
-			local dist = math.random(70 * resfac, 90 * resfac)
-	
-			local child = {
-				Placement = {
-					AreaMin = dist - resoff,
-					AreaMax = dist + resoff,
-					Noise = noiseIron,
-					NoiseMin = noiseMin,
-					NoiseMax = noiseMax,
-					Grid = 4,
-				},
-				Data = RandomMapGenerator.StructureSets.IronPileExplored,
-				Childs = {},
-			}
+		else
+			for i = 1, amountClayPile do
 			
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
-		end
-	end
-	
-	-- sulfur
-	if amountSulfurPit > 0 then
-		amountPiles, amountPilesLeft = math.floor(amountSulfurPile / amountSulfurPit), math.mod(amountSulfurPile, amountSulfurPit)
-		for i = 1, amountSulfurPit do
+				local dist = math.random(50 * resfac, 70 * resfac)
 		
-			local dist = math.random(70 * resfac, 90 * resfac)
-
-			local child = {
-				Placement = {
-					AreaMin = dist - resoff,
-					AreaMax = dist + resoff,
-					Noise = noiseSulfur,
-					NoiseMin = noiseMin,
-					NoiseMax = noiseMax,
-					Grid = 4,
-				},
-				Data = RandomMapGenerator.StructureSets.SulfurPit,
-				Childs = {},
-			}
-
-			local n = 1
-			if i <= amountPilesLeft then
-				n = 0
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = RandomMapGenerator.GenerationData.ThresholdCoast,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.ClayPileExplored,
+					Childs = {},
+				}
+				
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
 			end
-			for j = n, amountPiles do
-				table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.SulfurPile,})
-			end
-
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
 		end
-	else
-		for i = 1, amountSulfurPile do
 		
-			local dist = math.random(70 * resfac, 90 * resfac)
-	
-			local child = {
-				Placement = {
-					AreaMin = dist - resoff,
-					AreaMax = dist + resoff,
-					Noise = noiseSulfur,
-					NoiseMin = noiseMin,
-					NoiseMax = noiseMax,
-					Grid = 4,
-				},
-				Data = RandomMapGenerator.StructureSets.SulfurPileExplored,
-				Childs = {},
-			}
+		-- stone
+		if amountStonePit > 0 then
+			amountPiles, amountPilesLeft = math.floor(amountStonePile / amountStonePit), math.mod(amountStonePile, amountStonePit)
+			for i = 1, amountStonePit do
 			
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+				local dist = math.random(60 * resfac, 80 * resfac)
+
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = RandomMapGenerator.GenerationData.ThresholdHill,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.StonePit,
+					Childs = {},
+				}
+
+				local n = 1
+				if i <= amountPilesLeft then
+					n = 0
+				end
+				for j = n, amountPiles do
+					table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.StonePile,})
+				end
+
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+			end
+		else
+			for i = 1, amountStonePile do
+			
+				local dist = math.random(60 * resfac, 80 * resfac)
+		
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = RandomMapGenerator.GenerationData.ThresholdHill,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.StonePileExplored,
+					Childs = {},
+				}
+				
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+			end
+		end
+		
+		-- iron
+		if amountIronPit > 0 then
+			amountPiles, amountPilesLeft = math.floor(amountIronPile / amountIronPit), math.mod(amountIronPile, amountIronPit)
+			for i = 1, amountIronPit do
+			
+				local dist = math.random(70 * resfac, 90 * resfac)
+
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = noiseIron,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.IronPit,
+					Childs = {},
+				}
+
+				local n = 1
+				if i <= amountPilesLeft then
+					n = 0
+				end
+				for j = n, amountPiles do
+					table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.IronPile,})
+				end
+
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+			end
+		else
+			for i = 1, amountIronPile do
+			
+				local dist = math.random(70 * resfac, 90 * resfac)
+		
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = noiseIron,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.IronPileExplored,
+					Childs = {},
+				}
+				
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+			end
+		end
+		
+		-- sulfur
+		if amountSulfurPit > 0 then
+			amountPiles, amountPilesLeft = math.floor(amountSulfurPile / amountSulfurPit), math.mod(amountSulfurPile, amountSulfurPit)
+			for i = 1, amountSulfurPit do
+			
+				local dist = math.random(70 * resfac, 90 * resfac)
+
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = noiseSulfur,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.SulfurPit,
+					Childs = {},
+				}
+
+				local n = 1
+				if i <= amountPilesLeft then
+					n = 0
+				end
+				for j = n, amountPiles do
+					table.insert(child.Childs, {Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.SulfurPile,})
+				end
+
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+			end
+		else
+			for i = 1, amountSulfurPile do
+			
+				local dist = math.random(70 * resfac, 90 * resfac)
+		
+				local child = {
+					Placement = {
+						AreaMin = dist - resoff,
+						AreaMax = dist + resoff,
+						Noise = noiseSulfur,
+						NoiseMin = noiseMin,
+						NoiseMax = noiseMax,
+						Grid = 4,
+					},
+					Data = RandomMapGenerator.StructureSets.SulfurPileExplored,
+					Childs = {},
+				}
+				
+				table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+			end
 		end
 	end
 	
@@ -2733,28 +2669,73 @@ function RandomMapGenerator.InitGenerationData()
 			},]]
 		},
 	}
-
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.CopyDataToTable(_from, _to)
-
-	--_to = _to or {}
+function RandomMapGenerator.GetPlayersAndTeams()
 	
-	for k, v in pairs(_from) do
+	local nplayers = 0
+	local players = {}
+	local nteams = 0
+	local teams = {}
+	
+	if XNetwork.Manager_DoesExist() == 1 then
+	
+		for p = 1, 16 do
+			if Logic.PlayerGetGameState(p) == 1 then
+				nplayers = nplayers + 1
+				
+				local team = XNetwork.GameInformation_GetLogicPlayerTeam(p)
+				local isIn = false
 		
-		if type(v) == "table" then
+				for k,v in pairs(teams) do
+					if v == team then
+						isIn = true
+						break
+					end
+				end
+		
+				if not isIn then
+					nteams = nteams + 1
+					teams[nteams] = team
+				end
 			
-			if not _to[k] then
-				_to[k] = {}
+				players[nplayers] = {id = p, team = team}
 			end
-			
-			RandomMapGenerator.CopyDataToTable(_from[k], _to[k])
-		else
-			_to[k] = _to[k] or v
 		end
+ 
+	else
+		-- just some testing in SP - amount must fit now due to new sorting system
+		nplayers = 4
+		players[1] = {id = 1, team = 5, ishuman = 1}
+		players[2] = {id = 6, team = 2, ishuman = 1}
+		players[3] = {id = 4, team = 5, ishuman = 1}
+		players[4] = {id = 3, team = 2, ishuman = 1}
+		--players[5] = {id = 5, team = 2, ishuman = 1}
+		--players[6] = {id = 2, team = 5, ishuman = 1}
+		--players[7] = {id = 7, team = 5, ishuman = 1}
+		--players[8] = {id = 8, team = 2, ishuman = 1}
+		--players[9] = {id = 9, team = 2, ishuman = 1}
+		nteams = 2
+		teams[1] = 5
+		teams[2] = 2
+		--teams[3] = 3
+		--teams[4] = 4
 	end
+
+	-- sort players by team
+	--[[table.sort(teams,
+    function(a, b)
+        return a < b;
+    end
+	)]]
 	
-	--return _to
+	table.sort(players,
+    function(a, b)
+		return (a.team < b.team) or (a.team == b.team and a.id < b.id)
+    end
+	)
+	
+	return nplayers, players, nteams--, teams
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.FinalizeGenerationData()
@@ -3657,8 +3638,11 @@ function RandomMapGenerator.SetTerrainHeights(_generationData)
 			-- this is more a textures thing but since textures use a 4 stepped loop we do it here
 			if math.sqrt((x - maphalf)^2 + (y - maphalf)^2) < maphalf then
 				RandomMapGenerator.SetRandomVertexColor(_generationData, x, y)
+
+				--if _generationData.TerrainNodes[x][y].blocking ~= 0 then
+					--Logic.SetTerrainVertexColor(x, y, 255, 128, 128)
+				--end
 			end
-			
 		end
 	end
 end
@@ -3780,12 +3764,12 @@ function RandomMapGenerator.GenerateStructure(_generationData)
 				
 				local mx, my = RandomMapGenerator.MirrorNode(_generationData, x, y, p)
 				mx, my = Round(mx), Round(my)
-				RandomMapGenerator.CreateStructure(_generationData, struct, mx, my, _generationData.Players[p].id)--, true) -- this works without doNotRegister since player 1 is set at last below
+				RandomMapGenerator.CreateStructure(_generationData, struct, mx, my, _generationData.Players[p])--, true) -- this works without doNotRegister since player 1 is set at last below
 			end
 		end
 		
 		-- if MirrorMap is true, this is player 1 and needs to be the last call to get the positioning for mirror sources right
-		RandomMapGenerator.CreateStructure(_generationData, struct, x, y, _generationData.Players[RandomMapGenerator.StructGetCurrentPlayer(_generationData)].id)
+		RandomMapGenerator.CreateStructure(_generationData, struct, x, y, _generationData.Players[RandomMapGenerator.StructGetCurrentPlayer(_generationData)])
 				
 		-- never change anything in the following lines !!!
 		local level = _generationData.Structures.Current.Levels[0]
@@ -3934,9 +3918,11 @@ function RandomMapGenerator.CreateStructure(_generationData, _struct, _x, _y, _p
 				entity.data = data.Entities[i]
 				entity.x = _x * 100
 				entity.y = _y * 100
-				entity.p = data.Entities[i].Player or _player
+				entity.p = data.Entities[i].Player or _player.id
 				
-				table.insert(_generationData.Entities, entity)
+				if _player.ishuman == 1 or not entity.data.SkipDummy then
+					table.insert(_generationData.Entities, entity)
+				end
 			end
 		end
 		

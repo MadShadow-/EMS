@@ -9,15 +9,15 @@
 function EMS.GL.GetThresholdDescription(_string)
 	return "Legt fest, ab welchem Noise Wert ".._string.." generiert werden. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Werte zwischen -1000 und 1000 sind möglich. Je größer der Abstand zum Wert darüber, desto mehr Fläche wird dieses Biom einnehmen. @cr Die Werte auf der linken Seite der Tabelle sollten nach unten hin größer werden, auf der rechten Seite kleiner. Ansonsten werden entsprechende Biome nicht generiert. @cr Die Optionen Flachland und Hochebenen gehören nicht dazu. Diesen Werten glätten die Terrainhöhe. @cr @cr @color:255,204,51,255 VORSICHT: @color:255,255,255,255 Wahlloses verstellen dieser Werte kann die Karte unspielbar machen."
 end
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.GetAmountDescription(_string)
 	return "Legt die Anzahl an ".._string.." je Spieler fest. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Rohstoffhaufen werden gleichmäßig in der Nähe von Schächten des gleichen Rohstofftyps verteilt."
 end
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.GetContentDescription(_string)
 	return "Legt die Anzahl an Rohstoffeinheiten in ".._string.." fest."
 end
-
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function EMS.GL.GUIUpdate_Threshold(_rule)
 	local widget = EMS.GL.MapRuleToGUIWidget[_rule];
 	local value = EMS.GL.GetRule(_rule):GetRepresentative();
@@ -25,6 +25,158 @@ function EMS.GL.GUIUpdate_Threshold(_rule)
 		value = "-";
 	end
 	XGUIEng.SetText(widget[1], "@center "..value);
+end
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function EMS.GL.GUIUpdate_Dummy(_string)
+	--ignore
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function EMS.GL.GUIUpdate_PlayerConfig(_index, _text)
+	
+	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	local widget = "RMG6F".._index.."".._text
+	
+	if config[1] < _index then
+		XGUIEng.ShowWidget("RMG6Frame".._index, 0)
+		return
+	end
+	
+	local p = config[2][_index].id
+	local ishuman = config[2][_index].ishuman == 1
+	
+	if _text == "Name" then
+		if ishuman then
+			XGUIEng.SetText(widget, "@center".." "..p)--XNetwork.GameInformation_GetLogicPlayerUserName(p))
+		else
+			XGUIEng.SetText(widget, "@center Dummy")
+		end
+	elseif _text == "Player" then
+		if ishuman then
+			local r, g, b = EMS.GL.GEN_GetPlayerColor( XNetwork.GameInformation_GetLogicPlayerColor(p) )
+			XGUIEng.SetMaterialColor(widget, 0, r, g, b, 255)
+			XGUIEng.SetMaterialColor(widget, 1, r, g, b, 255)
+			XGUIEng.SetMaterialColor(widget, 2, r, g, b, 255)
+			XGUIEng.SetMaterialColor(widget, 3, r, g, b, 255)
+			XGUIEng.SetMaterialColor(widget, 4, r, g, b, 255)
+		else
+			XGUIEng.SetMaterialColor(widget, 0, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 1, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 2, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 3, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 4, 0, 0, 0, 0)
+		end
+	elseif _text == "Team" then
+		XGUIEng.SetText(widget, "@center Team"..config[2][_index].team)
+	elseif _text == "Add" then
+		if ishuman then
+			XGUIEng.ShowWidget(widget, 1)
+			XGUIEng.ShowWidget("RMG6F".._index.."Remove", 0)
+		else
+			XGUIEng.ShowWidget(widget, 0)
+			XGUIEng.ShowWidget("RMG6F".._index.."Remove", 1)
+		end
+	elseif _text == "Remove" then
+		if not ishuman then
+			XGUIEng.ShowWidget(widget, 1)
+			XGUIEng.ShowWidget("RMG6F".._index.."Add", 0)
+		else
+			XGUIEng.ShowWidget(widget, 0)
+			XGUIEng.ShowWidget("RMG6F".._index.."Add", 1)
+		end
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function EMS.GL.AddDummyPlayer(_index)
+	
+	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	if config[1] < 16 then
+		config[1] = config[1] + 1
+
+		for i = config[1], _index + 2, -1 do
+			config[2][i] = config[2][i - 1]
+		end
+		config[2][_index + 1] = {id = 1, team = config[2][_index].team, ishuman = 0}
+		
+		EMS.GL.SetValueSynced("RMG_PlayerConfig", config)
+		
+		XGUIEng.ShowWidget("RMG6Frame"..config[1], 1)
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function EMS.GL.RemoveDummyPlayer(_index)
+	
+	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	config[1] = config[1] - 1
+	
+	for i = _index, config[1], 1 do
+		config[2][i] = config[2][i + 1]
+	end
+	config[2][config[1] + 1] = nil
+	
+	EMS.GL.SetValueSynced("RMG_PlayerConfig", config)
+end
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function EMS.GL.SetRandomSeed()
+	
+	if not EMS.CanChangeRules or EMS.GL.GameStarted then
+		return;
+	end
+	
+	-- XGUIEng.GetRandom ist Mist !
+	--[[local seed = XGUIEng.GetRandom(31622)
+	seed = seed + seed ^ 2
+	
+	if XGUIEng.GetRandom(1) == 1 then
+		seed = -seed
+	end]]
+	
+	EMS.GL.SetValue("RMG_Seed", RandomMapGenerator.GetRandomSeed(EMS.RD.Rules.RMG_Seed:GetValue()))
+end
+
+function EMS.GL.GEN_GetPlayerColor( _ColorID )
+
+	if _ColorID == 1 then
+		return 15, 64, 255
+	elseif _ColorID == 2 then
+		return 226, 0, 0
+	elseif _ColorID == 3 then
+		return 235, 209, 0
+	elseif _ColorID == 4 then
+		return 0, 235, 209
+	elseif _ColorID == 5 then
+		return 252, 164, 39
+	elseif _ColorID == 6 then
+		return 178, 2, 255
+	elseif _ColorID == 7 then
+		return 178, 176, 154
+	elseif _ColorID == 8 then
+		return 115, 209, 65
+	elseif _ColorID == 9 then
+		return 0, 140, 2
+	elseif _ColorID == 10 then
+		return 184, 184, 184
+	elseif _ColorID == 11 then
+		return 184, 182, 90
+	elseif _ColorID == 12 then
+		return 135, 135, 135 
+	elseif _ColorID == 13 then
+		return 230, 230, 230
+	elseif _ColorID == 14 then
+		return 57, 57, 57
+	elseif _ColorID == 15 then
+		return 139, 223, 255
+	elseif _ColorID == 16 then
+		return 255, 150, 214
+	else
+		
+		if XNetwork.Manager_DoesExist() == 1 then
+			return XNetwork.EXTENDED_ColorCodeToRGBA(_ColorID);
+		end
+		
+	end;
+	
+	return 40, 40, 40
+	
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.GL_Setup()
@@ -132,6 +284,7 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.GUIUpdate["RMG_AmountVC"]				= EMS.GL.GUIUpdate_Text
 	EMS.GL.GUIUpdate["RMG_ShowResources"]			= EMS.GL.GUIUpdate_TextToggleButton
 	EMS.GL.GUIUpdate["RMG_ShowVillageCenters"]		= EMS.GL.GUIUpdate_TextToggleButton
+	EMS.GL.GUIUpdate["RMG_PlayerConfig"]			= EMS.GL.GUIUpdate_Dummy
 	
 	-- map rule to gui widget
 	EMS.GL.MapRuleToGUIWidget["RMG_Seed"]					= {"RMG1F1Value"}
@@ -189,9 +342,10 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapRuleToGUIWidget["RMG_AmountVC"]				= {"RMG2F7Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_ShowResources"]			= "RMG2F9Value"
 	EMS.GL.MapRuleToGUIWidget["RMG_ShowVillageCenters"]		= "RMG2F6Value"
+	--EMS.GL.MapRuleToGUIWidget["RMG_PlayerConfig"]			= "RMG6F1Name"
 	
 	-- map widget to rule
-	EMS.GL.MapWidgetToRule["RMG1F1Value"]	= "RMG_Seed"
+	--[[EMS.GL.MapWidgetToRule["RMG1F1Value"]	= "RMG_Seed"
 	EMS.GL.MapWidgetToRule["RMG1F2Value"]	= "RMG_LandscapeSet"
 	EMS.GL.MapWidgetToRule["RMG1F3Value"]	= "RMG_GenerateRivers"
 	EMS.GL.MapWidgetToRule["RMG1F3aValue"]	= "RMG_GateLayout"
@@ -245,7 +399,7 @@ function RandomMapGenerator.GL_Setup()
 	
 	EMS.GL.MapWidgetToRule["RMG2F7Value"]	= "RMG_AmountVC"
 	EMS.GL.MapWidgetToRule["RMG2F9Value"]	= "RMG_ShowResources"
-	EMS.GL.MapWidgetToRule["RMG2F6Value"]	= "RMG_ShowVillageCenters"
+	EMS.GL.MapWidgetToRule["RMG2F6Value"]	= "RMG_ShowVillageCenters"]]
 		
 	-- tooltip text
 	EMS.L.RMG_RandomSeed 		= "Setzt einen zufälligen Seed."
@@ -262,8 +416,8 @@ function RandomMapGenerator.GL_Setup()
 end	
 function RandomMapGenerator.SetRulesToDefault()
 	
-	RandomMapGenerator.SetRandomSeed()
-	--EMS.GL.SetValue("RMG_Seed",			123456789)
+	EMS.GL.SetValueSynced("RMG_Seed", RandomMapGenerator.GetRandomSeed())
+
 	EMS.GL.SetValueSynced("RMG_GenerateRivers",	2)
 	EMS.GL.SetValueSynced("RMG_GateLayout",		1)
 	EMS.GL.SetValueSynced("RMG_GateSize",		3)
@@ -271,25 +425,26 @@ function RandomMapGenerator.SetRulesToDefault()
 	EMS.GL.SetValueSynced("RMG_LandscapeSet",	1)
 	EMS.GL.SetValueSynced("RMG_MirrorMap",		Bool2Num(true))
 	
-	EMS.GL.SetValueSynced("RMG_AmountClayPit", 1)
-	EMS.GL.SetValueSynced("RMG_ContentClayPit", 30000)
-	EMS.GL.SetValueSynced("RMG_AmountClayPile", 4)
-	EMS.GL.SetValueSynced("RMG_ContentClayPile", 4000)
-	EMS.GL.SetValueSynced("RMG_AmountStonePit", 1)
-	EMS.GL.SetValueSynced("RMG_ContentStonePit", 30000)
-	EMS.GL.SetValueSynced("RMG_AmountStonePile", 4)
-	EMS.GL.SetValueSynced("RMG_ContentStonePile", 4000)
-	EMS.GL.SetValueSynced("RMG_AmountIronPit", 2)
-	EMS.GL.SetValueSynced("RMG_ContentIronPit", 30000)
-	EMS.GL.SetValueSynced("RMG_AmountIronPile", 4)
-	EMS.GL.SetValueSynced("RMG_ContentIronPile", 4000)
-	EMS.GL.SetValueSynced("RMG_AmountSulfurPit", 2)
+	EMS.GL.SetValueSynced("RMG_AmountClayPit",        1)
+	EMS.GL.SetValueSynced("RMG_ContentClayPit",   30000)
+	EMS.GL.SetValueSynced("RMG_AmountClayPile",       4)
+	EMS.GL.SetValueSynced("RMG_ContentClayPile",   4000)
+	EMS.GL.SetValueSynced("RMG_AmountStonePit",       1)
+	EMS.GL.SetValueSynced("RMG_ContentStonePit",  30000)
+	EMS.GL.SetValueSynced("RMG_AmountStonePile",      4)
+	EMS.GL.SetValueSynced("RMG_ContentStonePile",  4000)
+	EMS.GL.SetValueSynced("RMG_AmountIronPit",        2)
+	EMS.GL.SetValueSynced("RMG_ContentIronPit",   30000)
+	EMS.GL.SetValueSynced("RMG_AmountIronPile",       4)
+	EMS.GL.SetValueSynced("RMG_ContentIronPile",   4000)
+	EMS.GL.SetValueSynced("RMG_AmountSulfurPit",      2)
 	EMS.GL.SetValueSynced("RMG_ContentSulfurPit", 30000)
-	EMS.GL.SetValueSynced("RMG_AmountSulfurPile", 4)
+	EMS.GL.SetValueSynced("RMG_AmountSulfurPile",     4)
 	EMS.GL.SetValueSynced("RMG_ContentSulfurPile", 4000)
-	EMS.GL.SetValueSynced("RMG_AmountWoodPile", 0)
-	EMS.GL.SetValueSynced("RMG_ContentWoodPile", 30000)
+	EMS.GL.SetValueSynced("RMG_AmountWoodPile",       0)
+	EMS.GL.SetValueSynced("RMG_ContentWoodPile",  30000)
 	EMS.GL.SetValueSynced("RMG_AmountVC", 3)
 	
 	RandomMapGenerator.SetupThresholdsNormal()
+	EMS.GL.SetValueSynced("RMG_PlayerConfig", {RandomMapGenerator.GetPlayersAndTeams()})
 end
