@@ -344,15 +344,15 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapRuleToGUIWidget["RMG_ShowVillageCenters"]		= "RMG2F6Value"
 	--EMS.GL.MapRuleToGUIWidget["RMG_PlayerConfig"]			= "RMG6F1Name"
 	
-	-- map widget to rule
-	--[[EMS.GL.MapWidgetToRule["RMG1F1Value"]	= "RMG_Seed"
-	EMS.GL.MapWidgetToRule["RMG1F2Value"]	= "RMG_LandscapeSet"
-	EMS.GL.MapWidgetToRule["RMG1F3Value"]	= "RMG_GenerateRivers"
-	EMS.GL.MapWidgetToRule["RMG1F3aValue"]	= "RMG_GateLayout"
-	EMS.GL.MapWidgetToRule["RMG1F3bValue"]	= "RMG_GateSize"
-	EMS.GL.MapWidgetToRule["RMG1F4Value"]	= "RMG_GenerateRoads"
-	EMS.GL.MapWidgetToRule["RMG1F5Value"]	= "RMG_MirrorMap"
-	EMS.GL.MapWidgetToRule["RMG1F6Value"]	= "RMG_RandomPlayerPosition"
+	-- map widget to rule required for CTI
+	EMS.GL.MapWidgetToRule["RMG1F1Value"]	= "RMG_Seed"
+	--EMS.GL.MapWidgetToRule["RMG1F2Value"]	= "RMG_LandscapeSet"
+	--EMS.GL.MapWidgetToRule["RMG1F3Value"]	= "RMG_GenerateRivers"
+	--EMS.GL.MapWidgetToRule["RMG1F3aValue"]	= "RMG_GateLayout"
+	--EMS.GL.MapWidgetToRule["RMG1F3bValue"]	= "RMG_GateSize"
+	--EMS.GL.MapWidgetToRule["RMG1F4Value"]	= "RMG_GenerateRoads"
+	--EMS.GL.MapWidgetToRule["RMG1F5Value"]	= "RMG_MirrorMap"
+	--EMS.GL.MapWidgetToRule["RMG1F6Value"]	= "RMG_RandomPlayerPosition"
 	
 	EMS.GL.MapWidgetToRule["RMG2F1Value"]	= "RMG_TerrainBaseHeight"
 	EMS.GL.MapWidgetToRule["RMG2F2Value"]	= "RMG_WaterBaseHeight"
@@ -398,8 +398,8 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapWidgetToRule["RMG5F9Value2"]	= "RMG_ContentWoodPile"
 	
 	EMS.GL.MapWidgetToRule["RMG2F7Value"]	= "RMG_AmountVC"
-	EMS.GL.MapWidgetToRule["RMG2F9Value"]	= "RMG_ShowResources"
-	EMS.GL.MapWidgetToRule["RMG2F6Value"]	= "RMG_ShowVillageCenters"]]
+	--EMS.GL.MapWidgetToRule["RMG2F9Value"]	= "RMG_ShowResources"
+	--EMS.GL.MapWidgetToRule["RMG2F6Value"]	= "RMG_ShowVillageCenters"
 		
 	-- tooltip text
 	EMS.L.RMG_RandomSeed 		= "Setzt einen zufälligen Seed."
@@ -441,7 +441,7 @@ function RandomMapGenerator.SetRulesToDefault()
 	EMS.GL.SetValueSynced("RMG_ContentSulfurPit", 30000)
 	EMS.GL.SetValueSynced("RMG_AmountSulfurPile",     4)
 	EMS.GL.SetValueSynced("RMG_ContentSulfurPile", 4000)
-	EMS.GL.SetValueSynced("RMG_AmountWoodPile",       0)
+	EMS.GL.SetValueSynced("RMG_AmountWoodPile",       2)
 	EMS.GL.SetValueSynced("RMG_ContentWoodPile",  30000)
 	EMS.GL.SetValueSynced("RMG_AmountVC", 3)
 	

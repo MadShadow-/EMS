@@ -6,7 +6,7 @@
 -- mirror rivers
 -- do generation before countdown starts
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-EMS_CustomMapConfig.Version = 1.6
+EMS_CustomMapConfig.Version = 1.7
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua" )
@@ -1949,7 +1949,7 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.InitGenerationData()
 	
-	RandomMapGenerator.GenerationData = { DebugMode = true, }
+	RandomMapGenerator.GenerationData = { DebugMode = false, }
 	
 	Score.Player[0] = {buildings=0, all=0}
 	
@@ -2391,7 +2391,12 @@ function RandomMapGenerator.InitGenerationData()
 	}
 	
 	RandomMapGenerator.GenerationData.PlayerDistanceToMiddle = 0.667 -- in percent
-	RandomMapGenerator.GenerationData.PlayerClearance = 15 -- distance to team border
+	RandomMapGenerator.GenerationData.PlayerClearance = 35 -- distance to team border
+	
+	if nplayers > 8 then
+		RandomMapGenerator.GenerationData.PlayerDistanceToMiddle = 0.75 -- in percent
+		RandomMapGenerator.GenerationData.PlayerClearance = 15 -- distance to team border
+	end
 	
 	if RandomMapGenerator.GenerationData.RandomPlayerPosition then
 		RandomMapGenerator.GenerationData.PlayerClearance = 0
@@ -2705,16 +2710,17 @@ function RandomMapGenerator.GetPlayersAndTeams()
  
 	else
 		-- just some testing in SP - amount must fit now due to new sorting system
-		nplayers = 4
+		nplayers = 10
 		players[1] = {id = 1, team = 5, ishuman = 1}
 		players[2] = {id = 6, team = 2, ishuman = 1}
 		players[3] = {id = 4, team = 5, ishuman = 1}
 		players[4] = {id = 3, team = 2, ishuman = 1}
-		--players[5] = {id = 5, team = 2, ishuman = 1}
-		--players[6] = {id = 2, team = 5, ishuman = 1}
-		--players[7] = {id = 7, team = 5, ishuman = 1}
-		--players[8] = {id = 8, team = 2, ishuman = 1}
-		--players[9] = {id = 9, team = 2, ishuman = 1}
+		players[5] = {id = 5, team = 2, ishuman = 1}
+		players[6] = {id = 2, team = 5, ishuman = 1}
+		players[7] = {id = 7, team = 5, ishuman = 1}
+		players[8] = {id = 8, team = 2, ishuman = 1}
+		players[9] = {id = 1, team = 2, ishuman = 1}
+		players[10] = {id = 2, team = 5, ishuman = 1}
 		nteams = 2
 		teams[1] = 5
 		teams[2] = 2
@@ -4196,7 +4202,8 @@ function RandomMapGenerator.CreateEntities(_generationData)
 		local maphalf = mapsize / 2
 		local maphalfsqared = maphalf ^ 2
 		
-		local step = 3 / density
+		-- base value is here
+		local step = 5 / density
 		
 		-- density only for forests ! global would hit the entity limit quite quickly
 		for i = 8, mapsize - 8, step do
