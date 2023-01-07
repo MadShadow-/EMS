@@ -6,7 +6,7 @@
 -- mirror rivers
 -- do generation before countdown starts
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-EMS_CustomMapConfig.Version = 1.7
+EMS_CustomMapConfig.Version = 1.8
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua" )
@@ -2043,10 +2043,9 @@ function RandomMapGenerator.InitGenerationData()
  	RandomMapGenerator.GenerationData.Entities = {}
 
 	-- get number of players and number of teams
-	--local nplayers, players, nteams, teams = RandomMapGenerator.GetPlayersAndTeams()
-	--local nplayers, players, nteams = RandomMapGenerator.GetPlayersAndTeams()
-	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
-	local nplayers, players, nteams = config[1], config[2], config[3]
+	local nplayers, players, nteams = RandomMapGenerator.GetPlayersAndTeams()
+	--local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	--local nplayers, players, nteams = config[1], config[2], config[3]
 	
 	RandomMapGenerator.GenerationData.Players = {}
 	RandomMapGenerator.GenerationData.NumberOfPlayers = nplayers
@@ -2719,7 +2718,7 @@ function RandomMapGenerator.GetPlayersAndTeams()
 		players[6] = {id = 2, team = 5, ishuman = 1}
 		players[7] = {id = 7, team = 5, ishuman = 1}
 		players[8] = {id = 8, team = 2, ishuman = 1}
-		players[9] = {id = 1, team = 2, ishuman = 1}
+		players[9] = {id = 3, team = 2, ishuman = 1}
 		players[10] = {id = 2, team = 5, ishuman = 1}
 		nteams = 2
 		teams[1] = 5
@@ -3926,7 +3925,7 @@ function RandomMapGenerator.CreateStructure(_generationData, _struct, _x, _y, _p
 				entity.y = _y * 100
 				entity.p = data.Entities[i].Player or _player.id
 				
-				if _player.ishuman == 1 or not entity.data.SkipDummy then
+				if _player.ishuman == 1 or ((not entity.data.SkipDummy) and (not entity.data.Explore)) then
 					table.insert(_generationData.Entities, entity)
 				end
 			end
@@ -4385,6 +4384,11 @@ function RandomMapGenerator.Finalize(_generationData)
 	_generationData.Structures = nil
 	_generationData.TerrainNodes = nil
 	
+	RandomMapGenerator.TextureSets = nil
+	RandomMapGenerator.VertexColorSets = nil
+	RandomMapGenerator.EntitySets = nil
+	RandomMapGenerator.LandscapeSets = nil
+	
 	-- start game
 	if GUI.GetPlayerID() == EMS.GV.HostId or not CNetwork then
 		RandomMapGenerator.EMS_GL_StartRequestYes()
@@ -4440,6 +4444,7 @@ function RandomMapGenerator.Callback_OnGameStart()
 		end
 	end
 	
+	--RandomMapGenerator = nil
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Peacetime Callback
@@ -4600,3 +4605,6 @@ Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_guil.lua")
 Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_ruledata.lua")
 RandomMapGenerator.GL_Setup()
 RandomMapGenerator.SetRulesToDefault()
+
+--temp
+XGUIEng.ShowWidget("RMG6", 0)

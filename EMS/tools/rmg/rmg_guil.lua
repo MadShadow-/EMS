@@ -225,8 +225,14 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.CustomTextInputs["RMG_ContentSulfurPile"]	= CTI.New({Widget="RMG5F8Value2", Before = "@center ", NumbersOnly=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_AmountWoodPile"]		= CTI.New({Widget="RMG5F9Value1", Before = "@center ", NumbersOnly=true, MaxLength=1, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_ContentWoodPile"]		= CTI.New({Widget="RMG5F9Value2", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
-	
 	EMS.GL.CustomTextInputs["RMG_AmountVC"]				= CTI.New({Widget="RMG2F7Value", Before = "@center ", NumbersOnly=true, MaxLength=1, Callback=EMS.GL.CustomTextInputCallback});
+
+	EMS.GL.CustomTextInputs["RMG_StartResourceGold"]	= CTI.New({Widget="RMG7F1Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
+	EMS.GL.CustomTextInputs["RMG_StartResourceClay"]	= CTI.New({Widget="RMG7F2Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
+	EMS.GL.CustomTextInputs["RMG_StartResourceWood"]	= CTI.New({Widget="RMG7F3Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
+	EMS.GL.CustomTextInputs["RMG_StartResourceStone"]	= CTI.New({Widget="RMG7F4Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
+	EMS.GL.CustomTextInputs["RMG_StartResourceIron"]	= CTI.New({Widget="RMG7F5Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
+	EMS.GL.CustomTextInputs["RMG_StartResourceSulfur"]	= CTI.New({Widget="RMG7F6Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
 	
 	-- gui update
 	EMS.GL.GUIUpdate["RMG_Seed"]					= EMS.GL.GUIUpdate_Number
@@ -285,6 +291,13 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.GUIUpdate["RMG_ShowResources"]			= EMS.GL.GUIUpdate_TextToggleButton
 	EMS.GL.GUIUpdate["RMG_ShowVillageCenters"]		= EMS.GL.GUIUpdate_TextToggleButton
 	EMS.GL.GUIUpdate["RMG_PlayerConfig"]			= EMS.GL.GUIUpdate_Dummy
+
+	EMS.GL.GUIUpdate["RMG_StartResourceGold"]		= EMS.GL.GUIUpdate_Number
+	EMS.GL.GUIUpdate["RMG_StartResourceClay"]		= EMS.GL.GUIUpdate_Number
+	EMS.GL.GUIUpdate["RMG_StartResourceWood"]		= EMS.GL.GUIUpdate_Number
+	EMS.GL.GUIUpdate["RMG_StartResourceStone"]		= EMS.GL.GUIUpdate_Number
+	EMS.GL.GUIUpdate["RMG_StartResourceIron"]		= EMS.GL.GUIUpdate_Number
+	EMS.GL.GUIUpdate["RMG_StartResourceSulfur"]		= EMS.GL.GUIUpdate_Number
 	
 	-- map rule to gui widget
 	EMS.GL.MapRuleToGUIWidget["RMG_Seed"]					= {"RMG1F1Value"}
@@ -343,6 +356,13 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapRuleToGUIWidget["RMG_ShowResources"]			= "RMG2F9Value"
 	EMS.GL.MapRuleToGUIWidget["RMG_ShowVillageCenters"]		= "RMG2F6Value"
 	--EMS.GL.MapRuleToGUIWidget["RMG_PlayerConfig"]			= "RMG6F1Name"
+
+	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceGold"]		= {"RMG7F1Value"}
+	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceClay"]		= {"RMG7F2Value"}
+	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceWood"]		= {"RMG7F3Value"}
+	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceStone"]		= {"RMG7F4Value"}
+	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceIron"]		= {"RMG7F5Value"}
+	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceSulfur"]	= {"RMG7F6Value"}
 	
 	-- map widget to rule required for CTI
 	EMS.GL.MapWidgetToRule["RMG1F1Value"]	= "RMG_Seed"
@@ -400,6 +420,13 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapWidgetToRule["RMG2F7Value"]	= "RMG_AmountVC"
 	--EMS.GL.MapWidgetToRule["RMG2F9Value"]	= "RMG_ShowResources"
 	--EMS.GL.MapWidgetToRule["RMG2F6Value"]	= "RMG_ShowVillageCenters"
+
+	EMS.GL.MapWidgetToRule["RMG7F1Value"]	= "RMG_StartResourceGold"
+	EMS.GL.MapWidgetToRule["RMG7F2Value"]	= "RMG_StartResourceClay"
+	EMS.GL.MapWidgetToRule["RMG7F3Value"]	= "RMG_StartResourceWood"
+	EMS.GL.MapWidgetToRule["RMG7F4Value"]	= "RMG_StartResourceStone"
+	EMS.GL.MapWidgetToRule["RMG7F5Value"]	= "RMG_StartResourceIron"
+	EMS.GL.MapWidgetToRule["RMG7F6Value"]	= "RMG_StartResourceSulfur"
 		
 	-- tooltip text
 	EMS.L.RMG_RandomSeed 		= "Setzt einen zufälligen Seed."
@@ -447,4 +474,12 @@ function RandomMapGenerator.SetRulesToDefault()
 	
 	RandomMapGenerator.SetupThresholdsNormal()
 	EMS.GL.SetValueSynced("RMG_PlayerConfig", {RandomMapGenerator.GetPlayersAndTeams()})
+
+	--local res = EMS.RD.AdditionalConfig.Ressources.Normal[player]
+	EMS.GL.SetValueSynced("RMG_StartResourceGold", 500)
+	EMS.GL.SetValueSynced("RMG_StartResourceClay", 2400)
+	EMS.GL.SetValueSynced("RMG_StartResourceWood", 1750)
+	EMS.GL.SetValueSynced("RMG_StartResourceStone", 700)
+	EMS.GL.SetValueSynced("RMG_StartResourceIron", 50)
+	EMS.GL.SetValueSynced("RMG_StartResourceSulfur", 50)
 end

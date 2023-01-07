@@ -968,3 +968,100 @@ end
 function EMS.RD.Rules.RMG_PlayerConfig:GetValue()
 	return self.value
 end
+
+-- ************************************************************************************************ --
+-- *	Gold
+-- *
+
+EMS.RD.Rules.RMG_StartResourceGold = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_StartResourceGold:GetTitle()
+	return "Taler"
+end
+
+function EMS.RD.Rules.RMG_StartResourceGold:GetDescription()
+	return "Legt die Menge an Talern fest, die zu begin des Spiels zur Verfügung stehen."
+end
+
+function EMS.RD.Rules.RMG_StartResourceGold:Evaluate()
+	for player, data in pairs(EMS.PlayerList) do
+		EMS.RD.AdditionalConfig.Ressources.Normal[player] = {
+			EMS.RD.Rules.RMG_StartResourceGold:GetValue(),
+			EMS.RD.Rules.RMG_StartResourceClay:GetValue(),
+			EMS.RD.Rules.RMG_StartResourceWood:GetValue(),
+			EMS.RD.Rules.RMG_StartResourceStone:GetValue(),
+			EMS.RD.Rules.RMG_StartResourceIron:GetValue(),
+			EMS.RD.Rules.RMG_StartResourceSulfur:GetValue(),
+		}
+	end
+end
+
+-- ************************************************************************************************ --
+-- *	Clay
+-- *
+
+EMS.RD.Rules.RMG_StartResourceClay = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_StartResourceClay:GetTitle()
+	return "Lehm"
+end
+
+function EMS.RD.Rules.RMG_StartResourceClay:GetDescription()
+	return "Legt die Menge an Lehm fest, die zu begin des Spiels zur Verfügung stehen."
+end
+
+-- ************************************************************************************************ --
+-- *	Wood
+-- *
+
+EMS.RD.Rules.RMG_StartResourceWood = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_StartResourceWood:GetTitle()
+	return "Holz"
+end
+
+function EMS.RD.Rules.RMG_StartResourceWood:GetDescription()
+	return "Legt die Menge an Holz fest, die zu begin des Spiels zur Verfügung stehen."
+end
+
+-- ************************************************************************************************ --
+-- *	Stone
+-- *
+
+EMS.RD.Rules.RMG_StartResourceStone = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_StartResourceStone:GetTitle()
+	return "Stein"
+end
+
+function EMS.RD.Rules.RMG_StartResourceStone:GetDescription()
+	return "Legt die Menge an Steinen fest, die zu begin des Spiels zur Verfügung stehen."
+end
+
+-- ************************************************************************************************ --
+-- *	Iron
+-- *
+
+EMS.RD.Rules.RMG_StartResourceIron = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_StartResourceIron:GetTitle()
+	return "Eisen"
+end
+
+function EMS.RD.Rules.RMG_StartResourceIron:GetDescription()
+	return "Legt die Menge an Eisen fest, die zu begin des Spiels zur Verfügung stehen."
+end
+
+-- ************************************************************************************************ --
+-- *	Sulfur
+-- *
+
+EMS.RD.Rules.RMG_StartResourceSulfur = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_StartResourceSulfur:GetTitle()
+	return "Schwefel"
+end
+
+function EMS.RD.Rules.RMG_StartResourceSulfur:GetDescription()
+	return "Legt die Menge an Schwefel fest, die zu begin des Spiels zur Verfügung stehen."
+end
