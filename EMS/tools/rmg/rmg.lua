@@ -6,7 +6,7 @@
 -- mirror rivers
 -- do generation before countdown starts
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-EMS_CustomMapConfig.Version = 1.8
+EMS_CustomMapConfig.Version = 1.9
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua" )
@@ -2675,7 +2675,10 @@ function RandomMapGenerator.InitGenerationData()
 	}
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.GetPlayersAndTeams()
+function RandomMapGenerator.GetPlayersAndTeams( _sortTeams, _sortPlayers )
+	
+	_sortTeams = _sortTeams or 1
+	_sortPlayers = _sortPlayers or 1
 	
 	local nplayers = 0
 	local players = {}
@@ -2703,7 +2706,7 @@ function RandomMapGenerator.GetPlayersAndTeams()
 					teams[nteams] = team
 				end
 			
-				players[nplayers] = {id = p, team = team}
+				players[nplayers] = {id = p, team = team, ishuman = 1}
 			end
 		end
  
@@ -2726,21 +2729,33 @@ function RandomMapGenerator.GetPlayersAndTeams()
 		--teams[3] = 3
 		--teams[4] = 4
 	end
-
-	-- sort players by team
-	--[[table.sort(teams,
-    function(a, b)
-        return a < b;
-    end
-	)]]
 	
-	table.sort(players,
-    function(a, b)
-		return (a.team < b.team) or (a.team == b.team and a.id < b.id)
-    end
-	)
+	-- sort team by id
+	if _sortTeams == 1 then
+		table.sort(teams,
+		function(a, b)
+			return a < b;
+		end
+		)
+	end
 	
-	return nplayers, players, nteams--, teams
+	-- sort players by team and id
+	if _sortPlayers == 1 then
+		table.sort(players,
+		function(a, b)
+			return (a.team < b.team) or (a.team == b.team and a.id < b.id)
+		end
+		)
+	-- sort players by id
+	elseif _sortPlayers == 2 then
+		table.sort(players,
+		function(a, b)
+			return (a.id < b.id)
+		end
+		)
+	end
+	
+	return nplayers, players, nteams, teams
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.FinalizeGenerationData()
