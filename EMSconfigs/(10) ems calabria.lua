@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1,
+	Version = 1.1,
 	
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -27,7 +27,7 @@ EMS_CustomMapConfig =
 		
 		Script.Load("maps\\externalmap\\customweather.lua")
 		Script.Load("maps\\externalmap\\weatherextensions.lua")
-		Script.Load("maps\\externalmap\\customticklib.lua")
+		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\other\\CustomTick.lua")
 		
 		InitCustomWeather()
 		LocalMusic.UseSet = MEDITERANEANMUSIC
@@ -61,6 +61,30 @@ EMS_CustomMapConfig =
 		-- woraround for black fog due to no weather
 		-- there is still a rendering bug for a split second
 		Display.SetRenderUseGfxSets(1)
+		
+		-- load dz spam fix (self initializing)
+		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\other\\NextTick.lua")
+		Script.Load("maps\\externalmap\\preventdzspam.lua")
+		
+		-- non periodic day night cycle until peacetime ended
+		local peacetime = EMS.RD.Rules.Peacetime:GetValue() * 60
+		local weather = {}
+		local phase = {{1,240},{4,60},{7,120},{4,60},}
+		local p = 1
+		local t = 0
+		
+		while t < peacetime do
+			table.insert(weather, {phase[p][1], phase[p][2] + t})
+			t = t + phase[p][2]
+			p = p + 1
+			if p > table.getn(phase) then
+				p = 1
+			end
+		end
+		
+		for i = table.getn(weather), 1, -1 do
+			Logic.AddWeatherElement(1, weather[i][2], 0, weather[i][1], 0, 60)
+		end
 	end,
 	
 	-- ********************************************************************************************
