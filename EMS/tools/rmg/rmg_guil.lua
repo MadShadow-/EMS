@@ -31,22 +31,49 @@ function EMS.GL.GUIUpdate_Dummy(_string)
 	--ignore
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function EMS.GL.DbgShow_PlayerConfig()
+	for i = 1,16 do
+		XGUIEng.ShowWidget("RMG6Frame"..i, 1)
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.GUIUpdate_PlayerConfig(_index, _text)
 	
-	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	local nplayers, players, nteams = RandomMapGenerator.UnpackPlayerConfig()
 	local widget = "RMG6F".._index.."".._text
 	
-	if config[1] < _index then
-		XGUIEng.ShowWidget("RMG6Frame".._index, 0)
+	if nplayers < _index then
+		--XGUIEng.ShowWidget("RMG6Frame".._index, 0)
+		if _text == "Name" then
+			XGUIEng.SetText(widget, "")
+		elseif _text == "Player" then
+			XGUIEng.SetMaterialColor(widget, 0, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 1, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 2, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 3, 0, 0, 0, 0)
+			XGUIEng.SetMaterialColor(widget, 4, 0, 0, 0, 0)
+		elseif _text == "Team" then
+			XGUIEng.SetText(widget, "")
+		elseif _text == "Add" then
+			XGUIEng.DisableButton(widget, 1)
+			XGUIEng.ShowWidget("RMG6F".._index.."Remove", 0)
+		elseif _text == "Remove" then
+			XGUIEng.ShowWidget(widget, 0)
+			XGUIEng.ShowWidget("RMG6F".._index.."Add", 1)
+		end
 		return
 	end
 	
-	local p = config[2][_index].id
-	local ishuman = config[2][_index].ishuman == 1
+	local p = players[_index].id
+	local ishuman = players[_index].ishuman == 1
 	
 	if _text == "Name" then
 		if ishuman then
-			XGUIEng.SetText(widget, "@center".." "..p)--XNetwork.GameInformation_GetLogicPlayerUserName(p))
+			if XNetwork.Manager_DoesExist() == 1 then
+				XGUIEng.SetText(widget, "@center".." "..XNetwork.GameInformation_GetLogicPlayerUserName(p))
+			else
+				XGUIEng.SetText(widget, "@center".." "..p)
+			end
 		else
 			XGUIEng.SetText(widget, "@center Dummy")
 		end
@@ -66,9 +93,10 @@ function EMS.GL.GUIUpdate_PlayerConfig(_index, _text)
 			XGUIEng.SetMaterialColor(widget, 4, 0, 0, 0, 0)
 		end
 	elseif _text == "Team" then
-		XGUIEng.SetText(widget, "@center Team"..config[2][_index].team)
+		XGUIEng.SetText(widget, "@center Team"..players[_index].team)
 	elseif _text == "Add" then
 		if ishuman then
+			XGUIEng.DisableButton(widget, 0)
 			XGUIEng.ShowWidget(widget, 1)
 			XGUIEng.ShowWidget("RMG6F".._index.."Remove", 0)
 		else
@@ -77,6 +105,7 @@ function EMS.GL.GUIUpdate_PlayerConfig(_index, _text)
 		end
 	elseif _text == "Remove" then
 		if not ishuman then
+			XGUIEng.DisableButton(widget, 0)
 			XGUIEng.ShowWidget(widget, 1)
 			XGUIEng.ShowWidget("RMG6F".._index.."Add", 0)
 		else
@@ -88,32 +117,36 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.AddDummyPlayer(_index)
 	
-	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
-	if config[1] < 16 then
-		config[1] = config[1] + 1
+	local nplayers, players = RandomMapGenerator.UnpackPlayerConfig()
+	if nplayers < 16 then
+		nplayers = nplayers + 1
 
-		for i = config[1], _index + 2, -1 do
-			config[2][i] = config[2][i - 1]
+		for i = nplayers, _index + 2, -1 do
+			players[i] = players[i - 1]
 		end
-		config[2][_index + 1] = {id = 1, team = config[2][_index].team, ishuman = 0}
+		players[_index + 1] = {id = 1, team = players[_index].team, ishuman = 0}
 		
-		EMS.GL.SetValueSynced("RMG_PlayerConfig", config)
+		RandomMapGenerator.PackPlayerConfig( nplayers, players )
 		
-		XGUIEng.ShowWidget("RMG6Frame"..config[1], 1)
+		XGUIEng.ShowWidget("RMG6Frame"..nplayers, 1)
 	end
+	
+	EMS.GL.DbgShow_PlayerConfig()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.RemoveDummyPlayer(_index)
 	
-	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
-	config[1] = config[1] - 1
+	local nplayers, players = RandomMapGenerator.UnpackPlayerConfig()
+	nplayers = nplayers - 1
 	
-	for i = _index, config[1], 1 do
-		config[2][i] = config[2][i + 1]
+	for i = _index, nplayers, 1 do
+		players[i] = players[i + 1]
 	end
-	config[2][config[1] + 1] = nil
+	players[nplayers + 1] = nil
 	
-	EMS.GL.SetValueSynced("RMG_PlayerConfig", config)
+	RandomMapGenerator.PackPlayerConfig( nplayers, players )
+	
+	EMS.GL.DbgShow_PlayerConfig()
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function EMS.GL.SetRandomSeed()
@@ -290,7 +323,6 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.GUIUpdate["RMG_AmountVC"]				= EMS.GL.GUIUpdate_Text
 	EMS.GL.GUIUpdate["RMG_ShowResources"]			= EMS.GL.GUIUpdate_TextToggleButton
 	EMS.GL.GUIUpdate["RMG_ShowVillageCenters"]		= EMS.GL.GUIUpdate_TextToggleButton
-	EMS.GL.GUIUpdate["RMG_PlayerConfig"]			= EMS.GL.GUIUpdate_Dummy
 
 	EMS.GL.GUIUpdate["RMG_StartResourceGold"]		= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_StartResourceClay"]		= EMS.GL.GUIUpdate_Number
@@ -298,6 +330,8 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.GUIUpdate["RMG_StartResourceStone"]		= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_StartResourceIron"]		= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_StartResourceSulfur"]		= EMS.GL.GUIUpdate_Number
+
+	EMS.GL.GUIUpdate["RMG_PlayerConfig"]			= EMS.GL.GUIUpdate_Dummy
 	
 	-- map rule to gui widget
 	EMS.GL.MapRuleToGUIWidget["RMG_Seed"]					= {"RMG1F1Value"}
@@ -436,7 +470,7 @@ function RandomMapGenerator.GL_Setup()
 	-- add rule pages
 	table.insert(EMS.GV.Pages, "EMSPagesRMG")
 	table.insert(EMS.GV.Pages, "EMSPagesRMG2")
-	
+
 	-- show rule page arrows
 	XGUIEng.ShowWidget("EMSPUSCUp", 1)
 	XGUIEng.ShowWidget("EMSPUSCDown", 1)
@@ -473,7 +507,6 @@ function RandomMapGenerator.SetRulesToDefault()
 	EMS.GL.SetValueSynced("RMG_AmountVC", 3)
 	
 	RandomMapGenerator.SetupThresholdsNormal()
-	EMS.GL.SetValueSynced("RMG_PlayerConfig", {RandomMapGenerator.GetPlayersAndTeams()})
 
 	--local res = EMS.RD.AdditionalConfig.Ressources.Normal[player]
 	EMS.GL.SetValueSynced("RMG_StartResourceGold", 500)
@@ -482,4 +515,83 @@ function RandomMapGenerator.SetRulesToDefault()
 	EMS.GL.SetValueSynced("RMG_StartResourceStone", 700)
 	EMS.GL.SetValueSynced("RMG_StartResourceIron", 50)
 	EMS.GL.SetValueSynced("RMG_StartResourceSulfur", 50)
+end
+
+function RandomMapGenerator.PackPlayerConfig( _nplayers, _players, _nteams, _teams )
+	
+	local config = ""
+	config = AddNumberToString( config, _nplayers, 2 )
+	
+	for p = 1, _nplayers do
+		
+		local data = _players[p]
+		
+		config = AddNumberToString( config, data.id, 2 )
+		config = AddNumberToString( config, data.team, 2 )
+		config = AddNumberToString( config, data.ishuman, 1 )
+	end
+	
+	EMS.GL.SetValue( "RMG_PlayerConfig", config )
+end
+
+function AddNumberToString( _text, _num, _digits )
+	
+	_digits = _digits or 1
+	
+	-- the lazy aproach is enough
+	if _digits == 2 and _num < 10 then
+		_text = _text .. "0"
+	end
+	_text = _text .. _num
+		
+	return _text
+end
+
+function RandomMapGenerator.UnpackPlayerConfig()
+	
+	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	
+	local nplayers = 0
+	local players = {}
+	local nteams = 0
+	local teams = {}
+	
+	config, nplayers = GetNumberFromString( config, 2 )
+	
+	for p = 1, nplayers do
+		
+		local id,team, ishuman = 0,0,0
+		
+		config, id      = GetNumberFromString( config, 2 )
+		config, team    = GetNumberFromString( config, 2 )
+		config, ishuman = GetNumberFromString( config, 1 )
+		
+		local isIn = false
+
+		for _,v in pairs(teams) do
+			if v == team then
+				isIn = true
+				break
+			end
+		end
+
+		if not isIn then
+			nteams = nteams + 1
+			teams[nteams] = team
+		end
+		
+		players[p] = { id = id, team = team, ishuman = ishuman }
+	end
+	
+	return nplayers, players, nteams, teams
+end
+
+function GetNumberFromString( _text, _digits )
+	
+	_digits = _digits or 1
+	
+	local num = tonumber( string.sub( _text, 1, _digits ) )
+	_text = string.sub( _text, _digits + 1, string.len( _text ) )
+	
+	return _text, num
 end

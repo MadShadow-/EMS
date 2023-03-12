@@ -948,28 +948,6 @@ function EMS.RD.Rules.RMG_ShowVillageCenters:GetDescription()
 end
 
 -- ************************************************************************************************ --
--- *	Player Config
--- *
-
-EMS.RD.Rules.RMG_PlayerConfig = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_PlayerConfig:GetTitle()
-	return "Spielerkonfiguration"
-end
-
-function EMS.RD.Rules.RMG_PlayerConfig:GetDescription()
-	return "Hier könnt ihr Dummy Spieler hinzufügen und entfernen. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Ein Dummy Spieler wird bei der Generierung wie ein richtiger Spieler behandelt mit dem Unterschied, dass für ihn keine Startgebäude platziert werden. @cr Diese Einstellung dient in erster Linie dazu, bei ungleicher Anzahl an Spielern pro Team faire Platz- und Rohstoffverhältnisse herzustellen."
-end
-
-function EMS.RD.Rules.RMG_PlayerConfig:SetValue(_value)
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_PlayerConfig:GetValue()
-	return self.value
-end
-
--- ************************************************************************************************ --
 -- *	Gold
 -- *
 
@@ -1064,4 +1042,26 @@ end
 
 function EMS.RD.Rules.RMG_StartResourceSulfur:GetDescription()
 	return "Legt die Menge an Schwefel fest, die zu begin des Spiels zur Verfügung stehen."
+end
+
+-- ************************************************************************************************ --
+-- *	Player Config
+-- *
+
+EMS.RD.Rules.RMG_PlayerConfig = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
+	
+function EMS.RD.Rules.RMG_PlayerConfig:GetTitle()
+	return "Spielerkonfiguration"
+end
+
+function EMS.RD.Rules.RMG_PlayerConfig:GetDescription()
+	return "Hier könnt ihr Dummy Spieler hinzufügen und entfernen. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Ein Dummy Spieler wird bei der Generierung wie ein richtiger Spieler behandelt mit dem Unterschied, dass für ihn keine Startgebäude platziert werden. @cr Diese Einstellung dient in erster Linie dazu, bei ungleicher Anzahl an Spielern pro Team faire Platz- und Rohstoffverhältnisse herzustellen."
+end
+
+function EMS.RD.Rules.RMG_PlayerConfig:SetValue(_value)
+	self.value = _value
+end
+
+function EMS.RD.Rules.RMG_PlayerConfig:GetValue()
+	return self.value
 end

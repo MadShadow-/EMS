@@ -8,6 +8,7 @@
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 EMS_CustomMapConfig.Version = 1.9
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\TerrainTypes.lua" )
@@ -1971,8 +1972,9 @@ function RandomMapGenerator.InitGenerationData()
 	end
 	-- DBG only --
 	
-	local seed = EMS.RD.Rules.RMG_Seed:GetValue()
 	
+	local seed = EMS.RD.Rules.RMG_Seed:GetValue()
+
 	RandomMapGenerator.GenerationData.Seed = seed,
 	SimplexNoise.seedP(seed)
 	
@@ -2043,9 +2045,11 @@ function RandomMapGenerator.InitGenerationData()
  	RandomMapGenerator.GenerationData.Entities = {}
 
 	-- get number of players and number of teams
-	local nplayers, players, nteams = RandomMapGenerator.GetPlayersAndTeams()
-	--local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
-	--local nplayers, players, nteams = config[1], config[2], config[3]
+	local nplayers, players, nteams = RandomMapGenerator.UnpackPlayerConfig()
+	
+	if EMS.RD.Rules.RMG_PlayerConfig:GetValue() == 0 then
+		nplayers, players, nteams = RandomMapGenerator.GetPlayersAndTeams()
+	end
 	
 	RandomMapGenerator.GenerationData.Players = {}
 	RandomMapGenerator.GenerationData.NumberOfPlayers = nplayers
@@ -2675,10 +2679,7 @@ function RandomMapGenerator.InitGenerationData()
 	}
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.GetPlayersAndTeams( _sortTeams, _sortPlayers )
-	
-	_sortTeams = _sortTeams or 1
-	_sortPlayers = _sortPlayers or 1
+function RandomMapGenerator.GetPlayersAndTeams()
 	
 	local nplayers = 0
 	local players = {}
@@ -2712,17 +2713,17 @@ function RandomMapGenerator.GetPlayersAndTeams( _sortTeams, _sortPlayers )
  
 	else
 		-- just some testing in SP - amount must fit now due to new sorting system
-		nplayers = 10
+		nplayers = 4
 		players[1] = {id = 1, team = 5, ishuman = 1}
 		players[2] = {id = 6, team = 2, ishuman = 1}
 		players[3] = {id = 4, team = 5, ishuman = 1}
 		players[4] = {id = 3, team = 2, ishuman = 1}
-		players[5] = {id = 5, team = 2, ishuman = 1}
-		players[6] = {id = 2, team = 5, ishuman = 1}
-		players[7] = {id = 7, team = 5, ishuman = 1}
-		players[8] = {id = 8, team = 2, ishuman = 1}
-		players[9] = {id = 3, team = 2, ishuman = 1}
-		players[10] = {id = 2, team = 5, ishuman = 1}
+		--players[5] = {id = 5, team = 2, ishuman = 1}
+		--players[6] = {id = 2, team = 5, ishuman = 1}
+		--players[7] = {id = 7, team = 5, ishuman = 1}
+		--players[8] = {id = 8, team = 2, ishuman = 1}
+		--players[9] = {id = 3, team = 2, ishuman = 1}
+		--players[10] = {id = 2, team = 5, ishuman = 1}
 		nteams = 2
 		teams[1] = 5
 		teams[2] = 2
@@ -2730,31 +2731,21 @@ function RandomMapGenerator.GetPlayersAndTeams( _sortTeams, _sortPlayers )
 		--teams[4] = 4
 	end
 	
+	-- sort MUST be done here !
 	-- sort team by id
-	if _sortTeams == 1 then
-		table.sort(teams,
-		function(a, b)
-			return a < b;
-		end
-		)
+	table.sort(teams,
+	function(a, b)
+		return a < b;
 	end
+	)
 	
-	-- sort players by team and id
-	if _sortPlayers == 1 then
-		table.sort(players,
-		function(a, b)
-			return (a.team < b.team) or (a.team == b.team and a.id < b.id)
-		end
-		)
-	-- sort players by id
-	elseif _sortPlayers == 2 then
-		table.sort(players,
-		function(a, b)
-			return (a.id < b.id)
-		end
-		)
+	-- sort players by team
+	table.sort(players,
+	function(a, b)
+		return (a.team < b.team) --or (a.team == b.team and a.id < b.id)
 	end
-	
+	)
+
 	return nplayers, players, nteams, teams
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
@@ -4618,8 +4609,18 @@ end
  --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_guil.lua")
 Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_ruledata.lua")
+
 RandomMapGenerator.GL_Setup()
 RandomMapGenerator.SetRulesToDefault()
 
---temp
-XGUIEng.ShowWidget("RMG6", 0)
+-- init on rule page changed, not immediately because player data is not yet available >:(
+RandomMapGenerator.EMS_GL_ToggleRulePage = EMS.GL.ToggleRulePage
+EMS.GL.ToggleRulePage = function( _value )
+	RandomMapGenerator.PackPlayerConfig( unpack({ RandomMapGenerator.GetPlayersAndTeams() }) )
+	XGUIEng.ShowWidget("RMG6", 1)
+	EMS.GL.DbgShow_PlayerConfig()
+	
+	EMS.GL.ToggleRulePage = RandomMapGenerator.EMS_GL_ToggleRulePage
+	RandomMapGenerator.EMS_GL_ToggleRulePage = nil
+	EMS.GL.ToggleRulePage( _value )
+end
