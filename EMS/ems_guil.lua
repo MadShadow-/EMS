@@ -1412,20 +1412,20 @@ function EMS.GL.RandomizeRules()
 end
 
 function EMS.GL.CalculateRandomValues()
-	EMS.GL.SetValue("Sword",Logic.GetRandom(5))
-	EMS.GL.SetValue("PoleArm",Logic.GetRandom(5))
-	EMS.GL.SetValue("Bow",Logic.GetRandom(5))
-	EMS.GL.SetValue("Cannon1", Logic.GetRandom(2))
-	EMS.GL.SetValue("Cannon2", Logic.GetRandom(2))
-	EMS.GL.SetValue("Cannon3", Logic.GetRandom(2))
-	EMS.GL.SetValue("Cannon4", Logic.GetRandom(2))
-	EMS.GL.SetValue("HeavyCavalry",Logic.GetRandom(3))
-	EMS.GL.SetValue("LightCavalry",Logic.GetRandom(3))
-	EMS.GL.SetValue("Rifle",Logic.GetRandom(3))
-	EMS.GL.SetValue("Thief",Logic.GetRandom(2))
-	EMS.GL.SetValue("Scout",Logic.GetRandom(2))
-	EMS.GL.SetValue("Bridge",Logic.GetRandom(3))
-	EMS.GL.SetValue("TowerLevel",Logic.GetRandom(4))
+	EMS.GL.SetValue("Sword",math.random(0,4))
+	EMS.GL.SetValue("PoleArm",math.random(0,4))
+	EMS.GL.SetValue("Bow",math.random(0,4))
+	EMS.GL.SetValue("Cannon1", math.random(0,1))
+	EMS.GL.SetValue("Cannon2", math.random(0,1))
+	EMS.GL.SetValue("Cannon3", math.random(0,1))
+	EMS.GL.SetValue("Cannon4", math.random(0,1))
+	EMS.GL.SetValue("HeavyCavalry",math.random(0,2))
+	EMS.GL.SetValue("LightCavalry",math.random(0,2))
+	EMS.GL.SetValue("Rifle",math.random(0,2))
+	EMS.GL.SetValue("Thief",math.random(0,1))
+	EMS.GL.SetValue("Scout",math.random(0,1))
+	EMS.GL.SetValue("Bridge",math.random(0,1))
+	EMS.GL.SetValue("TowerLevel",math.random(0,3))
 	local heroes = {
     "Dario",
     "Ari",
@@ -1441,24 +1441,24 @@ function EMS.GL.CalculateRandomValues()
     "Kala"
 		}
 	for i = 1,12,1 do
-			EMS.GL.SetValue(heroes[i], Logic.GetRandom(2))
+			EMS.GL.SetValue(heroes[i], math.random(0,1))
 	end
 	
-	EMS.GL.SetValue("NumberOfHeroesForAll", Logic.GetRandom(13))
-	EMS.GL.SetValue("Peacetime",Logic.GetRandom(61))
-	EMS.GL.SetValue("WeatherChangeLockTimer",Logic.GetRandom(11))
-	--EMS.GL.SetValue("TradeLimit", math.floor(Logic.GetRandom(100001)/250)*250)
-	EMS.GL.SetValue("TowerLimit",Logic.GetRandom(61))
-	EMS.GL.SetValue("MakeSummer", Logic.GetRandom(2))
-	EMS.GL.SetValue("MakeRain", Logic.GetRandom(2))
-	EMS.GL.SetValue("MakeSnow", Logic.GetRandom(2))
-	--EMS.GL.SetValue("HQRush", Logic.GetRandom(2))
-	EMS.GL.SetValue("BlessLimit", Logic.GetRandom(2))
-	--EMS.GL.SetValue("AntiBug", Logic.GetRandom(2))
+	EMS.GL.SetValue("NumberOfHeroesForAll", math.random(0,12))
+	EMS.GL.SetValue("Peacetime",math.random(0,120))
+	EMS.GL.SetValue("WeatherChangeLockTimer",math.random(0,15))
+	--EMS.GL.SetValue("TradeLimit", math.floor(math.random(100001)/250)*250)
+	EMS.GL.SetValue("TowerLimit",math.random(0,60))
+	EMS.GL.SetValue("MakeSummer", math.random(0,1))
+	EMS.GL.SetValue("MakeRain", math.random(0,1))
+	EMS.GL.SetValue("MakeSnow", math.random(0,1))
+	--EMS.GL.SetValue("HQRush", math.random(0,1))
+	EMS.GL.SetValue("BlessLimit", math.random(0,1))
+	--EMS.GL.SetValue("AntiBug", math.random(0,1))
 	
-	if Logic.GetRandom(2) == 1 then
-		EMS.GL.SetValue("Markets",0)
-		EMS.GL.SetValue("Markets",Logic.GetRandom(101))
+	if math.random(0,1) == 1 then
+		--EMS.GL.SetValue("Markets",0)
+		EMS.GL.SetValue("Markets",math.random(0,100))
 	else
 		EMS.GL.SetValue("Markets",-1)
 	end
