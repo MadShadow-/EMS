@@ -15,6 +15,7 @@ Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\TerrainTypes.lua" 
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\WaterTypes.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\number\\round.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\entity\\CreateWoodPile.lua" )
+Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\mapeditor\\MirrorMapTools.lua" )
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RandomMapGenerator = {}
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
@@ -1950,7 +1951,7 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.InitGenerationData()
 	
-	RandomMapGenerator.GenerationData = { DebugMode = false, }
+	RandomMapGenerator.GenerationData = { DebugMode = true, }
 	
 	Score.Player[0] = {buildings=0, all=0}
 	
@@ -2779,6 +2780,7 @@ function RandomMapGenerator.FinalizeGenerationData()
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RandomMapGenerator.StartGenerateMap()
+	
 	local _generationData = RandomMapGenerator.GenerationData
 	
 	RandomMapGenerator.FillNoiseTable(_generationData)
@@ -3160,38 +3162,56 @@ function RandomMapGenerator.FillRiverLocationTable(_generationData)
 	local maphalf = mapsize / 2
 	local radhalf = _generationData.PlayerRadian / 2
 	local currentTeam = 0
+	local teamIndex = 0
 	
-	_generationData.Rivers[0] = {}
+	_generationData.Rivers.Paths = {}
+	_generationData.Rivers.MirrorAngles = {}
 	
 	-- find the points at the egde of the map between different teams
 	for player = 1, _generationData.NumberOfPlayers do
 		if _generationData.Players[player].team > currentTeam then
 			currentTeam = _generationData.Players[player].team
+			teamIndex = teamIndex + 1
 			
 			local delta = (player - 1) * _generationData.PlayerRadian
-			local x = maphalf * math.cos(delta) + maphalf
-			local y = maphalf * math.sin(delta) + maphalf
+
+			-- add mirror angles 
+			if _generationData.MirrorMap then
+				
+				table.insert( _generationData.Rivers.MirrorAngles, math.deg( delta ) )
+			end
 			
-			-- dont use FindBestPoint here, since the river might not touch the map border then
-			x, y = SnapToGrid(4, x, y)
-			_generationData.Rivers[currentTeam] = {x = x, y = y}
+			if not _generationData.MirrorMap or teamIndex == 1 then
 			
-			_generationData.Rivers[0][currentTeam] = {currentTeam, _generationData.NumberOfTeams + 1}
+				local x = maphalf * math.cos(delta) + maphalf
+				local y = maphalf * math.sin(delta) + maphalf
+				
+				-- dont use FindBestPoint here, since the river might not touch the map border then
+				x, y = SnapToGrid(4, x, y)
+				_generationData.Rivers[teamIndex] = {x = x, y = y}
+				
+				_generationData.Rivers.Paths[teamIndex] = {teamIndex, _generationData.NumberOfTeams + 1}
+			end
 		end
 	end
 	
 	-- add the central point in the middle of the map, where all rivers merge together
-	local x, y = RandomMapGenerator.FindBestPoint(_generationData, maphalf, maphalf, 16, 4, -1)
+	-- must be the exact center if rivers will be mirrored
+	local x, y = maphalf, maphalf
+	if not _generationData.MirrorMap then
+		x, y = RandomMapGenerator.FindBestPoint(_generationData, maphalf, maphalf, 16, 4, -1)
+	end
 	_generationData.Rivers[_generationData.NumberOfTeams + 1] = {x = x, y = y}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function RandomMapGenerator.CreateRivers(_generationData)
 
 	local mapsize = Logic.WorldGetSize() / 100
+	local maphalf = mapsize / 2
 	
-	for i = 1, table.getn(_generationData.Rivers[0]) do
+	for i = 1, table.getn(_generationData.Rivers.Paths) do
 		
-		local a, b = _generationData.Rivers[0][i][1], _generationData.Rivers[0][i][2]
+		local a, b = _generationData.Rivers.Paths[i][1], _generationData.Rivers.Paths[i][2]
 		local x1, y1, x2, y2 = _generationData.Rivers[a].x, _generationData.Rivers[a].y, _generationData.Rivers[b].x, _generationData.Rivers[b].y
 		
 		local river = AStar.FindPath( _generationData.TerrainNodes[x1][y1], _generationData.TerrainNodes[x2][y2], _generationData.TerrainNodes, RandomMapGenerator.AStar_GetNeighborNodes_River, RandomMapGenerator.AStar_GetPathCost_River )
@@ -3202,22 +3222,38 @@ function RandomMapGenerator.CreateRivers(_generationData)
 			local noise = RandomMapGenerator.GetTerrainNoiseFromHeight(_generationData, height)
 
 			local currNode = river[1]
-			RandomMapGenerator.SetNoiseOverride(_generationData, currNode.x, currNode.y, 16, 6, noise, height)
-			
-			table.insert(_generationData.Rivers.Nodes, {x = currNode.x, y = currNode.y})
+			RandomMapGenerator.AddRiverNode( _generationData, currNode.x, currNode.y, 16, 6, noise, height )
+
  			local prevNode = currNode
  
-			for i = 2, table.getn(river) do
+			for j = 2, table.getn(river) do
 			
-				currNode = river[i]
-				RandomMapGenerator.SetNoiseOverride(_generationData, currNode.x, currNode.y, 16, 6, noise, height)
+				currNode = river[j]
+				RandomMapGenerator.AddRiverNode( _generationData, currNode.x, currNode.y, 16, 6, noise, height )
 				
-				-- add the middle between two nodes so rivers and roads do not miss each other with two diagonals - trust me, it works like this ;)
-				table.insert(_generationData.Rivers.Nodes, {x = (currNode.x + prevNode.x) / 2, y = (currNode.y + prevNode.y) / 2})
+				-- add the middle between two nodes so rivers and roads do not miss each other with two diagonals
+				RandomMapGenerator.AddRiverNode( _generationData, (currNode.x + prevNode.x) / 2, (currNode.y + prevNode.y) / 2 )
 				
-				table.insert(_generationData.Rivers.Nodes, {x = currNode.x, y = currNode.y})
 				prevNode = currNode
 			end
+		end
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RandomMapGenerator.AddRiverNode( _generationData, _x, _y, _a, _b, _noise, _height )
+	
+	local maphalf = Logic.WorldGetSize() / 200
+	
+	for _, targetangle in ipairs( _generationData.Rivers.MirrorAngles ) do
+		
+		_x, _y = _x - maphalf, _y - maphalf
+		_x, _y = MMT.GetMirrorPosition( math.sqrt( _x ^ 2 + _y ^ 2 ), 0, targetangle, MMT.AllignAngle( math.deg( math.atan2( _y, _x ) ), targetangle ), maphalf, 0 )
+		_x, _y = Round( _x ), Round( _y )
+		
+		table.insert( _generationData.Rivers.Nodes, {x = _x, y = _y} )
+		
+		if _noise then
+			RandomMapGenerator.SetNoiseOverride( _generationData, _x, _y, _a, _b, _noise, _height )
 		end
 	end
 end
@@ -3234,7 +3270,7 @@ function RandomMapGenerator.FillRoadLocationTable(_generationData)
 	-- check for specific case with nonly 2 players on 2 teams
 	if _generationData.NumberOfPlayers == 2 and _generationData.NumberOfTeams == 2 then
 	
-		_generationData.Roads[0] = {{1, 2}, {3, 1}, {4, 1}, {3, 2}, {4, 2}} -- from player 1 to player 2 and from imaginary player 3 and 4 to each player 1 and 2
+		_generationData.Roads.Paths = {{1, 2}, {3, 1}, {4, 1}, {3, 2}, {4, 2}} -- from player 1 to player 2 and from imaginary player 3 and 4 to each player 1 and 2
 		
 		_generationData.Roads[1] = _generationData.Players[1]
 		_generationData.Roads[2] = _generationData.Players[2]
@@ -3256,20 +3292,20 @@ function RandomMapGenerator.FillRoadLocationTable(_generationData)
 	-- otherwise use the generic system
 	else
  
-		_generationData.Roads[0] = {}
+		_generationData.Roads.Paths = {}
   
 		-- players
 		for p = 1, _generationData.NumberOfPlayers do
 		
 			_generationData.Roads[p] = _generationData.Players[p]
-			table.insert(_generationData.Roads[0], {_generationData.NumberOfPlayers + 1, p}) -- from middle to player is faster than player to middle when rivers are generated, without its equal fast
+			table.insert(_generationData.Roads.Paths, {_generationData.NumberOfPlayers + 1, p}) -- from middle to player is faster than player to middle when rivers are generated, without its equal fast
    
 			if p < _generationData.NumberOfPlayers then
 			
-				table.insert(_generationData.Roads[0], {p, p + 1})
+				table.insert(_generationData.Roads.Paths, {p, p + 1})
 			else
 			
-				table.insert(_generationData.Roads[0], {1, p})
+				table.insert(_generationData.Roads.Paths, {1, p})
 			end
 		end
   
@@ -3284,9 +3320,9 @@ function RandomMapGenerator.CreateRoads(_generationData)
 	local mapsize = Logic.WorldGetSize() / 100
 	local bridges = {}
 	
-	for i = 1, table.getn(_generationData.Roads[0]) do
+	for i = 1, table.getn(_generationData.Roads.Paths) do
 		
-		local a, b = _generationData.Roads[0][i][1], _generationData.Roads[0][i][2]
+		local a, b = _generationData.Roads.Paths[i][1], _generationData.Roads.Paths[i][2]
 		local x1, y1, x2, y2 = _generationData.Roads[a].x, _generationData.Roads[a].y, _generationData.Roads[b].x, _generationData.Roads[b].y
 
 		local road = AStar.FindPath ( _generationData.TerrainNodes[x1][y1], _generationData.TerrainNodes[x2][y2], _generationData.TerrainNodes, RandomMapGenerator.AStar_GetNeighborNodes_Road, RandomMapGenerator.AStar_GetPathCost_Road )
@@ -3296,26 +3332,26 @@ function RandomMapGenerator.CreateRoads(_generationData)
 			local nodeA, nodeB
 			local n = 0
 			
-			for i = 2, table.getn(road) do
+			for j = 2, table.getn(road) do
 			
 				if n ~= 0 then
 					break
 				end
 				
-				nodeA = road[i]
-				nodeB = road[i-1]
+				nodeA = road[j]
+				nodeB = road[j-1]
 				
 				x1, y1, x2, y2 = nodeA.x, nodeA.y, (nodeA.x + nodeB.x) / 2, (nodeA.y + nodeB.y) / 2
 				
 				if _generationData.Rivers then
 				
-					for j = 1, table.getn(_generationData.Rivers.Nodes) do
+					for k = 1, table.getn(_generationData.Rivers.Nodes) do
 					
-						nodeB = _generationData.Rivers.Nodes[j]
+						nodeB = _generationData.Rivers.Nodes[k]
 						
 						if (x1 == nodeB.x or x2 == nodeB.x) and (y1 == nodeB.y or y2 == nodeB.y) then
 						
-							n = i
+							n = j
 							--x, y = nodeA.x, nodeA.y
 							break
 						end
@@ -3404,14 +3440,14 @@ function RandomMapGenerator.CreateRoads(_generationData)
 			
 			local prevNode = currNode
 			
-			for i = 2, table.getn(road) do
+			for j = 2, table.getn(road) do
 		
-				currNode = road[i]
+				currNode = road[j]
 				
 				-- same as for rivers we need at least the middle node to make shure river and road dont miss each other at a diagonal
-				for j = 4, 1, -1 do
+				for k = 4, 1, -1 do
 				
-					local x,y = Lerp(currNode.x, prevNode.x, j/4), Lerp(currNode.y, prevNode.y, j/4)
+					local x,y = Lerp(currNode.x, prevNode.x, k/4), Lerp(currNode.y, prevNode.y, k/4)
 					
 					if _generationData.TerrainNodes[x][y].blocking ~= RandomMapGenerator.BlockingTypes.River then
 						RandomMapGenerator.SetNoiseOverride(_generationData, x, y, 6, 1, noise, height)
@@ -4352,6 +4388,19 @@ function RandomMapGenerator.Finalize(_generationData)
 	--StartSimpleJob("RMG_ResetFeedbackSound")
 	--GDB.SetValueNoSave( "Config\\Sound\\FeedbackVolume", 0)
 	--SoundOptions.UpdateSound()
+
+	-- peacetime with rivers
+	if EMS_CustomMapConfig.Peacetime > 0 and _generationData.TeamBorderType == 3 then
+		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.PB_Bridge1)) do
+			DestroyEntity(id)
+		end
+		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.PB_Bridge2)) do
+			DestroyEntity(id)
+		end
+		for p = 1, RandomMapGenerator.GenerationData.NumberOfPlayers do
+			ForbidTechnology(Technologies.B_Bridge, p)
+		end
+	end
 	
 	-- debug
 	if _generationData.DebugMode then
@@ -4368,32 +4417,20 @@ function RandomMapGenerator.Finalize(_generationData)
 			end
 		end]]
 		
+	else
+		
+		-- clear _generationData
+		_generationData.Entities = nil
+		_generationData.Rivers = nil
+		_generationData.Roads = nil
+		_generationData.Structures = nil
+		_generationData.TerrainNodes = nil
+		
+		RandomMapGenerator.TextureSets = nil
+		RandomMapGenerator.VertexColorSets = nil
+		RandomMapGenerator.EntitySets = nil
+		RandomMapGenerator.LandscapeSets = nil
 	end
-	
-	-- peacetime with rivers
-	if EMS_CustomMapConfig.Peacetime > 0 and _generationData.TeamBorderType == 3 then
-		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.PB_Bridge1)) do
-			DestroyEntity(id)
-		end
-		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.PB_Bridge2)) do
-			DestroyEntity(id)
-		end
-		for p = 1, RandomMapGenerator.GenerationData.NumberOfPlayers do
-			ForbidTechnology(Technologies.B_Bridge, p)
-		end
-	end
-	
-	-- clear _generationData
-	_generationData.Entities = nil
-	_generationData.Rivers = nil
-	_generationData.Roads = nil
-	_generationData.Structures = nil
-	_generationData.TerrainNodes = nil
-	
-	RandomMapGenerator.TextureSets = nil
-	RandomMapGenerator.VertexColorSets = nil
-	RandomMapGenerator.EntitySets = nil
-	RandomMapGenerator.LandscapeSets = nil
 	
 	-- start game
 	if GUI.GetPlayerID() == EMS.GV.HostId or not CNetwork then
