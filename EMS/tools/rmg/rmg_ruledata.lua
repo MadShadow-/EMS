@@ -43,18 +43,18 @@ function EMS.RD.Rules.RMG_GenerateRivers:SetValue(_value)
 	end
 
 	if _value < 1 then
-		_value = table.getn(RandomMapGenerator.TeamBorderTypes)
-	elseif _value > table.getn(RandomMapGenerator.TeamBorderTypes) then
+		_value = table.getn(RMG.TeamBorderTypes)
+	elseif _value > table.getn(RMG.TeamBorderTypes) then
 		_value = 1
 	end
 	self.value = _value
 	
-	XGUIEng.ShowWidget("RMG1Frame3a", RandomMapGenerator.TeamBorderTypes[self.value].gate)
-	XGUIEng.ShowWidget("RMG1Frame3b", RandomMapGenerator.TeamBorderTypes[self.value].gate)
+	XGUIEng.ShowWidget("RMG1Frame3a", RMG.TeamBorderTypes[self.value].gate)
+	XGUIEng.ShowWidget("RMG1Frame3b", RMG.TeamBorderTypes[self.value].gate)
 end
 
 function EMS.RD.Rules.RMG_GenerateRivers:GetRepresentative()
-	return RandomMapGenerator.TeamBorderTypes[self.value].representative or RandomMapGenerator.TeamBorderTypes[self.value].id
+	return RMG.TeamBorderTypes[self.value].representative or RMG.TeamBorderTypes[self.value].id
 end
 
 -- ************************************************************************************************ --
@@ -74,15 +74,15 @@ end
 function EMS.RD.Rules.RMG_GateLayout:SetValue(_value)
 	EMS.RD.Rules.PredefinedRuleset:SoftCustomize()
 	if _value < 1 then
-		_value = table.getn(RandomMapGenerator.GateLayouts)
-	elseif _value > table.getn(RandomMapGenerator.GateLayouts) then
+		_value = table.getn(RMG.GateLayouts)
+	elseif _value > table.getn(RMG.GateLayouts) then
 		_value = 1
 	end
 	self.value = _value
 end
 
 function EMS.RD.Rules.RMG_GateLayout:GetRepresentative()
-	return RandomMapGenerator.GateLayouts[self.value].representative or RandomMapGenerator.GateLayouts[self.value].id
+	return RMG.GateLayouts[self.value].representative or RMG.GateLayouts[self.value].id
 end
 
 -- ************************************************************************************************ --
@@ -102,15 +102,15 @@ end
 function EMS.RD.Rules.RMG_GateSize:SetValue(_value)
 	EMS.RD.Rules.PredefinedRuleset:SoftCustomize()
 	if _value < 1 then
-		_value = table.getn(RandomMapGenerator.GateSizes)
-	elseif _value > table.getn(RandomMapGenerator.GateSizes) then
+		_value = table.getn(RMG.GateSizes)
+	elseif _value > table.getn(RMG.GateSizes) then
 		_value = 1
 	end
 	self.value = _value
 end
 
 function EMS.RD.Rules.RMG_GateSize:GetRepresentative()
-	return RandomMapGenerator.GateSizes[self.value].representative or RandomMapGenerator.GateSizes[self.value].id
+	return RMG.GateSizes[self.value].representative or RMG.GateSizes[self.value].id
 end
 
 -- ************************************************************************************************ --
@@ -145,26 +145,26 @@ end
 function EMS.RD.Rules.RMG_LandscapeSet:SetValue(_value)
 	EMS.RD.Rules.PredefinedRuleset:SoftCustomize()
 	if _value < 1 then
-		_value = table.getn(RandomMapGenerator.LandscapeSetKeys)
-	elseif _value > table.getn(RandomMapGenerator.LandscapeSetKeys) then
+		_value = table.getn(RMG.LandscapeSetKeys)
+	elseif _value > table.getn(RMG.LandscapeSetKeys) then
 		_value = 1
 	end
 	self.value = _value
 	
-	RandomMapGenerator.SetupThresholdsNormal()
-	if RandomMapGenerator.LandscapeSetKeys[self.value].func then
-		RandomMapGenerator.LandscapeSetKeys[self.value].func()
+	--RMG.SetupThresholdsNormal()
+	if RMG.LandscapeSetKeys[self.value].func then
+		RMG.LandscapeSetKeys[self.value].func()
 	end
 end
 
 function EMS.RD.Rules.RMG_LandscapeSet:Evaluate()
-	if RandomMapGenerator.LandscapeSetKeys[self.value].eval then
-		RandomMapGenerator.LandscapeSetKeys[self.value].eval()
+	if RMG.LandscapeSetKeys[self.value].eval then
+		RMG.LandscapeSetKeys[self.value].eval()
 	end
 end
 	
 function EMS.RD.Rules.RMG_LandscapeSet:GetRepresentative()
-	return RandomMapGenerator.LandscapeSetKeys[self.value].representative or RandomMapGenerator.LandscapeSetKeys[self.value].id
+	return RMG.LandscapeSetKeys[self.value].representative or RMG.LandscapeSetKeys[self.value].id
 end
 
 -- ************************************************************************************************ --
@@ -214,7 +214,7 @@ end
 function EMS.RD.Rules.RMG_RandomPlayerPosition:GetDescription()
 	return "Legt fest ob die Startpositionen der Spieler einen Kreis bilden, oder alle zufällig auf der Karte verteilt werden. @cr @cr @color:255,204,51,255 VORSICHT: @color:255,255,255,255 Bei zufälliger Verteilung sind Karte spiegeln und Team Abgrenzung nicht verfügbar. @cr @cr @color:255,102,51,255 WARNUNG: @color:255,255,255,255 Bei zufälliger Verteilung kann es Vorkommen, dass nicht genug Platz für alle Stukturen wie Rohstoffschächte vorhanden ist. Der Generator wird euch dies mitteilen. @cr Außerdem kann es in seltenen Fällen Vorkommen, dass eure Burgen ineinander stehen. @cr Bei Problemen könnt ihr es mit einem anderen Seed versuchen."
 end
-
+--[[
 -- ************************************************************************************************ --
 -- *	TerrainBaseHeight
 -- *
@@ -436,132 +436,6 @@ function EMS.RD.Rules.RMG_ThresholdCoast:GetDescription()
 end
 
 -- ************************************************************************************************ --
--- *	ThresholdForest
--- *
-
-EMS.RD.Rules.RMG_ThresholdForest = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdForest:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdForest:GetTitle()
-	return "Wald"
-end
-
-function EMS.RD.Rules.RMG_ThresholdForest:GetDescription()
-	return EMS.GL.GetThresholdDescription("Wälder")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdMeadow
--- *
-
-EMS.RD.Rules.RMG_ThresholdMeadow = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdMeadow:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdMeadow:GetTitle()
-	return "Wiese"
-end
-
-function EMS.RD.Rules.RMG_ThresholdMeadow:GetDescription()
-	return EMS.GL.GetThresholdDescription("Wiesen")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdFlatland
--- *
-
-EMS.RD.Rules.RMG_ThresholdFlatland = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdFlatland:SetValue(_value)
-	if _value > 1000 or _value < 0 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdFlatland:GetTitle()
-	return "Flachland"
-end
-
-function EMS.RD.Rules.RMG_ThresholdFlatland:GetDescription()
-	return "Legt fest, zwischen welchen Werten die Geländehöhe geglättet werden soll. @cr @cr @color:51,204,255,255 HINWEIS: @color:255,255,255,255 Der linke Wert muss negativ sein, der rechte positiv."
-end
-
--- ************************************************************************************************ --
--- *	ThresholdLowForest
--- *
-
-EMS.RD.Rules.RMG_ThresholdLowForest = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdLowForest:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdLowForest:GetTitle()
-	return "Wald"
-end
-
-function EMS.RD.Rules.RMG_ThresholdLowForest:GetDescription()
-	return EMS.GL.GetThresholdDescription("Wälder")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdLowMeadow
--- *
-
-EMS.RD.Rules.RMG_ThresholdLowMeadow = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdLowMeadow:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdLowMeadow:GetTitle()
-	return "Wiese"
-end
-
-function EMS.RD.Rules.RMG_ThresholdLowMeadow:GetDescription()
-	return EMS.GL.GetThresholdDescription("Wiesen")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdLowFlatland
--- *
-
-EMS.RD.Rules.RMG_ThresholdLowFlatland = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdLowFlatland:SetValue(_value)
-	if _value > 0 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdLowFlatland:GetTitle()
-	return "Flachland"
-end
-
-function EMS.RD.Rules.RMG_ThresholdLowFlatland:GetDescription()
-	return "Legt fest, zwischen welchen Werten die Geländehöhe geglättet werden soll. @cr @cr @color:51,204,255,255 HINWEIS: @color:255,255,255,255 Der linke Wert muss negativ sein, der rechte positiv."
-end
-
--- ************************************************************************************************ --
 -- *	ThresholdRoad
 -- *
 
@@ -580,48 +454,6 @@ end
 
 function EMS.RD.Rules.RMG_ThresholdRoad:GetDescription()
 	return "Legt fest, auf welchem Wert Straßen generiert werden sollen. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Wenn ihr wollt, dass die Straßen durch Wälder führen, müsst ihr einen Wert zwischen Wald und Hügel oder zwischen Wald und Küste wählen. @cr Die Option Straßen muss aktiviert sein."
-end
-
--- ************************************************************************************************ --
--- *	ThresholdHighForest
--- *
-
-EMS.RD.Rules.RMG_ThresholdHighForest = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdHighForest:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdHighForest:GetTitle()
-	return "Hochwald"
-end
-
-function EMS.RD.Rules.RMG_ThresholdHighForest:GetDescription()
-	return EMS.GL.GetThresholdDescription("Hochwälder")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdHighMeadow
--- *
-
-EMS.RD.Rules.RMG_ThresholdHighMeadow = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdHighMeadow:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdHighMeadow:GetTitle()
-	return "Hochwiese"
-end
-
-function EMS.RD.Rules.RMG_ThresholdHighMeadow:GetDescription()
-	return EMS.GL.GetThresholdDescription("Hochwiesen")
 end
 
 -- ************************************************************************************************ --
@@ -644,7 +476,7 @@ end
 function EMS.RD.Rules.RMG_ThresholdPlateau:GetDescription()
 	return "Dieser Wert verhält sich ähnlich wie die Option Flachland, nur dass die Geländehöhe oberhalb dieses Werts geglättet wird. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Setzt diesen Wert auf 1000 um Hochebenen zu deaktivieren."
 end
-
+]]
 -- ************************************************************************************************ --
 -- *	Amount Clay Pit
 -- *

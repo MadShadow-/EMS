@@ -35,7 +35,7 @@ EMS_CustomMapConfig =
 	-- * and after the 10 seconds of countdown
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
-		RandomMapGenerator.Callback_OnGameStart()
+		RMG.Callback_OnGameStart()
 	end,
 	
 	-- ********************************************************************************************
@@ -43,7 +43,7 @@ EMS_CustomMapConfig =
 	-- * Called after the peace time ends
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
-		RandomMapGenerator.Callback_OnPeacetimeEnded()
+		RMG.Callback_OnPeacetimeEnded()
 	end,
 	
 	Peacetime = 40,
@@ -105,3 +105,13 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	AIPlayers = {},
 };
+
+if not WidgetHelper then
+	Script.Load( "MP_SettlerServer\\WidgetHelper.lua" )
+end
+
+WidgetHelper.AddPreCommitCallback(
+	function()
+		CWidget.Transaction_AddRawWidgetsFromFile( "maps\\user\\EMS\\tools\\rmg\\EMSPagesRMG.xml" )
+	end
+)

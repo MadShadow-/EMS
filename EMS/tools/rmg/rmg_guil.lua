@@ -6,8 +6,18 @@
 -- stdbool should return bool instead of number
 -- self:SetValue should not sheck if > 0 by defaul
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function EMS.GL.GetThresholdDescription(_string)
-	return "Legt fest, ab welchem Noise Wert ".._string.." generiert werden. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Werte zwischen -1000 und 1000 sind möglich. Je größer der Abstand zum Wert darüber, desto mehr Fläche wird dieses Biom einnehmen. @cr Die Werte auf der linken Seite der Tabelle sollten nach unten hin größer werden, auf der rechten Seite kleiner. Ansonsten werden entsprechende Biome nicht generiert. @cr Die Optionen Flachland und Hochebenen gehören nicht dazu. Diesen Werten glätten die Terrainhöhe. @cr @cr @color:255,204,51,255 VORSICHT: @color:255,255,255,255 Wahlloses verstellen dieser Werte kann die Karte unspielbar machen."
+function RMG.GetRandomSeed(_value)
+	
+	_value = _value or 0
+	local seed = _value + 9876543210 + Game.RealTimeGetMs() + Game.RealTimeGetMs() * 100000
+	
+	while seed >= 1000000000 do
+		seed = seed - 1000000000
+	end
+	
+	return seed
+	--EMS.GL.SetValueSynced("RMG_Seed", value)
+	--oder einfach math.randomseed?
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.GetAmountDescription(_string)
@@ -16,15 +26,6 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.GetContentDescription(_string)
 	return "Legt die Anzahl an Rohstoffeinheiten in ".._string.." fest."
-end
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function EMS.GL.GUIUpdate_Threshold(_rule)
-	local widget = EMS.GL.MapRuleToGUIWidget[_rule];
-	local value = EMS.GL.GetRule(_rule):GetRepresentative();
-	if math.abs(value) >= 1000 then
-		value = "-";
-	end
-	XGUIEng.SetText(widget[1], "@center "..value);
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function EMS.GL.GUIUpdate_Dummy(_string)
@@ -39,7 +40,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.GUIUpdate_PlayerConfig(_index, _text)
 	
-	local nplayers, players, nteams = RandomMapGenerator.UnpackPlayerConfig()
+	local nplayers, players, nteams = RMG.UnpackPlayerConfig()
 	local widget = "RMG6F".._index.."".._text
 	
 	if nplayers < _index then
@@ -64,8 +65,8 @@ function EMS.GL.GUIUpdate_PlayerConfig(_index, _text)
 		return
 	end
 	
-	local p = players[_index].id
-	local ishuman = players[_index].ishuman == 1
+	local p = players[_index].Id
+	local ishuman = players[_index].IsHuman == 1
 	
 	if _text == "Name" then
 		if ishuman then
@@ -93,7 +94,7 @@ function EMS.GL.GUIUpdate_PlayerConfig(_index, _text)
 			XGUIEng.SetMaterialColor(widget, 4, 0, 0, 0, 0)
 		end
 	elseif _text == "Team" then
-		XGUIEng.SetText(widget, "@center Team"..players[_index].team)
+		XGUIEng.SetText(widget, "@center Team"..players[_index].Team)
 	elseif _text == "Add" then
 		if ishuman then
 			XGUIEng.DisableButton(widget, 0)
@@ -117,16 +118,16 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.AddDummyPlayer(_index)
 	
-	local nplayers, players = RandomMapGenerator.UnpackPlayerConfig()
+	local nplayers, players = RMG.UnpackPlayerConfig()
 	if nplayers < 16 then
 		nplayers = nplayers + 1
 
 		for i = nplayers, _index + 2, -1 do
 			players[i] = players[i - 1]
 		end
-		players[_index + 1] = {id = 1, team = players[_index].team, ishuman = 0}
+		players[_index + 1] = {Id = 1, Team = players[_index].Team, IsHuman = 0}
 		
-		RandomMapGenerator.PackPlayerConfig( nplayers, players )
+		RMG.PackPlayerConfig( nplayers, players )
 		
 		XGUIEng.ShowWidget("RMG6Frame"..nplayers, 1)
 	end
@@ -136,7 +137,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function EMS.GL.RemoveDummyPlayer(_index)
 	
-	local nplayers, players = RandomMapGenerator.UnpackPlayerConfig()
+	local nplayers, players = RMG.UnpackPlayerConfig()
 	nplayers = nplayers - 1
 	
 	for i = _index, nplayers, 1 do
@@ -144,7 +145,7 @@ function EMS.GL.RemoveDummyPlayer(_index)
 	end
 	players[nplayers + 1] = nil
 	
-	RandomMapGenerator.PackPlayerConfig( nplayers, players )
+	RMG.PackPlayerConfig( nplayers, players )
 	
 	EMS.GL.DbgShow_PlayerConfig()
 end
@@ -155,15 +156,7 @@ function EMS.GL.SetRandomSeed()
 		return;
 	end
 	
-	-- XGUIEng.GetRandom ist Mist !
-	--[[local seed = XGUIEng.GetRandom(31622)
-	seed = seed + seed ^ 2
-	
-	if XGUIEng.GetRandom(1) == 1 then
-		seed = -seed
-	end]]
-	
-	EMS.GL.SetValue("RMG_Seed", RandomMapGenerator.GetRandomSeed(EMS.RD.Rules.RMG_Seed:GetValue()))
+	EMS.GL.SetValue("RMG_Seed", RMG.GetRandomSeed(EMS.RD.Rules.RMG_Seed:GetValue()))
 end
 
 function EMS.GL.GEN_GetPlayerColor( _ColorID )
@@ -212,34 +205,23 @@ function EMS.GL.GEN_GetPlayerColor( _ColorID )
 	
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.GL_Setup()
+function RMG.GL_Setup()
+	
+	XGUIEng.ShowWidget( "RMG2F1Value", 0 )
+	XGUIEng.ShowWidget( "RMG2F2Value", 0 )
+	XGUIEng.ShowWidget( "RMG2F3Value", 0 )
+	XGUIEng.ShowWidget( "RMG2F4Value", 0 )
+	XGUIEng.ShowWidget( "RMG2F5Value", 0 )
+	
 	-- custom text input
 	EMS.GL.CustomTextInputs["RMG_Seed"]					= CTI.New({Widget="RMG1F1Value", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=9, Callback=EMS.GL.CustomTextInputCallback});
-	
+	--[[
 	EMS.GL.CustomTextInputs["RMG_TerrainBaseHeight"]	= CTI.New({Widget="RMG2F1Value", Before = "@center ", NumbersOnly=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_WaterBaseHeight"]		= CTI.New({Widget="RMG2F2Value", Before = "@center ", NumbersOnly=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_NoiseFactorZ"]			= CTI.New({Widget="RMG2F3Value", Before = "@center ", NumbersOnly=true, MaxLength=3, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_NoiseFactorXY"]		= CTI.New({Widget="RMG2F4Value", Before = "@center ", NumbersOnly=true, MaxLength=3, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_ForestDensity"]		= CTI.New({Widget="RMG2F5Value", Before = "@center ", NumbersOnly=true, MaxLength=3, Callback=EMS.GL.CustomTextInputCallback});
-	
-	EMS.GL.CustomTextInputs["RMG_ThresholdPike"]		= CTI.New({Widget="RMG3F2Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdMountain"]	= CTI.New({Widget="RMG3F4Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdHill"]		= CTI.New({Widget="RMG3F6Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdForest"]		= CTI.New({Widget="RMG3F7Value2", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdMeadow"]		= CTI.New({Widget="RMG3F8Value2", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdFlatland"]	= CTI.New({Widget="RMG3F9Value2", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=false, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdSea"]			= CTI.New({Widget="RMG3F1Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdLake"]		= CTI.New({Widget="RMG3F3Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdCoast"]		= CTI.New({Widget="RMG3F5Value",  Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdLowForest"]	= CTI.New({Widget="RMG3F7Value1", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdLowMeadow"]	= CTI.New({Widget="RMG3F8Value1", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdLowFlatland"]	= CTI.New({Widget="RMG3F9Value1", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdRoad"]		= CTI.New({Widget="RMG3F10Value", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	
-	EMS.GL.CustomTextInputs["RMG_ThresholdHighMeadow"]	= CTI.New({Widget="RMG4F2Value1", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdHighForest"]	= CTI.New({Widget="RMG4F3Value1", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	EMS.GL.CustomTextInputs["RMG_ThresholdPlateau"]		= CTI.New({Widget="RMG4F1Value1", Before = "@center ", NumbersOnly=true, AllowNegativeNumbers=true, MaxLength=4, Callback=EMS.GL.CustomTextInputCallback});
-	
+	]]
 	EMS.GL.CustomTextInputs["RMG_AmountClayPit"]		= CTI.New({Widget="RMG5F1Value1", Before = "@center ", NumbersOnly=true, MaxLength=1, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_ContentClayPit"]		= CTI.New({Widget="RMG5F1Value2", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_AmountClayPile"]		= CTI.New({Widget="RMG5F2Value1", Before = "@center ", NumbersOnly=true, MaxLength=2, Callback=EMS.GL.CustomTextInputCallback});
@@ -259,7 +241,7 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.CustomTextInputs["RMG_AmountWoodPile"]		= CTI.New({Widget="RMG5F9Value1", Before = "@center ", NumbersOnly=true, MaxLength=1, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_ContentWoodPile"]		= CTI.New({Widget="RMG5F9Value2", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_AmountVC"]				= CTI.New({Widget="RMG2F7Value", Before = "@center ", NumbersOnly=true, MaxLength=1, Callback=EMS.GL.CustomTextInputCallback});
-
+	
 	EMS.GL.CustomTextInputs["RMG_StartResourceGold"]	= CTI.New({Widget="RMG7F1Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_StartResourceClay"]	= CTI.New({Widget="RMG7F2Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
 	EMS.GL.CustomTextInputs["RMG_StartResourceWood"]	= CTI.New({Widget="RMG7F3Value", Before = "@center ", NumbersOnly=true, MaxLength=6, Callback=EMS.GL.CustomTextInputCallback});
@@ -276,31 +258,13 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.GUIUpdate["RMG_GenerateRoads"]			= EMS.GL.GUIUpdate_TextToggleButton
 	EMS.GL.GUIUpdate["RMG_MirrorMap"]				= EMS.GL.GUIUpdate_TextToggleButton
 	EMS.GL.GUIUpdate["RMG_RandomPlayerPosition"]	= EMS.GL.GUIUpdate_TextToggleButton
-	
+	--[[
 	EMS.GL.GUIUpdate["RMG_TerrainBaseHeight"]		= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_WaterBaseHeight"]			= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_NoiseFactorZ"]			= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_NoiseFactorXY"]			= EMS.GL.GUIUpdate_Number
 	EMS.GL.GUIUpdate["RMG_ForestDensity"]			= EMS.GL.GUIUpdate_Number
-	
-	EMS.GL.GUIUpdate["RMG_ThresholdPike"]			= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdMountain"]		= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdHill"]			= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdForest"]			= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdMeadow"]			= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdFlatland"]		= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdSea"]			= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdLake"]			= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdCoast"]			= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdLowForest"]		= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdLowMeadow"]		= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdLowFlatland"]	= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdRoad"]			= EMS.GL.GUIUpdate_Threshold
-	
-	EMS.GL.GUIUpdate["RMG_ThresholdHighMeadow"]		= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdHighForest"]		= EMS.GL.GUIUpdate_Threshold
-	EMS.GL.GUIUpdate["RMG_ThresholdPlateau"]		= EMS.GL.GUIUpdate_Threshold
-
+	]]
 	EMS.GL.GUIUpdate["RMG_AmountClayPit"]			= EMS.GL.GUIUpdate_Text
 	EMS.GL.GUIUpdate["RMG_ContentClayPit"]			= EMS.GL.GUIUpdate_Text
 	EMS.GL.GUIUpdate["RMG_AmountClayPile"]			= EMS.GL.GUIUpdate_Text
@@ -342,31 +306,13 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapRuleToGUIWidget["RMG_GenerateRoads"]			= "RMG1F4Value"
 	EMS.GL.MapRuleToGUIWidget["RMG_MirrorMap"]				= "RMG1F5Value"
 	EMS.GL.MapRuleToGUIWidget["RMG_RandomPlayerPosition"]	= "RMG1F6Value"
-	
+	--[[
 	EMS.GL.MapRuleToGUIWidget["RMG_TerrainBaseHeight"]		= {"RMG2F1Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_WaterBaseHeight"]		= {"RMG2F2Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_NoiseFactorZ"]			= {"RMG2F3Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_NoiseFactorXY"]			= {"RMG2F4Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_ForestDensity"]			= {"RMG2F5Value"}
-	
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdPike"]			= {"RMG3F2Value"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdMountain"]		= {"RMG3F4Value"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdHill"]			= {"RMG3F6Value"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdForest"]		= {"RMG3F7Value2"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdMeadow"]		= {"RMG3F8Value2"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdFlatland"]		= {"RMG3F9Value2"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdSea"]			= {"RMG3F1Value"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdLake"]			= {"RMG3F3Value"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdCoast"]			= {"RMG3F5Value"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdLowForest"]		= {"RMG3F7Value1"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdLowMeadow"]		= {"RMG3F8Value1"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdLowFlatland"]	= {"RMG3F9Value1"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdRoad"]			= {"RMG3F10Value"}
-
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdHighMeadow"]	= {"RMG4F2Value1"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdHighForest"]	= {"RMG4F3Value1"}
-	EMS.GL.MapRuleToGUIWidget["RMG_ThresholdPlateau"]		= {"RMG4F1Value1"}
-
+	]]
 	EMS.GL.MapRuleToGUIWidget["RMG_AmountClayPit"]			= {"RMG5F1Value1"}
 	EMS.GL.MapRuleToGUIWidget["RMG_ContentClayPit"]			= {"RMG5F1Value2"}
 	EMS.GL.MapRuleToGUIWidget["RMG_AmountClayPile"]			= {"RMG5F2Value1"}
@@ -385,12 +331,12 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapRuleToGUIWidget["RMG_ContentSulfurPile"]		= {"RMG5F8Value2"}
 	EMS.GL.MapRuleToGUIWidget["RMG_AmountWoodPile"]			= {"RMG5F9Value1"}
 	EMS.GL.MapRuleToGUIWidget["RMG_ContentWoodPile"]		= {"RMG5F9Value2"}
-
+	
 	EMS.GL.MapRuleToGUIWidget["RMG_AmountVC"]				= {"RMG2F7Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_ShowResources"]			= "RMG2F9Value"
 	EMS.GL.MapRuleToGUIWidget["RMG_ShowVillageCenters"]		= "RMG2F6Value"
 	--EMS.GL.MapRuleToGUIWidget["RMG_PlayerConfig"]			= "RMG6F1Name"
-
+	
 	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceGold"]		= {"RMG7F1Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceClay"]		= {"RMG7F2Value"}
 	EMS.GL.MapRuleToGUIWidget["RMG_StartResourceWood"]		= {"RMG7F3Value"}
@@ -407,31 +353,13 @@ function RandomMapGenerator.GL_Setup()
 	--EMS.GL.MapWidgetToRule["RMG1F4Value"]	= "RMG_GenerateRoads"
 	--EMS.GL.MapWidgetToRule["RMG1F5Value"]	= "RMG_MirrorMap"
 	--EMS.GL.MapWidgetToRule["RMG1F6Value"]	= "RMG_RandomPlayerPosition"
-	
+	--[[
 	EMS.GL.MapWidgetToRule["RMG2F1Value"]	= "RMG_TerrainBaseHeight"
 	EMS.GL.MapWidgetToRule["RMG2F2Value"]	= "RMG_WaterBaseHeight"
 	EMS.GL.MapWidgetToRule["RMG2F3Value"]	= "RMG_NoiseFactorZ"
 	EMS.GL.MapWidgetToRule["RMG2F4Value"]	= "RMG_NoiseFactorXY"
 	EMS.GL.MapWidgetToRule["RMG2F5Value"]	= "RMG_ForestDensity"
-	
-	EMS.GL.MapWidgetToRule["RMG3F1Value"]	= "RMG_ThresholdSea"
-	EMS.GL.MapWidgetToRule["RMG3F2Value"]	= "RMG_ThresholdPike"
-	EMS.GL.MapWidgetToRule["RMG3F3Value"]	= "RMG_ThresholdLake"
-	EMS.GL.MapWidgetToRule["RMG3F4Value"]	= "RMG_ThresholdMountain"
-	EMS.GL.MapWidgetToRule["RMG3F5Value"]	= "RMG_ThresholdCoast"
-	EMS.GL.MapWidgetToRule["RMG3F6Value"]	= "RMG_ThresholdHill"
-	EMS.GL.MapWidgetToRule["RMG3F7Value1"]	= "RMG_ThresholdLowForest"
-	EMS.GL.MapWidgetToRule["RMG3F7Value2"]	= "RMG_ThresholdForest"
-	EMS.GL.MapWidgetToRule["RMG3F8Value1"]	= "RMG_ThresholdLowMeadow"
-	EMS.GL.MapWidgetToRule["RMG3F8Value2"]	= "RMG_ThresholdMeadow"
-	EMS.GL.MapWidgetToRule["RMG3F9Value1"]	= "RMG_ThresholdLowFlatland"
-	EMS.GL.MapWidgetToRule["RMG3F9Value2"]	= "RMG_ThresholdFlatland"
-	EMS.GL.MapWidgetToRule["RMG3F10Value"]	= "RMG_ThresholdRoad"
-	
-	EMS.GL.MapWidgetToRule["RMG4F2Value1"]	= "RMG_ThresholdHighMeadow"
-	EMS.GL.MapWidgetToRule["RMG4F3Value1"]	= "RMG_ThresholdHighForest"
-	EMS.GL.MapWidgetToRule["RMG4F1Value1"]	= "RMG_ThresholdPlateau"
-
+	]]
 	EMS.GL.MapWidgetToRule["RMG5F1Value1"]	= "RMG_AmountClayPit"
 	EMS.GL.MapWidgetToRule["RMG5F1Value2"]	= "RMG_ContentClayPit"
 	EMS.GL.MapWidgetToRule["RMG5F2Value1"]	= "RMG_AmountClayPile"
@@ -454,7 +382,7 @@ function RandomMapGenerator.GL_Setup()
 	EMS.GL.MapWidgetToRule["RMG2F7Value"]	= "RMG_AmountVC"
 	--EMS.GL.MapWidgetToRule["RMG2F9Value"]	= "RMG_ShowResources"
 	--EMS.GL.MapWidgetToRule["RMG2F6Value"]	= "RMG_ShowVillageCenters"
-
+	
 	EMS.GL.MapWidgetToRule["RMG7F1Value"]	= "RMG_StartResourceGold"
 	EMS.GL.MapWidgetToRule["RMG7F2Value"]	= "RMG_StartResourceClay"
 	EMS.GL.MapWidgetToRule["RMG7F3Value"]	= "RMG_StartResourceWood"
@@ -464,20 +392,18 @@ function RandomMapGenerator.GL_Setup()
 		
 	-- tooltip text
 	EMS.L.RMG_RandomSeed 		= "Setzt einen zufälligen Seed."
-	EMS.L.RMG_IncreaseThreshold = "Erhöht alle Gelände-Parameter. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Bei höheren Parametern wird es mehr Gewässer und weniger Berge geben."
-	EMS.L.RMG_DecreaseThreshold = "Verringert alle Gelände-Parameter. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Bei niedrigeren Parametern wird es mehr Berge und weniger Gewässer geben."
 	
 	-- add rule pages
 	table.insert(EMS.GV.Pages, "EMSPagesRMG")
-	table.insert(EMS.GV.Pages, "EMSPagesRMG2")
+	--table.insert(EMS.GV.Pages, "EMSPagesRMG2")
 
 	-- show rule page arrows
 	XGUIEng.ShowWidget("EMSPUSCUp", 1)
 	XGUIEng.ShowWidget("EMSPUSCDown", 1)
 end	
-function RandomMapGenerator.SetRulesToDefault()
+function RMG.SetRulesToDefault()
 	
-	EMS.GL.SetValueSynced("RMG_Seed", RandomMapGenerator.GetRandomSeed())
+	EMS.GL.SetValueSynced("RMG_Seed", RMG.GetRandomSeed())
 
 	EMS.GL.SetValueSynced("RMG_GenerateRivers",	2)
 	EMS.GL.SetValueSynced("RMG_GateLayout",		1)
@@ -487,27 +413,25 @@ function RandomMapGenerator.SetRulesToDefault()
 	EMS.GL.SetValueSynced("RMG_MirrorMap",		Bool2Num(true))
 	
 	EMS.GL.SetValueSynced("RMG_AmountClayPit",        1)
-	EMS.GL.SetValueSynced("RMG_ContentClayPit",   30000)
-	EMS.GL.SetValueSynced("RMG_AmountClayPile",       4)
+	EMS.GL.SetValueSynced("RMG_ContentClayPit",   50000)
+	EMS.GL.SetValueSynced("RMG_AmountClayPile",       3)
 	EMS.GL.SetValueSynced("RMG_ContentClayPile",   4000)
 	EMS.GL.SetValueSynced("RMG_AmountStonePit",       1)
-	EMS.GL.SetValueSynced("RMG_ContentStonePit",  30000)
-	EMS.GL.SetValueSynced("RMG_AmountStonePile",      4)
+	EMS.GL.SetValueSynced("RMG_ContentStonePit",  50000)
+	EMS.GL.SetValueSynced("RMG_AmountStonePile",      3)
 	EMS.GL.SetValueSynced("RMG_ContentStonePile",  4000)
 	EMS.GL.SetValueSynced("RMG_AmountIronPit",        2)
 	EMS.GL.SetValueSynced("RMG_ContentIronPit",   30000)
-	EMS.GL.SetValueSynced("RMG_AmountIronPile",       4)
+	EMS.GL.SetValueSynced("RMG_AmountIronPile",       3)
 	EMS.GL.SetValueSynced("RMG_ContentIronPile",   4000)
 	EMS.GL.SetValueSynced("RMG_AmountSulfurPit",      2)
 	EMS.GL.SetValueSynced("RMG_ContentSulfurPit", 30000)
-	EMS.GL.SetValueSynced("RMG_AmountSulfurPile",     4)
+	EMS.GL.SetValueSynced("RMG_AmountSulfurPile",     3)
 	EMS.GL.SetValueSynced("RMG_ContentSulfurPile", 4000)
 	EMS.GL.SetValueSynced("RMG_AmountWoodPile",       2)
-	EMS.GL.SetValueSynced("RMG_ContentWoodPile",  30000)
+	EMS.GL.SetValueSynced("RMG_ContentWoodPile",   8000)
 	EMS.GL.SetValueSynced("RMG_AmountVC", 3)
 	
-	RandomMapGenerator.SetupThresholdsNormal()
-
 	--local res = EMS.RD.AdditionalConfig.Ressources.Normal[player]
 	EMS.GL.SetValueSynced("RMG_StartResourceGold", 500)
 	EMS.GL.SetValueSynced("RMG_StartResourceClay", 2400)
@@ -517,7 +441,7 @@ function RandomMapGenerator.SetRulesToDefault()
 	EMS.GL.SetValueSynced("RMG_StartResourceSulfur", 50)
 end
 
-function RandomMapGenerator.PackPlayerConfig( _nplayers, _players, _nteams, _teams )
+function RMG.PackPlayerConfig( _nplayers, _players, _nteams, _teams )
 	
 	local config = ""
 	config = AddNumberToString( config, _nplayers, 2 )
@@ -526,9 +450,9 @@ function RandomMapGenerator.PackPlayerConfig( _nplayers, _players, _nteams, _tea
 		
 		local data = _players[p]
 		
-		config = AddNumberToString( config, data.id, 2 )
-		config = AddNumberToString( config, data.team, 2 )
-		config = AddNumberToString( config, data.ishuman, 1 )
+		config = AddNumberToString( config, data.Id, 2 )
+		config = AddNumberToString( config, data.Team, 2 )
+		config = AddNumberToString( config, data.IsHuman, 1 )
 	end
 	
 	EMS.GL.SetValue( "RMG_PlayerConfig", config )
@@ -547,7 +471,7 @@ function AddNumberToString( _text, _num, _digits )
 	return _text
 end
 
-function RandomMapGenerator.UnpackPlayerConfig()
+function RMG.UnpackPlayerConfig()
 	
 	local config = EMS.RD.Rules.RMG_PlayerConfig:GetValue()
 	
@@ -580,7 +504,7 @@ function RandomMapGenerator.UnpackPlayerConfig()
 			teams[nteams] = team
 		end
 		
-		players[p] = { id = id, team = team, ishuman = ishuman }
+		players[p] = { Id = id, Team = team, IsHuman = ishuman }
 	end
 	
 	return nplayers, players, nteams, teams

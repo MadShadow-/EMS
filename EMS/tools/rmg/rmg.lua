@@ -1,12 +1,20 @@
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- author:RobbiTheFox,mcb		current maintainer:RobbiTheFox
--- Tool um zufällige Maps zu erzeugen.
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+--
+-- supported player-team compositions:
+--
+-- - ffa with up to 16 players
+-- - 4 teams in any composition with up to 8 players
+-- - 3 teams in any composition with up to 9 players
+-- - 2 teams in any composition with up to 10 players
+-- - equal teams up to 16 players ( odd numbers above 8 are only supported as ffa )
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- TODO:
--- fix Pit locations to 400 grid or maybe 200 is already enough
--- mirror rivers
--- do generation before countdown starts
+-- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-EMS_CustomMapConfig.Version = 1.11
+RMG = {}
+EMS_CustomMapConfig.Version = 2.0
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
@@ -16,1771 +24,70 @@ Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\WaterTypes.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\number\\round.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\entity\\CreateWoodPile.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\mapeditor\\MirrorMapTools.lua" )
+Script.Load( "maps\\user\\EMS\\tools\\rmg\\texturesets.lua" )
+Script.Load( "maps\\user\\EMS\\tools\\rmg\\vertexcolorsets.lua" )
+Script.Load( "maps\\user\\EMS\\tools\\rmg\\entitysets.lua" )
+Script.Load( "maps\\user\\EMS\\tools\\rmg\\landscapesets.lua" )
+--Script.Load( "maps\\user\\EMS\\tools\\rmg\\structuresets.lua" )
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RandomMapGenerator = {}
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.SetupThresholdsNormal()
-	EMS.GL.SetValueSynced("RMG_TerrainBaseHeight",	 2900)	-- height of flat terrain
-	EMS.GL.SetValueSynced("RMG_WaterBaseHeight",	 2500)
-	EMS.GL.SetValueSynced("RMG_NoiseFactorZ",		  100)
-	EMS.GL.SetValueSynced("RMG_NoiseFactorXY",		  100)	-- lower values stretch the noise
-	EMS.GL.SetValueSynced("RMG_ForestDensity",		  100)
-	
-	EMS.GL.SetValueSynced("RMG_ThresholdPike",		  600)	-- noise higher than value
-	EMS.GL.SetValueSynced("RMG_ThresholdHighMeadow", 1000)
-	EMS.GL.SetValueSynced("RMG_ThresholdHighForest", 1000)
-	EMS.GL.SetValueSynced("RMG_ThresholdMountain",	  500)
-	EMS.GL.SetValueSynced("RMG_ThresholdHill",		  450)
-	EMS.GL.SetValueSynced("RMG_ThresholdForest",	  275)
-	EMS.GL.SetValueSynced("RMG_ThresholdMeadow",	  225)
-	EMS.GL.SetValueSynced("RMG_ThresholdSea",		 -600)	-- noise lower than value
-	EMS.GL.SetValueSynced("RMG_ThresholdLake",		 -500)
-	EMS.GL.SetValueSynced("RMG_ThresholdCoast",		 -450)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowForest",	 -275)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowMeadow",	 -225)
-	EMS.GL.SetValueSynced("RMG_ThresholdFlatland",	  420)	-- noise values between ThresholdFlatland and ThresholdLowFlatland get flattened to TerrainBaseHeight
-	EMS.GL.SetValueSynced("RMG_ThresholdLowFlatland",-420)
-	EMS.GL.SetValueSynced("RMG_ThresholdRoad",		    0)	-- roads can theoreticly generate naturaly (which they are not supposed to) but this is extreme unlikely
-	EMS.GL.SetValueSynced("RMG_ThresholdPlateau",	 1000)
+-- overrides for compatibility
+function AStar.GetPathCost(_nodeA, _nodeB)
+	return AStar.GetDistance(_nodeA.X, _nodeA.Y, _nodeB.X, _nodeB.Y)
 end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupThresholdsNorth()
-	--EMS.GL.SetValueSynced("RMG_TerrainBaseHeight",	 2900)
-	--EMS.GL.SetValueSynced("RMG_WaterBaseHeight",	 2500)
-	EMS.GL.SetValueSynced("RMG_NoiseFactorZ",		   75)
-	--EMS.GL.SetValueSynced("RMG_NoiseFactorXY",		  100)
-	
-	EMS.GL.SetValueSynced("RMG_ThresholdPike",		 1000)
-	EMS.GL.SetValueSynced("RMG_ThresholdHighMeadow",  420)
-	EMS.GL.SetValueSynced("RMG_ThresholdHighForest",  240)
-	EMS.GL.SetValueSynced("RMG_ThresholdMountain",	  220)
-	EMS.GL.SetValueSynced("RMG_ThresholdHill",		  150)
-	EMS.GL.SetValueSynced("RMG_ThresholdForest",	  -25)
-	EMS.GL.SetValueSynced("RMG_ThresholdMeadow",	  -75)
-	EMS.GL.SetValueSynced("RMG_ThresholdSea",		 -600)
-	EMS.GL.SetValueSynced("RMG_ThresholdLake",		 -500)
-	EMS.GL.SetValueSynced("RMG_ThresholdCoast",		 -450)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowForest",	 -375)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowMeadow",	 -325)
-	EMS.GL.SetValueSynced("RMG_ThresholdFlatland",	   70)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowFlatland",-420)
-	EMS.GL.SetValueSynced("RMG_ThresholdRoad",		 -200)
-	EMS.GL.SetValueSynced("RMG_ThresholdPlateau",	  240)
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupThresholdsTideland()
-	--EMS.GL.SetValueSynced("RMG_TerrainBaseHeight",	 2900)
-	--EMS.GL.SetValueSynced("RMG_WaterBaseHeight",	 2500)
-	EMS.GL.SetValueSynced("RMG_NoiseFactorZ",		   75)
-	--EMS.GL.SetValueSynced("RMG_NoiseFactorXY",		  100)
-	
-	EMS.GL.SetValueSynced("RMG_ThresholdPike",		  650)
-	--EMS.GL.SetValueSynced("RMG_ThresholdHighMeadow", 1000)
-	--EMS.GL.SetValueSynced("RMG_ThresholdHighForest", 1000)
-	EMS.GL.SetValueSynced("RMG_ThresholdMountain",	  550)
-	EMS.GL.SetValueSynced("RMG_ThresholdHill",		  500)
-	EMS.GL.SetValueSynced("RMG_ThresholdForest",	  325)
-	EMS.GL.SetValueSynced("RMG_ThresholdMeadow",	  275)
-	EMS.GL.SetValueSynced("RMG_ThresholdSea",		 -550)
-	EMS.GL.SetValueSynced("RMG_ThresholdLake",		 -450)
-	EMS.GL.SetValueSynced("RMG_ThresholdCoast",		 -200)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowForest",	 -175)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowMeadow",	 -125)
-	EMS.GL.SetValueSynced("RMG_ThresholdFlatland",	  470)
-	EMS.GL.SetValueSynced("RMG_ThresholdLowFlatland",-170)
-	EMS.GL.SetValueSynced("RMG_ThresholdRoad",		   50)
-	--EMS.GL.SetValueSynced("RMG_ThresholdPlateau",	 1000)
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupThresholdsMordor()
-	EMS.GL.SetValueSynced("RMG_WaterBaseHeight", 0)
+function AStar.GetHeuristicCostEstimate(_nodeA, _nodeB)
+	return AStar.GetDistance(_nodeA.X, _nodeA.Y, _nodeB.X, _nodeB.Y)
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.SetupLandscapeNormal()
+function RMG.SetupLandscapeNormal()
 	SetupNormalWeatherGfxSet()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupLandscapeNorth()
+function RMG.SetupLandscapeNorth()
 	SetupHighlandWeatherGfxSet()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupLandscapeEvelance()
+function RMG.SetupLandscapeEvelance()
 	SetupEvelanceWeatherGfxSet()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupLandscapeMediterran()
+function RMG.SetupLandscapeMediterran()
 	SetupMediterraneanWeatherGfxSet()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupLandscapeMoor()
+function RMG.SetupLandscapeMoor()
 	SetupMoorWeatherGfxSet()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupLandscapeTideland()
+function RMG.SetupLandscapeTideland()
 	SetupNormalWeatherGfxSet()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetupLandscapeMordor()
-	SetupEvelanceWeatherGfxSet()
+function RMG.SetupLandscapeSteppe()
+	SetupSteppeWeatherGfxSet()
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RandomMapGenerator.TextureSets = { -- define TextureSets HERE !
-
- -- European
-	NormalEarthAndRocks = {
-		TerrainTypes.EarthFir01_AT,
-		TerrainTypes.EarthFir02_AT,TerrainTypes.EarthFir02_AT,
-		TerrainTypes.EarthFir03_AT,TerrainTypes.EarthFir03_AT,
-	},
-	NormalEarthBright = {
-		TerrainTypes.EarthBright01B_AT,TerrainTypes.EarthBright01B_AT,TerrainTypes.EarthBright01B_AT,TerrainTypes.EarthBright01B_AT,
-			TerrainTypes.EarthBright02_AT,TerrainTypes.EarthBright02_AT,
- 	TerrainTypes.EarthBrStones01B_AT,TerrainTypes.EarthBrStones01B_AT,
-	},
-	NormalEarthDark = {
-		TerrainTypes.EarthDark01B_AT,TerrainTypes.EarthDark01B_AT,TerrainTypes.EarthDark01B_AT,TerrainTypes.EarthDark01B_AT,
-		TerrainTypes.EarthDark02_AT,TerrainTypes.EarthDark02_AT,
-		TerrainTypes.EarthDark03_AT,TerrainTypes.EarthDark03_AT,
-	},
-	NormalForestSmooth = {
-		TerrainTypes.EarthFir02_AT,
-		TerrainTypes.EarthFir03_AT,
-		TerrainTypes.EarthMoss01_AT,TerrainTypes.EarthMoss01_AT,TerrainTypes.EarthMoss01_AT,TerrainTypes.EarthMoss01_AT,
-		TerrainTypes.EarthMoss02_AT,TerrainTypes.EarthMoss02_AT,TerrainTypes.EarthMoss02_AT,TerrainTypes.EarthMoss02_AT,
-		TerrainTypes.GrassDark01B_AT,
-		TerrainTypes.GrassDark02_AT,
-		TerrainTypes.GrassDarkLeaf01B_CT,
-		TerrainTypes.GrassDarkLeaf02_CT,
-	},
-	NormalGrassBrightSmooth = {
-		TerrainTypes.EarthBrStones01B_AT,
-		TerrainTypes.GrassBright01B_AT,TerrainTypes.GrassBright01B_AT,TerrainTypes.GrassBright01B_AT,TerrainTypes.GrassBright01B_AT,
-		TerrainTypes.GrassBright02_AT,TerrainTypes.GrassBright02_AT,
-		TerrainTypes.GrassBright03_AT,TerrainTypes.GrassBright03_AT,
-	},
-	NormalGrassDarkSmooth = {
-		TerrainTypes.EarthDark01B_AT,
-		TerrainTypes.GrassDark01B_AT,TerrainTypes.GrassDark01B_AT,TerrainTypes.GrassDark01B_AT,TerrainTypes.GrassDark01B_AT,TerrainTypes.GrassDark01B_AT,TerrainTypes.GrassDark01B_AT,
-		TerrainTypes.GrassDark02_AT,TerrainTypes.GrassDark02_AT,TerrainTypes.GrassDark02_AT,TerrainTypes.GrassDark02_AT,
-		TerrainTypes.GrassDarkLeaf01B_CT,
-		TerrainTypes.GrassDarkLeaf02_CT,
-	},
-	NormalMudDarkSmooth = {
-		TerrainTypes.MudDark01B_AT,TerrainTypes.MudDark01B_AT,TerrainTypes.MudDark01B_AT,TerrainTypes.MudDark01B_AT,
-		TerrainTypes.MudDark02B_AT,TerrainTypes.MudDark02B_AT,TerrainTypes.MudDark02B_AT,
-		TerrainTypes.MudDark03_AT,TerrainTypes.MudDark03_AT,
-		TerrainTypes.MudDark04_AT,TerrainTypes.MudDark04_AT,
-		TerrainTypes.MudDark05_AT,TerrainTypes.MudDark05_AT,
-	},
-	NormalRockDarkSmooth = {
-		TerrainTypes.RockDark01B_AT,TerrainTypes.RockDark01B_AT,TerrainTypes.RockDark01B_AT,TerrainTypes.RockDark01B_AT,
-		TerrainTypes.RockDark02_AT,TerrainTypes.RockDark02_AT,TerrainTypes.RockDark02_AT,
-		TerrainTypes.RockDark03_AT,TerrainTypes.RockDark03_AT,
-		TerrainTypes.EarthRocky01B_AT,
-	},
-	NormalRocky = {
-		TerrainTypes.EarthRocky01B_AT,
-	},
-	NormalSeabedSmooth = {
-		TerrainTypes.EarthSeabed01_AT,
-		TerrainTypes.EarthSeabed01_AT,
-		TerrainTypes.EarthSeabed02_AT,
-	},
- 
-	-- Norths
-	NorthEarthBright = {
-		TerrainTypes.EarthBrightNorth01B_AT,
-	},
-	NorthEarthDark = {
-		TerrainTypes.EarthDarkNorth01B_AT,
-	},
-	NorthForest = {
-		TerrainTypes.EarthDarkNorth01B_AT,
-		TerrainTypes.GrassNorth02B_AT,
-		TerrainTypes.GrassNorth02B_AT,
-	},
-	NorthGrassBrightSmooth = {
-		TerrainTypes.EarthBrightNorth01B_AT,
-		TerrainTypes.GrassNorth01B_AT,
-		TerrainTypes.GrassNorth01B_AT,
-		TerrainTypes.GrassNorth01B_AT,
-	},
-	NorthGrassDarkSmooth = {
-		TerrainTypes.EarthBrightNorth01B_AT,
-		TerrainTypes.GrassNorth02B_AT,
-		TerrainTypes.GrassNorth02B_AT,
-		TerrainTypes.GrassNorth02B_AT,
-	},
-	NorthGrassPurpleSmooth = {
-		TerrainTypes.EarthDarkNorth01B_AT,
-		TerrainTypes.GrassNorth03B_AT,
-		TerrainTypes.GrassNorth03B_AT,
-		TerrainTypes.GrassNorth03B_AT,
-	},
-	NorthGrassYellowSmooth = {
-		TerrainTypes.EarthBrightNorth01B_AT,
-		TerrainTypes.GrassNorthMoor01B_AT,
-		TerrainTypes.GrassNorthMoor01B_AT,
-		TerrainTypes.GrassNorthMoor01B_AT,
-		TerrainTypes.GrassNorthMoor01B_AT,
-		TerrainTypes.GrassNorthMoor01B_AT,
-	},
-	NorthRockDarkSmooth = {
-		TerrainTypes.RockDarkNorth01B_AT,
-	},
-	NorthSand = {
-		TerrainTypes.SandRockyNorth01_AT_HP,
-		TerrainTypes.SandEarthNorth01_AT_HP,
-	},	
-	NorthSeabedSmooth = {
-		TerrainTypes.EarthSeabedNorth01_AT,
-	},
- 
-	-- Evelance
-	EvelanceEarthBones = {
-		TerrainTypes.EarthDarkEvelance01_AT,
-		TerrainTypes.EarthDarkEvelance02_AT,
-	},
-	EvelanceEarthDark = {
-		TerrainTypes.EarthDarkEvelance01_AT,
-		TerrainTypes.EarthBrightEvelance02_AT,
-	},
-	EvelanceEarthDry = {
-		TerrainTypes.EarthBrightEvelance01B_AT,
-		TerrainTypes.EarthBrightEvelance01B_AT,
-		TerrainTypes.EarthBrightEvelance01B_AT,
-		TerrainTypes.EarthBrightEvelance02_AT,
-	},
-	EvelanceEarthRocky = {
-		TerrainTypes.EarthBrightNorth01B_AT,
-		TerrainTypes.EarthErosiveEvelance01B_AT,
-		TerrainTypes.EarthErosiveEvelance01B_AT,
-		TerrainTypes.EarthErosiveEvelance01B_AT,
-		TerrainTypes.EarthErosiveEvelance01B_AT,
-	},
-	EvelanceForest = {
-		TerrainTypes.EarthDarkEvelance01_AT,
-		TerrainTypes.EarthMoss01_AT,
-		TerrainTypes.EarthMoss02_AT,
-		TerrainTypes.GrassErosiveEvelance01B_AT,
-		TerrainTypes.GrassErosiveEvelance01B_AT,
-	},
-	EvelanceGrassErosive = {
-		TerrainTypes.EarthErosiveEvelance01B_AT,
-		TerrainTypes.EarthErosiveEvelance01B_AT,
-		TerrainTypes.GrassErosiveEvelance01B_AT,
-		TerrainTypes.GrassErosiveEvelance01B_AT,
-		TerrainTypes.GrassErosiveEvelance01B_AT,
-		TerrainTypes.GrassErosiveEvelance01B_AT,
-	},
-	EvelanceRockDarkSmooth = {
-		TerrainTypes.RockDarkEvelance01B_AT,
-		TerrainTypes.RockDarkEvelance01B_AT,
-		TerrainTypes.RockDarkEvelance01B_AT,
-		TerrainTypes.RockDarkEvelance01B_AT,
-		TerrainTypes.RockDarkEvelance02_AT,
-		TerrainTypes.RockDarkEvelance02_AT,
-		TerrainTypes.RockDarkEvelance02_AT,
-		TerrainTypes.RockDarkEvelance03B_AT,
-		TerrainTypes.RockDarkEvelance03B_AT,
-		TerrainTypes.RockDarkEvelance04B_AT,
-		TerrainTypes.RockDarkEvelance04B_AT,
-	},
-	
-	-- Medi
-	MediForest = {
-		TerrainTypes.EarthBright01B_AT,
-		TerrainTypes.GrassMediterrean01_AT,
-		TerrainTypes.GrassMediterrean01_AT,
-		TerrainTypes.GrassMediterrean01_AT,
-	},
-	MediGrassBright = {
-		TerrainTypes.EarthBright01B_AT,
-		TerrainTypes.GrassMediterrean02_AT,
-		TerrainTypes.GrassMediterrean02_AT,
-		TerrainTypes.GrassMediterrean02_AT,
-	},
-	MediGrassYellow = {
-		TerrainTypes.EarthBright01B_AT,
-		TerrainTypes.GrassMediterrean03_AT,
-		TerrainTypes.GrassMediterrean03_AT,
-		TerrainTypes.GrassMediterrean03_AT,
-	},
-	MediGrassSandy = {
-		TerrainTypes.EarthBright01B_AT,
-		TerrainTypes.GrassMediterrean04_AT,
-		TerrainTypes.GrassMediterrean04_AT,
-		TerrainTypes.GrassMediterrean04_AT,
-	},
-	MediRockBright = {
-		TerrainTypes.RockLight01B_AT,
-	},
-	MediRockDark = {
-		TerrainTypes.RockMedium01B_AT,
-	},
-	MediSand = {
-		TerrainTypes.SandMediterrean01_AT,
-		TerrainTypes.SandMediterrean02_AT,
-		TerrainTypes.SandMediterrean03_AT,
-	},
-	
-	-- Moor
-	MoorEarth = {
-		TerrainTypes.EarthBrightMoor01B_AT,
-		TerrainTypes.EarthBrightMoor01B_AT,
-		TerrainTypes.EarthBrightMoor01B_AT,
-		TerrainTypes.EarthBrightMoor02B_AT,
-		TerrainTypes.EarthDarkMoor01B_AT,
-	},
-	MoorGrassBright = {
-		TerrainTypes.EarthBrightMoor01B_AT,
-		TerrainTypes.GrassBrightMoor01B_AT,
-		TerrainTypes.GrassBrightMoor01B_AT,
-		TerrainTypes.GrassBrightMoor01B_AT,
-	},
-	MoorGrassDark = {
-		TerrainTypes.EarthDarkMoor01B_AT,
-		TerrainTypes.GrassDarkMoor01B_AT,
-		TerrainTypes.GrassDarkMoor01B_AT,
-		TerrainTypes.GrassDarkMoor01B_AT,
-	},
-	MoorRockDark = {
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor02_AT,
-		TerrainTypes.RockDarkMoor02_AT,
-		TerrainTypes.RockDarkMoor03_AT,
-		TerrainTypes.RockDarkMoor03_AT,
-	},
-	MoorRockDarkVains = {
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor01B_AT,
-		TerrainTypes.RockDarkMoor02_AT,
-		TerrainTypes.RockDarkMoor02_AT,
-		TerrainTypes.RockDarkMoor03_AT,
-		TerrainTypes.RockDarkMoor03_AT,
-		TerrainTypes.RockDarkMoor04B_AT,
-		TerrainTypes.RockDarkMoor04B_AT,
-		TerrainTypes.RockDarkMoor05_AT,
-		TerrainTypes.RockDarkMoor05_AT,
-	},
-	MoorRocky = {
-		TerrainTypes.EarthBrightMoor01B_AT,
-		TerrainTypes.EarthRockyMoor01_AT,
-		TerrainTypes.EarthRockyMoor01_AT,
-		TerrainTypes.EarthRockyMoor01_AT,
-	},
-	
-	-- Tideland
-	TidelandGrass = {
-		TerrainTypes.GrassFlowersTideland01B_AT,
-		TerrainTypes.GrassFlowersTideland02B_AT,
-	},
-	TidelandMud = {
-		TerrainTypes.MudTideland01B_AT,
-		TerrainTypes.MudTideland02_AT,
-	},
-	TidelandRockBright = {
-		TerrainTypes.RockBrightTideland01B_AT,
-	},
-	TidelandSand = {
-		TerrainTypes.SandEarthTideland01B_AT,
-		TerrainTypes.SandEarthTideland02_AT,
-	},
-	
-	-- Misc
-	MiscSnow = {
-		TerrainTypes.Snow01_CT,
-		TerrainTypes.Snow01_CT,
-		TerrainTypes.Snow01_CT,
-		TerrainTypes.Snow02_CT,
-		TerrainTypes.Snow03_CT,
-	},
-	
-	MiscRoad = {
-		TerrainTypes.PebblesEarth01_AT,
-	}
-}
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RandomMapGenerator.VertexColorSets = {
-
-	MordorLava = {
-		{r = 127, g = 0, b = 0},
-		{r = 153, g = 25, b = 0},
-		{r = 178, g = 59, b = 0},
-		{r = 204, g = 102, b = 0},
-		{r = 229, g = 153, b = 0},
-		{r = 255, g = 212, b = 0},
-		{r = 255, g = 255, b = 127},
-	},
-	MiscNormal = {
-		{r = 127, g = 127, b = 127},
-	},
-	MiscSlightlyDark = {
-		{r = 95, g = 95, b = 95},
-	},
-	MiscDark = {
-		{r = 63, g = 63, b = 63},
-	},
-	MiscVeryDark = {
-		{r = 31, g = 31, b = 31},
-	},
-	MiscBlack = {
-		{r = 0, g = 0, b = 0},
-	},
-}
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RandomMapGenerator.EntitySets = { -- define EntitySets HERE !
-
-	-- European
-	NormalGrassBright = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_Corn1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_Plant1,
-		Entities.XD_Plant2,
-		Entities.XD_Plant3,
-		Entities.XD_Plant4,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_Rock1,
-		Entities.XD_RockGrass2,
-	},
-	NormalGrassDark = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_Plant1,
-		Entities.XD_Plant2,
-		Entities.XD_Plant3,
-		Entities.XD_Plant4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_Rock1,
-		Entities.XD_RockGrass2,
-	},
-	NormalForestMixed = {
-		Entities.XD_Bush1,
-		Entities.XD_Bush4,
-		Entities.XD_Fir1,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir2,
-		Entities.XD_Fir2_small,
-		Entities.XD_Fir2_small,
-		Entities.XD_GreeneryBushHigh2,
-		Entities.XD_GreeneryBushHigh3,
-		Entities.XD_GreeneryBushHigh4,
-		Entities.XD_Plant1,
-		Entities.XD_Plant2,
-		Entities.XD_Rock1,
-		Entities.XD_RockGrass2,
-		Entities.XD_Tree1,
-		Entities.XD_Tree1_small,
-		Entities.XD_Tree1_small,
-		Entities.XD_Tree2,
-		Entities.XD_Tree2_small,
-		Entities.XD_Tree2_small,
-		Entities.XD_Tree3,
-		Entities.XD_Tree3_small,
-		Entities.XD_Tree3_small,
-	},
-	NormalRockDark = {
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock2,
-		Entities.XD_Rock2,
-		Entities.XD_Rock2,
-		Entities.XD_Rock2,
-		Entities.XD_Rock2,
-		Entities.XD_Rock2,
-		Entities.XD_Rock3,
-		Entities.XD_Rock3,
-		Entities.XD_Rock3,
-		Entities.XD_Rock3,
-		Entities.XD_Rock3,
-		Entities.XD_Rock4,
-		Entities.XD_Rock4,
-		Entities.XD_Rock4,
-		Entities.XD_Rock4,
-		Entities.XD_Rock5,
-		Entities.XD_Rock5,
-		Entities.XD_Rock5,
-		Entities.XD_Rock6,
-		Entities.XD_Rock6,
-		Entities.XD_Rock7,
-	},
-	NormalForestBirchAndWillow = {
-		Entities.XD_Bush1,
-		Entities.XD_Bush4,
-		Entities.XD_Plant1,
-		Entities.XD_Plant2,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_Rock1,
-		Entities.XD_RockGrass2,
-		Entities.XD_Tree4,
-		Entities.XD_Tree5,
-		Entities.XD_Tree6,
-		Entities.XD_Tree7,
-		Entities.XD_Willow1,
-	},
-
-	-- North
-	NorthGrass = {
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth3,
-		Entities.XD_PlantNorth3,
-		Entities.XD_PlantNorth3,
-		Entities.XD_PlantNorth3,
-		Entities.XD_PlantNorth4,
-		Entities.XD_PlantNorth4,
-		Entities.XD_PlantNorth4,
-		Entities.XD_PlantNorth4,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth4,
-	},
-	NorthGrassPurple = {
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth5,
-		Entities.XD_PlantNorth5,
-		Entities.XD_PlantNorth6,
-		Entities.XD_PlantNorth6,
-		Entities.XD_PlantNorth7,
-		Entities.XD_PlantNorth7,
-		Entities.XD_PlantNorth7,
-		Entities.XD_PlantNorth7,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth4,
-	},
-	NorthGrassYellow = {
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth2,
-		Entities.XD_RockNorth3,	
-		Entities.XD_RockNorth4,
-	},
-	NorthForestMixed = {
-		Entities.XD_Fir1,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir2,
-		Entities.XD_Fir2_small,
-		Entities.XD_Fir2_small,
-		Entities.XD_PineNorth1,
-		Entities.XD_PineNorth2,
-		Entities.XD_PineNorth2,
-		Entities.XD_PineNorth3,
-		Entities.XD_PineNorth3,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth2,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth4,
-		Entities.XD_RockNorth4,
-	},
-	NorthForestFir = {
-		Entities.XD_Fir1,
-		Entities.XD_Fir1,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir2,
-		Entities.XD_Fir2,
-		Entities.XD_Fir2_small,
-		Entities.XD_Fir2_small,
-		Entities.XD_Fir2_small,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth2,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth4,
-		Entities.XD_RockNorth4,
-	},
-	NorthRockDark = {
-		Entities.XD_RockNorth1,
-		Entities.XD_RockNorth2,
-		Entities.XD_RockNorth2,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth4,
-		Entities.XD_RockNorth4,
-		Entities.XD_RockNorth4,
-		Entities.XD_RockNorth4,
-	},
-	NorthForestBirch = {
-		Entities.XD_TreeNorth1,
-		Entities.XD_TreeNorth1,
-		Entities.XD_TreeNorth2,
-		Entities.XD_TreeNorth2,
-		Entities.XD_TreeNorth3,
-		Entities.XD_TreeNorth3,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth2,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth4,
-		Entities.XD_RockNorth4,
-	},
-	NorthForestPine = {
-		Entities.XD_PineNorth1,
-		Entities.XD_PineNorth1,
-		Entities.XD_PineNorth2,
-		Entities.XD_PineNorth2,
-		Entities.XD_PineNorth2,
-		Entities.XD_PineNorth3,
-		Entities.XD_PineNorth3,
-		Entities.XD_PineNorth3,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth1,
-		Entities.XD_PlantNorth2,
-		Entities.XD_PlantNorth2,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth3,
-		Entities.XD_RockNorth4,
-		Entities.XD_RockNorth4,
-	},
-	
-	-- Evelance
-	EvelanceEarth = {
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush6,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-	},
-	EvelanceForestFir = {
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush6,
-		Entities.XD_DeadBush6,
-		Entities.XD_Fir1,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir1_small,
-		Entities.XD_Fir2,
-		Entities.XD_Fir2_small,
-		Entities.XD_Fir2_small,
-		Entities.XD_Fir2_small,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_TreeEvelance1,
-	},
-	EvelanceForestDead = {
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush6,
-		Entities.XD_DeadBush6,
-		Entities.XD_DeadBush6,
-		Entities.XD_DeadBush6,
-		Entities.XD_DeadTree01,
-		Entities.XD_DeadTree01,
-		Entities.XD_DeadTree02,
-		Entities.XD_DeadTree02,
-		Entities.XD_DeadTree02,
-		Entities.XD_DeadTree02,
-		Entities.XD_DeadTree03,
-		Entities.XD_DeadTree03,
-		Entities.XD_DeadTree04,
-		Entities.XD_DeadTree04,
-		Entities.XD_DeadTree04,
-		Entities.XD_DeadTree04,
-		Entities.XD_DeadTree05,
-		Entities.XD_DeadTree05,
-		Entities.XD_DeadTree06,
-		Entities.XD_DeadTree06,
-		Entities.XD_DeadTreeEvelance1,
-		Entities.XD_DeadTreeEvelance1,
-		Entities.XD_DeadTreeEvelance2,
-		Entities.XD_DeadTreeEvelance2,
-		Entities.XD_DeadTreeEvelance3,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-	},
-	EvelanceGrass = {
-		Entities.XD_DeadBush1,
-		Entities.XD_DeadBush2,
-		Entities.XD_DeadBush3,
-		Entities.XD_DeadBush4,
-		Entities.XD_DeadBush5,
-		Entities.XD_DeadBush6,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_Plant1,
-		Entities.XD_Plant2,
-		Entities.XD_Plant3,
-		Entities.XD_Plant4,
-		Entities.XD_Plant5,
-		Entities.XD_Plant6,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal3,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance2,
-	},
-	EvelanceRockDark = {
-		Entities.XD_CliffEvelance1,
-		Entities.XD_CliffEvelance2,
-		Entities.XD_CliffEvelance3,
-		Entities.XD_CliffEvelance3,
-		Entities.XD_CliffEvelance3,
-		Entities.XD_CliffEvelance4,
-		Entities.XD_CliffEvelance4,
-		Entities.XD_CliffEvelance4,
-		Entities.XD_CliffEvelance4,
-		Entities.XD_CliffEvelance5,
-		Entities.XD_CliffEvelance5,
-		Entities.XD_CliffEvelance5,
-		Entities.XD_CliffEvelance5,
-		Entities.XD_CliffEvelance5,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance1,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance2,
-		Entities.XD_RockDarkEvelance3,
-		Entities.XD_RockDarkEvelance3,
-		Entities.XD_RockDarkEvelance3,
-		Entities.XD_RockDarkEvelance3,
-		Entities.XD_RockDarkEvelance3,
-		Entities.XD_RockDarkEvelance4,
-		Entities.XD_RockDarkEvelance4,
-		Entities.XD_RockDarkEvelance4,
-		Entities.XD_RockDarkEvelance4,
-		Entities.XD_RockDarkEvelance5,
-		Entities.XD_RockDarkEvelance5,
-		Entities.XD_RockDarkEvelance5,
-		Entities.XD_RockDarkEvelance6,
-		Entities.XD_RockDarkEvelance6,
-		Entities.XD_RockDarkEvelance7,
-	},
-	
-	-- Medi
-	MediForestCypress = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_Bush4,
-		Entities.XD_Cypress1,
-		Entities.XD_Cypress1,
-		Entities.XD_Cypress2,
-		Entities.XD_Cypress2,
-		Entities.XD_Cypress2,
-		Entities.XD_Cypress2,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_Plant3,
-		Entities.XD_Plant4,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal3,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediForestFruit = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_Bush4,
-		Entities.XD_AppleTree1,
-		Entities.XD_AppleTree1,
-		Entities.XD_AppleTree2,
-		Entities.XD_OrangeTree1,
-		Entities.XD_OrangeTree1,
-		Entities.XD_OrangeTree2,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_Plant3,
-		Entities.XD_Plant4,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal3,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediForestOlive = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_Bush4,
-		Entities.XD_OliveTree1,
-		Entities.XD_OliveTree2,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_Plant3,
-		Entities.XD_Plant4,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal3,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediForestPine = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_Bush4,
-		Entities.XD_Pine1,
-		Entities.XD_Pine1,
-		Entities.XD_Pine2,
-		Entities.XD_Pine3,
-		Entities.XD_Pine3,
-		Entities.XD_Pine4,
-		Entities.XD_Pine4,
-		Entities.XD_Pine5,
-		Entities.XD_Pine5,
-		Entities.XD_Pine6,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_Plant3,
-		Entities.XD_Plant4,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal3,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediGrassBright = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_Corn1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediGrassDark = {
-		Entities.XD_Bush2,
-		Entities.XD_Bush3,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediGrassYellow = {
-		Entities.XD_Corn1,
-		Entities.XD_Corn1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal3,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge1,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediGrassSandy = {
-		Entities.XD_Corn1,
-		Entities.XD_Corn1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge2,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	MediRockBright = {
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright5,
-		Entities.XD_RockKhakiBright5,
-		Entities.XD_RockKhakiBright5,
-		Entities.XD_RockKhakiBright6,
-		Entities.XD_RockKhakiBright6,
-		Entities.XD_RockKhakiBright7,
-	},
-	MediRockBrightCliff = {
-		Entities.XD_CliffBright1,
-		Entities.XD_CliffBright1,
-		Entities.XD_CliffBright1,
-		Entities.XD_CliffBright1,
-		Entities.XD_CliffBright2,
-		Entities.XD_CliffBright2,
-		Entities.XD_CliffBright2,
-		Entities.XD_CliffBright2,
-		Entities.XD_CliffBright2,
-		Entities.XD_CliffBright2,
-		Entities.XD_CliffBright3,
-		Entities.XD_CliffBright4,
-		Entities.XD_CliffBright4,
-		Entities.XD_CliffBright4,
-		Entities.XD_CliffBright5,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright1,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright2,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright3,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright4,
-		Entities.XD_RockKhakiBright5,
-		Entities.XD_RockKhakiBright5,
-		Entities.XD_RockKhakiBright5,
-		Entities.XD_RockKhakiBright6,
-		Entities.XD_RockKhakiBright6,
-		Entities.XD_RockKhakiBright7,
-	},
-	MediRockDark = {
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium5,
-		Entities.XD_RockKhakiMedium5,
-		Entities.XD_RockKhakiMedium5,
-		Entities.XD_RockKhakiMedium6,
-		Entities.XD_RockKhakiMedium6,
-		Entities.XD_RockKhakiMedium7,
-	},
-	MediRockDarkCliff = {
-		Entities.XD_Cliff1,
-		Entities.XD_Cliff1,
-		Entities.XD_Cliff1,
-		Entities.XD_Cliff2,
-		Entities.XD_Cliff2,
-		Entities.XD_Cliff2,
-		Entities.XD_Cliff2,
-		Entities.XD_Cliff2,
-		Entities.XD_CliffBright3,
-		Entities.XD_CliffBright4,
-		Entities.XD_CliffBright4,
-		Entities.XD_CliffBright5,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium1,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium2,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium3,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium4,
-		Entities.XD_RockKhakiMedium5,
-		Entities.XD_RockKhakiMedium5,
-		Entities.XD_RockKhakiMedium5,
-		Entities.XD_RockKhakiMedium6,
-		Entities.XD_RockKhakiMedium6,
-		Entities.XD_RockKhakiMedium7,
-	},
-	MediSand = {
-		Entities.XD_PlantDecal1,
-		Entities.XD_PlantDecal2,
-		Entities.XD_PlantDecal4,
-		Entities.XD_PlantDecalLarge3,
-		Entities.XD_PlantDecalLarge5,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium1,
-		Entities.XD_RockMedium2,
-	},
-	
-	--Moor
-	MoorEarth = {
-		Entities.XD_BushMoor1,
-		Entities.XD_BushMoor2,
-		Entities.XD_BushMoor3,
-		Entities.XD_BushMoor4,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantMoor1,
-		Entities.XD_PlantMoor1,
-		Entities.XD_PlantMoor2,
-		Entities.XD_PlantMoor2,
-		Entities.XD_PlantMoor3,
-		Entities.XD_PlantMoor3,
-		Entities.XD_PlantMoor4,
-		Entities.XD_PlantMoor4,
-		Entities.XD_PlantMoor5,
-		Entities.XD_PlantMoor5,
-		Entities.XD_PlantMoor6,
-		Entities.XD_PlantMoor6,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-	},
-	MoorForest = {
-		Entities.XD_BushMoor1,
-		Entities.XD_BushMoor4,
-		Entities.XD_PlantMoor1,
-		Entities.XD_PlantMoor2,
-		Entities.XD_PlantMoor3,
-		Entities.XD_PlantMoor4,
-		Entities.XD_PlantMoor5,
-		Entities.XD_PlantMoor6,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_TreeMoor1,
-		Entities.XD_TreeMoor2,
-		Entities.XD_TreeMoor3,
-		Entities.XD_TreeMoor4,
-		Entities.XD_TreeMoor5,
-		Entities.XD_TreeMoor6,
-	},
-	MoorForestBirch = {
-		Entities.XD_BushMoor1,
-		Entities.XD_BushMoor4,
-		Entities.XD_PlantMoor1,
-		Entities.XD_PlantMoor2,
-		Entities.XD_PlantMoor3,
-		Entities.XD_PlantMoor4,
-		Entities.XD_PlantMoor5,
-		Entities.XD_PlantMoor6,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_TreeMoor7,
-		Entities.XD_TreeMoor8,
-		Entities.XD_TreeMoor9,
-	},
-	MoorForestDead = {
-		Entities.XD_BushMoor1,
-		Entities.XD_BushMoor4,
-		Entities.XD_PlantMoor1,
-		Entities.XD_PlantMoor2,
-		Entities.XD_PlantMoor3,
-		Entities.XD_PlantMoor4,
-		Entities.XD_PlantMoor5,
-		Entities.XD_PlantMoor6,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_DeadTreeMoor1,
-		Entities.XD_DeadTreeMoor2,
-		Entities.XD_DeadTreeMoor3,
-	},
-	MoorGrass = {
-		Entities.XD_BushMoor1,
-		Entities.XD_BushMoor2,
-		Entities.XD_BushMoor3,
-		Entities.XD_BushMoor4,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_PlantMoor1,
-		Entities.XD_PlantMoor2,
-		Entities.XD_PlantMoor3,
-		Entities.XD_PlantMoor4,
-		Entities.XD_PlantMoor5,
-		Entities.XD_PlantMoor6,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-	},
-	MoorRockDark = {
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor5,
-		Entities.XD_RockDarkMoor5,
-		Entities.XD_RockDarkMoor5,
-		Entities.XD_RockDarkMoor6,
-		Entities.XD_RockDarkMoor6,
-		Entities.XD_RockDarkMoor7,
-	},
-	MoorRockDarkCliff = {
-		Entities.XD_CliffMoor1,
-		Entities.XD_CliffMoor2,
-		Entities.XD_CliffMoor3,
-		Entities.XD_CliffMoor3,
-		Entities.XD_CliffMoor3,
-		Entities.XD_CliffMoor4,
-		Entities.XD_CliffMoor4,
-		Entities.XD_CliffMoor4,
-		Entities.XD_CliffMoor4,
-		Entities.XD_CliffMoor5,
-		Entities.XD_CliffMoor5,
-		Entities.XD_CliffMoor5,
-		Entities.XD_CliffMoor5,
-		Entities.XD_CliffMoor5,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor2,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor3,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor4,
-		Entities.XD_RockDarkMoor5,
-		Entities.XD_RockDarkMoor5,
-		Entities.XD_RockDarkMoor5,
-		Entities.XD_RockDarkMoor6,
-		Entities.XD_RockDarkMoor6,
-		Entities.XD_RockDarkMoor7,
-	},
-	MoorRocky = {
-		Entities.XD_PlantMoor1,
-		Entities.XD_PlantMoor2,
-		Entities.XD_PlantMoor3,
-		Entities.XD_PlantMoor4,
-		Entities.XD_PlantMoor5,
-		Entities.XD_PlantMoor6,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor1,
-		Entities.XD_RockDarkMoor2,
-	},
-	MoorFog = {
-		Entities.XD_Fog1,
-		Entities.XD_Fog1,
-		Entities.XD_Fog2,
-		Entities.XD_Fog2,
-		Entities.XD_Fog2,
-		Entities.XD_Fog3,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-		Entities.XD_ScriptEntity,
-	},
-	
-	--Tideland
-	TidelandGrass = {
-		Entities.XD_Flower1,
-		Entities.XD_Flower2,
-		Entities.XD_Flower3,
-		Entities.XD_Flower4,
-		Entities.XD_Flower5,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical1,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-		Entities.XD_GreeneryVertical2,
-	},
-	TidelandMud = {
-		Entities.XD_PlantDecalTideland1,
-		Entities.XD_PlantDecalTideland2,
-		Entities.XD_PlantDecalTideland3,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland2,
-	},
-	TidelandRockBright = {
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland1,
-		Entities.XD_RockTideland2,
-		Entities.XD_RockTideland2,
-		Entities.XD_RockTideland2,
-		Entities.XD_RockTideland2,
-		Entities.XD_RockTideland2,
-		Entities.XD_RockTideland2,
-		Entities.XD_RockTideland3,
-		Entities.XD_RockTideland3,
-		Entities.XD_RockTideland3,
-		Entities.XD_RockTideland3,
-		Entities.XD_RockTideland3,
-		Entities.XD_RockTideland4,
-		Entities.XD_RockTideland4,
-		Entities.XD_RockTideland4,
-		Entities.XD_RockTideland4,
-		Entities.XD_RockTideland5,
-		Entities.XD_RockTideland5,
-		Entities.XD_RockTideland5,
-		Entities.XD_RockTideland6,
-		Entities.XD_RockTideland6,
-		Entities.XD_RockTideland7,
-	},
-	TidelandCliff = {
-		Entities.XD_CliffTideland1,
-		Entities.XD_CliffTideland2,
-		Entities.XD_CliffTideland2,
-		Entities.XD_CliffTideland3,
-		Entities.XD_CliffTideland3,
-		Entities.XD_CliffTideland3,
-		Entities.XD_CliffTideland4,
-		Entities.XD_CliffTideland4,
-		Entities.XD_CliffTideland4,
-		Entities.XD_CliffTideland4,
-		Entities.XD_CliffTideland5,
-		Entities.XD_CliffTideland5,
-		Entities.XD_CliffTideland5,
-		Entities.XD_CliffTideland5,
-		Entities.XD_CliffTideland5,
-	},
-	TidelandSand = {
-		Entities.XD_Driftwood1,
-		Entities.XD_Driftwood2,
-		Entities.XD_PlantDecalTideland1,
-		Entities.XD_PlantDecalTideland2,
-		Entities.XD_PlantDecalTideland3,
-		Entities.XD_PlantDecalTideland4,
-		Entities.XD_PlantDecalTideland4,
-		Entities.XD_PlantDecalTideland4,
-		Entities.XD_PlantDecalTideland5,
-		Entities.XD_PlantDecalTideland5,
-		Entities.XD_PlantDecalTideland5,
-	},
- 
-}
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RandomMapGenerator.LandscapeSetKeys = {
-	{id = "Normal",		eval = RandomMapGenerator.SetupLandscapeNormal, representative = "Europa"},
-	{id = "North",		eval = RandomMapGenerator.SetupLandscapeNorth, representative = "Skandinavien", func = RandomMapGenerator.SetupThresholdsNorth},
-	{id = "Evelance",	eval = RandomMapGenerator.SetupLandscapeEvelance},
-	{id = "Mediterran",	eval = RandomMapGenerator.SetupLandscapeMediterran},
-	{id = "Moor",		eval = RandomMapGenerator.SetupLandscapeMoor},
-	{id = "Tideland",	eval = RandomMapGenerator.SetupLandscapeTideland, representative = "Küstenland", func = RandomMapGenerator.SetupThresholdsTideland},
-	{id = "Mordor",		eval = RandomMapGenerator.SetupLandscapeMordor, func = RandomMapGenerator.SetupThresholdsMordor},
+RMG.LandscapeSetKeys = {
+	{ id = "Normal",		eval = RMG.SetupLandscapeNormal, representative = "Europa" },
+	{ id = "North",			eval = RMG.SetupLandscapeNorth, representative = "Skandinavien" },
+	{ id = "Evelance",		eval = RMG.SetupLandscapeEvelance },
+	{ id = "Mediterran",	eval = RMG.SetupLandscapeMediterran },
+	{ id = "Moor",			eval = RMG.SetupLandscapeMoor },
+	{ id = "Tideland",		eval = RMG.SetupLandscapeTideland, representative = "Küstenland" },
+	{ id = "Steppe",		eval = RMG.SetupLandscapeSteppe, },
 }
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-RandomMapGenerator.LandscapeSets = {
-
-	Normal = {
-		Textures = {
-			Pike		= RandomMapGenerator.TextureSets.NormalRockDarkSmooth,
-			HighMeadow	= RandomMapGenerator.TextureSets.NormalGrassDarkSmooth,
-			HighForest	= RandomMapGenerator.TextureSets.NormalForestSmooth,
-			Mountain	= RandomMapGenerator.TextureSets.NormalRockDarkSmooth,
-			Hill		= RandomMapGenerator.TextureSets.NormalRocky,
-			Forest		= RandomMapGenerator.TextureSets.NormalForestSmooth,
-			Meadow		= RandomMapGenerator.TextureSets.NormalGrassDarkSmooth,
-			Flatland	= RandomMapGenerator.TextureSets.NormalGrassBrightSmooth,
-			Road		= RandomMapGenerator.TextureSets.NormalEarthBright,
-			LowFlatland	= RandomMapGenerator.TextureSets.NormalGrassBrightSmooth,
-			LowMeadow	= RandomMapGenerator.TextureSets.NormalGrassDarkSmooth,
-			LowForest	= RandomMapGenerator.TextureSets.NormalForestSmooth,
-			Coast		= RandomMapGenerator.TextureSets.NormalEarthAndRocks,
-			Lake		= RandomMapGenerator.TextureSets.NormalEarthAndRocks,
-			Sea			= RandomMapGenerator.TextureSets.NormalSeabedSmooth,
-		},
-		Water			= WaterTypes.WaterA,
-		Entities = {
-			HighMeadow	= RandomMapGenerator.EntitySets.NormalGrassDark,
-			HighForest	= RandomMapGenerator.EntitySets.NormalForestMixed,
-			Hill		= RandomMapGenerator.EntitySets.NormalRockDark,
-			Forest		= RandomMapGenerator.EntitySets.NormalForestMixed,
-			Meadow		= RandomMapGenerator.EntitySets.NormalGrassDark,
-			Flatland	= RandomMapGenerator.EntitySets.NormalGrassBright,
-			LowFlatland	= RandomMapGenerator.EntitySets.NormalGrassBright,
-			LowMeadow	= RandomMapGenerator.EntitySets.NormalGrassDark,
-			LowForest	= RandomMapGenerator.EntitySets.NormalForestBirchAndWillow,
-		},
-	},
-	
-	North = {
-		Textures = {
-			Pike		= RandomMapGenerator.TextureSets.MiscSnow,
-			HighMeadow	= RandomMapGenerator.TextureSets.NorthGrassYellowSmooth,
-			HighForest	= RandomMapGenerator.TextureSets.NorthForest,
-			Mountain	= RandomMapGenerator.TextureSets.NorthRockDarkSmooth,
-			Hill		= RandomMapGenerator.TextureSets.NorthEarthBright,
-			Forest		= RandomMapGenerator.TextureSets.NorthForest,
-			Meadow		= RandomMapGenerator.TextureSets.NorthGrassDarkSmooth,
-			Flatland	= RandomMapGenerator.TextureSets.NorthGrassBrightSmooth,
-			Road		= RandomMapGenerator.TextureSets.NorthEarthDark,
-			LowFlatland	= RandomMapGenerator.TextureSets.NorthGrassBrightSmooth,
-			LowMeadow	= RandomMapGenerator.TextureSets.NorthGrassDarkSmooth,
-			LowForest	= RandomMapGenerator.TextureSets.NorthForest,
-			Coast		= RandomMapGenerator.TextureSets.NorthSand,
-			Lake		= RandomMapGenerator.TextureSets.NorthSand,
-			Sea			= RandomMapGenerator.TextureSets.NorthSeabedSmooth,
-		},
-		Water			= WaterTypes.Nordic_Swamp,
-		Entities = {
-			HighMeadow	= RandomMapGenerator.EntitySets.NorthGrassYellow,
-			HighForest	= RandomMapGenerator.EntitySets.NorthForestPine,
-			Hill		= RandomMapGenerator.EntitySets.NorthRockDark,
-			Forest		= RandomMapGenerator.EntitySets.NorthForestFir,
-			Meadow		= RandomMapGenerator.EntitySets.NorthGrass,
-			Flatland	= RandomMapGenerator.EntitySets.NorthGrass,
-			LowFlatland	= RandomMapGenerator.EntitySets.NorthGrass,
-			LowMeadow	= RandomMapGenerator.EntitySets.NorthGrass,
-			LowForest	= RandomMapGenerator.EntitySets.NorthForestBirch,
-		},
-	},
-	
-	Evelance = {
-		Textures = {
-			Pike		= RandomMapGenerator.TextureSets.EvelanceRockDarkSmooth,
-			HighMeadow	= RandomMapGenerator.TextureSets.EvelanceEarthDry,
-			HighForest	= RandomMapGenerator.TextureSets.EvelanceEarthBones,
-			Mountain	= RandomMapGenerator.TextureSets.EvelanceRockDarkSmooth,
-			Hill		= RandomMapGenerator.TextureSets.EvelanceEarthDark,
-			Forest		= RandomMapGenerator.TextureSets.EvelanceEarthBones,
-			Meadow		= RandomMapGenerator.TextureSets.EvelanceEarthDry,
-			Flatland	= RandomMapGenerator.TextureSets.EvelanceEarthBones,
-			Road		= RandomMapGenerator.TextureSets.EvelanceEarthDry,
-			LowFlatland	= RandomMapGenerator.TextureSets.EvelanceGrassErosive,
-			LowMeadow	= RandomMapGenerator.TextureSets.EvelanceGrassErosive,
-			LowForest	= RandomMapGenerator.TextureSets.EvelanceForest,
-			Coast		= RandomMapGenerator.TextureSets.EvelanceEarthRocky,
-			Lake		= RandomMapGenerator.TextureSets.EvelanceEarthRocky,
-			Sea			= RandomMapGenerator.TextureSets.EvelanceEarthRocky,
-		},
-		Water			= WaterTypes.Evelance_Swamp,
-		Entities = {
-			Mountain	= RandomMapGenerator.EntitySets.EvelanceRockDark,
-			HighMeadow	= RandomMapGenerator.EntitySets.EvelanceEarth,
-			HighForest	= RandomMapGenerator.EntitySets.EvelanceForestDead,
-			Hill		= RandomMapGenerator.EntitySets.EvelanceEarth,
-			Forest		= RandomMapGenerator.EntitySets.EvelanceForestDead,
-			Meadow		= RandomMapGenerator.EntitySets.EvelanceEarth,
-			Flatland	= RandomMapGenerator.EntitySets.EvelanceEarth,
-			LowFlatland	= RandomMapGenerator.EntitySets.EvelanceGrass,
-			LowMeadow	= RandomMapGenerator.EntitySets.EvelanceGrass,
-			LowForest	= RandomMapGenerator.EntitySets.EvelanceForestFir,
-		},
-	},
-	
-	Mediterran = {
-		Textures = {
-			Pike		= RandomMapGenerator.TextureSets.MediRockDark,
-			HighMeadow	= RandomMapGenerator.TextureSets.MediGrassBright,
-			HighForest	= RandomMapGenerator.TextureSets.MediForest,
-			Mountain	= RandomMapGenerator.TextureSets.MediRockBright,
-			Hill		= RandomMapGenerator.TextureSets.MediRockBright,
-			Forest		= RandomMapGenerator.TextureSets.MediForest,
-			Meadow		= RandomMapGenerator.TextureSets.MediGrassBright,
-			Flatland	= RandomMapGenerator.TextureSets.MediGrassYellow,
-			Road		= RandomMapGenerator.TextureSets.NormalEarthBright,
-			LowFlatland	= RandomMapGenerator.TextureSets.MediGrassYellow,
-			LowMeadow	= RandomMapGenerator.TextureSets.MediGrassBright,
-			LowForest	= RandomMapGenerator.TextureSets.MediForest,
-			Coast		= RandomMapGenerator.TextureSets.MediGrassSandy,
-			Lake		= RandomMapGenerator.TextureSets.MediSand,
-			Sea			= RandomMapGenerator.TextureSets.MediSand,
-		},
-		Water			= WaterTypes.Mediterran_River,
-		Entities = {
-			Pike		= RandomMapGenerator.EntitySets.MediRockDarkCliff,
-			Mountain	= RandomMapGenerator.EntitySets.MediRockBrightCliff,
-			HighMeadow	= RandomMapGenerator.EntitySets.MediForestPine,
-			HighForest	= RandomMapGenerator.EntitySets.MediGrassBright,
-			Hill		= RandomMapGenerator.EntitySets.MediRockBright,
-			Forest		= RandomMapGenerator.EntitySets.MediForestPine,
-			Meadow		= RandomMapGenerator.EntitySets.MediGrassBright,
-			Flatland	= RandomMapGenerator.EntitySets.MediGrassYellow,
-			LowFlatland	= RandomMapGenerator.EntitySets.MediGrassYellow,
-			LowMeadow	= RandomMapGenerator.EntitySets.MediGrassBright,
-			LowForest	= RandomMapGenerator.EntitySets.MediForestCypress,
-		},
-	},
-	
-	Tideland = {
-		Textures = {
-			Pike		= RandomMapGenerator.TextureSets.TidelandRockBright,
-			HighMeadow	= RandomMapGenerator.TextureSets.TidelandGrass,
-			HighForest	= RandomMapGenerator.TextureSets.NormalGrassDarkSmooth,
-			Mountain	= RandomMapGenerator.TextureSets.TidelandRockBright,
-			Hill		= RandomMapGenerator.TextureSets.TidelandMud,
-			Forest		= RandomMapGenerator.TextureSets.NormalGrassDarkSmooth,
-			Meadow		= RandomMapGenerator.TextureSets.TidelandGrass,
-			Flatland	= RandomMapGenerator.TextureSets.NormalGrassBrightSmooth,
-			Road		= RandomMapGenerator.TextureSets.TidelandSand,
-			LowFlatland	= RandomMapGenerator.TextureSets.NormalGrassBrightSmooth,
-			LowMeadow	= RandomMapGenerator.TextureSets.TidelandGrass,
-			LowForest	= RandomMapGenerator.TextureSets.NormalGrassDarkSmooth,
-			Coast		= RandomMapGenerator.TextureSets.TidelandSand,
-			Lake		= RandomMapGenerator.TextureSets.NormalSeabedSmooth,
-			Sea			= RandomMapGenerator.TextureSets.NormalSeabedSmooth,
-		},
-		Water			= WaterTypes.WaterC,
-		Entities = {
-			Mountain	= RandomMapGenerator.EntitySets.TidelandRockBright,
-			HighMeadow	= RandomMapGenerator.EntitySets.TidelandGrass,
-			HighForest	= RandomMapGenerator.EntitySets.MediForestPine,
-			Hill		= RandomMapGenerator.EntitySets.TidelandRockBright,
-			Forest		= RandomMapGenerator.EntitySets.MediForestPine,
-			Meadow		= RandomMapGenerator.EntitySets.TidelandGrass,
-			Flatland	= RandomMapGenerator.EntitySets.NormalGrassDark,
-			LowFlatland	= RandomMapGenerator.EntitySets.NormalGrassDark,
-			LowMeadow	= RandomMapGenerator.EntitySets.TidelandGrass,
-			LowForest	= RandomMapGenerator.EntitySets.NormalForestBirchAndWillow,
-			Coast		= RandomMapGenerator.EntitySets.TidelandSand,
-			--Sea			= RandomMapGenerator.EntitySets.TidelandCliff, -- too much
-		},
-	},
-	
-	Moor = {
-		Textures = {
-			Pike		= RandomMapGenerator.TextureSets.MoorRockDark,
-			HighMeadow	= RandomMapGenerator.TextureSets.MoorGrassDark,
-			HighForest	= RandomMapGenerator.TextureSets.MoorEarth,
-			Mountain	= RandomMapGenerator.TextureSets.MoorRockDarkVains,
-			Hill		= RandomMapGenerator.TextureSets.MoorRocky,
-			Forest		= RandomMapGenerator.TextureSets.MoorEarth,
-			Meadow		= RandomMapGenerator.TextureSets.MoorGrassDark,
-			Flatland	= RandomMapGenerator.TextureSets.MoorGrassBright,
-			Road		= RandomMapGenerator.TextureSets.MoorEarth,
-			LowFlatland	= RandomMapGenerator.TextureSets.MoorGrassBright,
-			LowMeadow	= RandomMapGenerator.TextureSets.MoorGrassDark,
-			LowForest	= RandomMapGenerator.TextureSets.MoorEarth,
-			Coast		= RandomMapGenerator.TextureSets.MoorEarth,
-			Lake		= RandomMapGenerator.TextureSets.MoorEarth,
-			Sea			= RandomMapGenerator.TextureSets.MoorEarth,
-		},
-		Water			= WaterTypes.Moor,
-		Entities = {
-			Pike		= RandomMapGenerator.EntitySets.MoorRockDark,
-			Mountain	= RandomMapGenerator.EntitySets.MoorRockDarkCliff,
-			HighMeadow	= RandomMapGenerator.EntitySets.MoorGrass,
-			HighForest	= RandomMapGenerator.EntitySets.MoorForest,
-			Hill		= RandomMapGenerator.EntitySets.MoorRocky,
-			Forest		= RandomMapGenerator.EntitySets.MoorForest,
-			Meadow		= RandomMapGenerator.EntitySets.MoorFog,
-			Flatland	= RandomMapGenerator.EntitySets.MoorGrass,
-			LowFlatland	= RandomMapGenerator.EntitySets.MoorGrass,
-			LowMeadow	= RandomMapGenerator.EntitySets.MoorFog,
-			LowForest	= RandomMapGenerator.EntitySets.MoorForestBirch,
-			Coast		= RandomMapGenerator.EntitySets.MoorFog,
-			Lake		= RandomMapGenerator.EntitySets.MoorFog,
-			Sea			= RandomMapGenerator.EntitySets.MoorFog,
-		},
-	},
-	
-	Mordor = {
-		Textures = {
-			Pike		= RandomMapGenerator.TextureSets.EvelanceRockDarkSmooth,
-			HighMeadow	= RandomMapGenerator.TextureSets.EvelanceEarthDark,
-			HighForest	= RandomMapGenerator.TextureSets.EvelanceEarthBones,
-			Mountain	= RandomMapGenerator.TextureSets.EvelanceRockDarkSmooth,
-			Hill		= RandomMapGenerator.TextureSets.EvelanceEarthBones,
-			Forest		= RandomMapGenerator.TextureSets.EvelanceEarthBones,
-			Meadow		= RandomMapGenerator.TextureSets.EvelanceEarthDark,
-			Flatland	= RandomMapGenerator.TextureSets.EvelanceEarthDark,
-			Road		= RandomMapGenerator.TextureSets.MiscRoad,
-			LowFlatland	= RandomMapGenerator.TextureSets.EvelanceEarthRocky,
-			LowMeadow	= RandomMapGenerator.TextureSets.EvelanceEarthRocky,
-			LowForest	= RandomMapGenerator.TextureSets.EvelanceEarthRocky,
-			Coast		= RandomMapGenerator.TextureSets.EvelanceEarthRocky,
-			Lake		= RandomMapGenerator.TextureSets.EvelanceRockDarkSmooth,
-			Sea			= RandomMapGenerator.TextureSets.EvelanceRockDarkSmooth,
-		},
-		Water			= WaterTypes.Evelance_Swamp,
-		Entities = {
-			Mountain	= RandomMapGenerator.EntitySets.EvelanceRockDark,
-			HighMeadow	= RandomMapGenerator.EntitySets.EvelanceEarth,
-			HighForest	= RandomMapGenerator.EntitySets.EvelanceForestDead,
-			Hill		= RandomMapGenerator.EntitySets.EvelanceEarth,
-			Forest		= RandomMapGenerator.EntitySets.EvelanceForestDead,
-			Meadow		= RandomMapGenerator.EntitySets.EvelanceEarth,
-			Flatland	= RandomMapGenerator.EntitySets.EvelanceEarth,
-			LowFlatland	= RandomMapGenerator.EntitySets.EvelanceEarth,
-			LowMeadow	= RandomMapGenerator.EntitySets.EvelanceEarth,
-			LowForest	= RandomMapGenerator.EntitySets.EvelanceForestDead,
-			Coast		= RandomMapGenerator.EntitySets.EvelanceEarth,
-			Lake		= RandomMapGenerator.EntitySets.MoorFog,
-			Sea			= RandomMapGenerator.EntitySets.MoorFog,
-		},
-		VertexColors = {
-			Mountain	= RandomMapGenerator.VertexColorSets.MiscDark,
-			Hill		= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			Forest		= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			Meadow		= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			Flatland	= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			Road		= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			LowFlatland	= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			LowMeadow	= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			LowForest	= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			Coast		= RandomMapGenerator.VertexColorSets.MiscSlightlyDark,
-			Lake		= RandomMapGenerator.VertexColorSets.MordorLava,
-			Sea			= RandomMapGenerator.VertexColorSets.MordorLava,
-		},
-	},
-}
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-RandomMapGenerator.TeamBorderTypes = {
+RMG.TeamBorderTypes = {
 	{id = "none", representative = "keine", gate = 0},
 	{id = "fence", representative = "Zaun", gate = 1},
 	{id = "river", representative = "Flüsse", gate = 0},
 }
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-RandomMapGenerator.GateLayouts = {
-	{id = "player", representative = "je Spieler"},
+RMG.GateLayouts = {
 	{id = "team", representative = "je Team"},
+	--{id = "player", representative = "je Spieler"},
 }
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-RandomMapGenerator.GateSizes = {
+RMG.GateSizes = {
 	{id = 2.25, representative = "sehr klein"},
 	{id = 2.5, representative = "klein"},
 	{id = 3, representative = "moderat"},
@@ -1788,7 +95,7 @@ RandomMapGenerator.GateSizes = {
 	{id = 6, representative = "sehr groß"},
 }
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RandomMapGenerator.BlockingTypes = {
+RMG.BlockingTypes = {
 	None = 0,
 	River = 1,
 	Road = 2,
@@ -1851,7 +158,7 @@ Structure = {
     = Number
     = {x, y}
     = {x1, y1, x2, y2},
-    TextureList = RandomMapGenerator.TextureSets.Name or TerrainTypes.Name, -- excl.
+    TextureList = RMG.TextureSets.Name or TerrainTypes.Name, -- excl.
     BiomeKey = String,
    },
   },
@@ -1873,90 +180,14 @@ Structure = {
 }
 ]]
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-	--RandomMapGenerator.InitRules();XGUIEng.ShowWidget("EMSPagesUnits", 0);XGUIEng.ShowWidget("EMSPagesRMG", 1);
-	--XGUIEng.ShowWidget("EMSPagesUnits", 1);XGUIEng.ShowWidget("EMSPagesRMG", 0);
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.AddToThreshold(_val)
+function RMG.InitGenerationData()
 	
-	if not EMS.CanChangeRules then
-		return;
-	end
-	RandomMapGenerator.AddToLowThreshold(_val)
-	RandomMapGenerator.AddToHighThreshold(_val)
-	
-	EMS.RD.Rules.RMG_ThresholdRoad:SetValue(EMS.RD.Rules.RMG_ThresholdRoad:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdRoad", EMS.RD.Rules.RMG_ThresholdRoad:GetValue());
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AddToHighThreshold(_val)
-
-	if not EMS.CanChangeRules then
-		return;
-	end
-	EMS.RD.Rules.RMG_ThresholdPike:SetValue(EMS.RD.Rules.RMG_ThresholdPike:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdPike", EMS.RD.Rules.RMG_ThresholdPike:GetValue());
-	EMS.RD.Rules.RMG_ThresholdMountain:SetValue(EMS.RD.Rules.RMG_ThresholdMountain:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdMountain", EMS.RD.Rules.RMG_ThresholdMountain:GetValue());
-	EMS.RD.Rules.RMG_ThresholdHill:SetValue(EMS.RD.Rules.RMG_ThresholdHill:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdHill", EMS.RD.Rules.RMG_ThresholdHill:GetValue());
-	EMS.RD.Rules.RMG_ThresholdForest:SetValue(EMS.RD.Rules.RMG_ThresholdForest:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdForest", EMS.RD.Rules.RMG_ThresholdForest:GetValue());
-	EMS.RD.Rules.RMG_ThresholdMeadow:SetValue(EMS.RD.Rules.RMG_ThresholdMeadow:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdMeadow", EMS.RD.Rules.RMG_ThresholdMeadow:GetValue());
-	EMS.RD.Rules.RMG_ThresholdFlatland:SetValue(EMS.RD.Rules.RMG_ThresholdFlatland:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdFlatland", EMS.RD.Rules.RMG_ThresholdFlatland:GetValue());
-	
-	if EMS.RD.Rules.RMG_ThresholdPlateau:GetValue() < 1000 then
-		EMS.RD.Rules.RMG_ThresholdHighMeadow:SetValue(EMS.RD.Rules.RMG_ThresholdHighMeadow:GetValue() + _val)
-		EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdHighMeadow", EMS.RD.Rules.RMG_ThresholdHighMeadow:GetValue());
-		EMS.RD.Rules.RMG_ThresholdHighForest:SetValue(EMS.RD.Rules.RMG_ThresholdHighForest:GetValue() + _val)
-		EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdHighForest", EMS.RD.Rules.RMG_ThresholdHighForest:GetValue());
-		EMS.RD.Rules.RMG_ThresholdPlateau:SetValue(EMS.RD.Rules.RMG_ThresholdPlateau:GetValue() + _val)
-		EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdPlateau", EMS.RD.Rules.RMG_ThresholdPlateau:GetValue());
-	end
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AddToLowThreshold(_val)
-
-	if not EMS.CanChangeRules then
-		return;
-	end
-	EMS.RD.Rules.RMG_ThresholdSea:SetValue(EMS.RD.Rules.RMG_ThresholdSea:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdSea", EMS.RD.Rules.RMG_ThresholdSea:GetValue());
-	EMS.RD.Rules.RMG_ThresholdLake:SetValue(EMS.RD.Rules.RMG_ThresholdLake:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdLake", EMS.RD.Rules.RMG_ThresholdLake:GetValue());
-	EMS.RD.Rules.RMG_ThresholdCoast:SetValue(EMS.RD.Rules.RMG_ThresholdCoast:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdCoast", EMS.RD.Rules.RMG_ThresholdCoast:GetValue());
-	EMS.RD.Rules.RMG_ThresholdLowForest:SetValue(EMS.RD.Rules.RMG_ThresholdLowForest:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdLowForest", EMS.RD.Rules.RMG_ThresholdLowForest:GetValue());
-	EMS.RD.Rules.RMG_ThresholdLowMeadow:SetValue(EMS.RD.Rules.RMG_ThresholdLowMeadow:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdLowMeadow", EMS.RD.Rules.RMG_ThresholdLowMeadow:GetValue());
-	EMS.RD.Rules.RMG_ThresholdLowFlatland:SetValue(EMS.RD.Rules.RMG_ThresholdLowFlatland:GetValue() + _val)
-	EMS.GL.TrySync("EMS.GL.SetValueSynced", "RMG_ThresholdLowFlatland", EMS.RD.Rules.RMG_ThresholdLowFlatland:GetValue());
-end
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.GetRandomSeed(_value)
-	
-	_value = _value or 0
-	local seed = _value + 9876543210 + Game.RealTimeGetMs() + Game.RealTimeGetMs() * 100000
-	
-	while seed >= 1000000000 do
-		seed = seed - 1000000000
-	end
-	
-	return seed
-	--EMS.GL.SetValueSynced("RMG_Seed", value)
-	--oder einfach math.randomseed?
-end
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.InitGenerationData()
-	
-	RandomMapGenerator.GenerationData = { DebugMode = false, }
+	RMG.GenerationData = { DebugMode = false, }
 	
 	Score.Player[0] = {buildings=0, all=0}
 	
 	-- DBG only --
-	if RandomMapGenerator.GenerationData.DebugMode then
+	if RMG.GenerationData.DebugMode then
 		
 		Game.GameTimeSetFactor(10)
 		Tools.ExploreArea(-1, -1, 900);
@@ -1976,46 +207,60 @@ function RandomMapGenerator.InitGenerationData()
 	
 	local seed = EMS.RD.Rules.RMG_Seed:GetValue()
 
-	RandomMapGenerator.GenerationData.Seed = seed,
+	RMG.GenerationData.Seed = seed,
 	SimplexNoise.seedP(seed)
 	
-	if XNetwork.Manager_DoesExist() == 0 then
-		math.randomseed(seed) --desynct auf Simis Server
+	--if XNetwork.Manager_DoesExist() == 0 then
+		math.randomseed(seed)
 		gvRandomseed = true -- prevent GetRandom from reseeding
-	end
+	--end
 	
-	RandomMapGenerator.GenerationData.TeamBorderType		= EMS.RD.Rules.RMG_GenerateRivers:GetValue()
-	RandomMapGenerator.GenerationData.GateLayout			= EMS.RD.Rules.RMG_GateLayout:GetValue()
-	RandomMapGenerator.GenerationData.GateSize				= RandomMapGenerator.GateSizes[EMS.RD.Rules.RMG_GateSize:GetValue()].id
-	RandomMapGenerator.GenerationData.GenerateRoads 		= Num2Bool(EMS.RD.Rules.RMG_GenerateRoads:GetValue())
+	RMG.GenerationData.TeamBorderType			= EMS.RD.Rules.RMG_GenerateRivers:GetValue()
+	RMG.GenerationData.GateLayout				= EMS.RD.Rules.RMG_GateLayout:GetValue()
+	RMG.GenerationData.GateSize					= RMG.GateSizes[EMS.RD.Rules.RMG_GateSize:GetValue()].id
+	RMG.GenerationData.GenerateRoads 			= Num2Bool(EMS.RD.Rules.RMG_GenerateRoads:GetValue())
 	
-	RandomMapGenerator.GenerationData.LandscapeSetKey		= RandomMapGenerator.LandscapeSetKeys[EMS.RD.Rules.RMG_LandscapeSet:GetValue()].id
-	RandomMapGenerator.GenerationData.MirrorMap				= Num2Bool(EMS.RD.Rules.RMG_MirrorMap:GetValue())
-	RandomMapGenerator.GenerationData.RandomPlayerPosition	= Num2Bool(EMS.RD.Rules.RMG_RandomPlayerPosition:GetValue())
+	RMG.GenerationData.LandscapeSetKey			= RMG.LandscapeSetKeys[EMS.RD.Rules.RMG_LandscapeSet:GetValue()].id
+	RMG.GenerationData.MirrorMap				= Num2Bool(EMS.RD.Rules.RMG_MirrorMap:GetValue())
+	RMG.GenerationData.RandomPlayerPosition		= Num2Bool(EMS.RD.Rules.RMG_RandomPlayerPosition:GetValue())
 	
-	RandomMapGenerator.GenerationData.TerrainBaseHeight		= EMS.RD.Rules.RMG_TerrainBaseHeight:GetValue()
-	RandomMapGenerator.GenerationData.WaterBaseHeight		= EMS.RD.Rules.RMG_WaterBaseHeight:GetValue()
-	RandomMapGenerator.GenerationData.NoiseFactorZ			= EMS.RD.Rules.RMG_NoiseFactorZ:GetValue() * 28
-	RandomMapGenerator.GenerationData.NoiseFactorXY			= (EMS.RD.Rules.RMG_NoiseFactorXY:GetValue() * 0.5 + 50) / 12500 -- otherwise it is way to sensitiv
-	RandomMapGenerator.GenerationData.ForestDensity			= EMS.RD.Rules.RMG_ForestDensity:GetValue() / 100
+	--RMG.GenerationData.TerrainBaseHeight		= EMS.RD.Rules.RMG_TerrainBaseHeight:GetValue()
+	--RMG.GenerationData.WaterBaseHeight		= EMS.RD.Rules.RMG_WaterBaseHeight:GetValue()
+	--RMG.GenerationData.NoiseFactorZ			= EMS.RD.Rules.RMG_NoiseFactorZ:GetValue() * 28
+	--RMG.GenerationData.NoiseFactorXY			= (EMS.RD.Rules.RMG_NoiseFactorXY:GetValue() * 0.5 + 50) / 12500 -- otherwise it is way to sensitiv
+	--RMG.GenerationData.ForestDensity			= EMS.RD.Rules.RMG_ForestDensity:GetValue() / 100
 	
-	RandomMapGenerator.GenerationData.ThresholdPike			= EMS.RD.Rules.RMG_ThresholdPike:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdMountain		= EMS.RD.Rules.RMG_ThresholdMountain:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdHill			= EMS.RD.Rules.RMG_ThresholdHill:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdSea			= EMS.RD.Rules.RMG_ThresholdSea:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdLake			= EMS.RD.Rules.RMG_ThresholdLake:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdCoast		= EMS.RD.Rules.RMG_ThresholdCoast:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdForest		= EMS.RD.Rules.RMG_ThresholdForest:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdMeadow		= EMS.RD.Rules.RMG_ThresholdMeadow:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdFlatland		= EMS.RD.Rules.RMG_ThresholdFlatland:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdLowForest	= EMS.RD.Rules.RMG_ThresholdLowForest:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdLowMeadow	= EMS.RD.Rules.RMG_ThresholdLowMeadow:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdLowFlatland	= EMS.RD.Rules.RMG_ThresholdLowFlatland:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdRoad			= EMS.RD.Rules.RMG_ThresholdRoad:GetValue() / 1000
+	-- recycled params from old generator, now fix
+	RMG.GenerationData.TerrainBaseHeight		= 2800
+	RMG.GenerationData.WaterBaseHeight			= 2300
+
+	local waterheight = RMG.GenerationData.WaterBaseHeight + 200
+	local invertedwaterheight = RMG.GenerationData.TerrainBaseHeight + ( RMG.GenerationData.TerrainBaseHeight - RMG.GenerationData.WaterBaseHeight )
 	
-	RandomMapGenerator.GenerationData.ThresholdHighMeadow	= EMS.RD.Rules.RMG_ThresholdHighMeadow:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdHighForest	= EMS.RD.Rules.RMG_ThresholdHighForest:GetValue() / 1000
-	RandomMapGenerator.GenerationData.ThresholdPlateau		= EMS.RD.Rules.RMG_ThresholdPlateau:GetValue() / 1000
+	RMG.GenerationData.NoiseFactorZ				= 140 * 14
+	RMG.GenerationData.NoiseFactorXY			= 102 / 14705
+	--RMG.GenerationData.GenerateRoads 			= true
+	--RMG.GenerationData.MirrorMap				= false
+	--RMG.GenerationData.TeamBorderType			= 1
+
+	RMG.GenerationData.ThresholdPike			= invertedwaterheight + 750
+	RMG.GenerationData.ThresholdMountain		= invertedwaterheight + 100
+	RMG.GenerationData.ThresholdHill			= invertedwaterheight - 200
+	
+	RMG.GenerationData.ThresholdSea				= RMG.GenerationData.WaterBaseHeight - 500
+	RMG.GenerationData.ThresholdLake			= RMG.GenerationData.WaterBaseHeight - 100
+	RMG.GenerationData.ThresholdCoast			= RMG.GenerationData.WaterBaseHeight + 200
+	
+	RMG.GenerationData.ThresholdRoad			= 0
+	RMG.GenerationData.ForestDensity			= 1 -- in %
+	
+	RMG.GenerationData.ThresholdVeryStrongGroth	= 0.5
+	RMG.GenerationData.ThresholdStrongGroth		= 0.3
+	RMG.GenerationData.ThresholdWeakGroth		= -0.1
+	RMG.GenerationData.ThresholdVeryWeakGroth	= -0.3
+	
+	-- no water
+	--RMG.GenerationData.WaterBaseHeight			= 0
 	
 	local contentClayPit	= EMS.RD.Rules.RMG_ContentClayPit:GetValue()
 	local contentClayPile	= EMS.RD.Rules.RMG_ContentClayPile:GetValue()
@@ -2031,49 +276,64 @@ function RandomMapGenerator.InitGenerationData()
 	local explorevc = EMS.RD.Rules.RMG_ShowVillageCenters:GetValue()
 	
 	-- Node = { x, y, noise, height, blocking }
-	-- TODO: Blocking = { 1 = Terrain, 2 = Water, 4 = Entity, 8 = River, 16 = Road }
-	RandomMapGenerator.GenerationData.TerrainNodes = {}
- 	RandomMapGenerator.GenerationData.Entities = {}
+	RMG.GenerationData.TerrainNodes = {}
+ 	RMG.GenerationData.Entities = {}
 
 	-- get number of players and number of teams
-	local nplayers, players, nteams = RandomMapGenerator.UnpackPlayerConfig()
+	local nplayers, players, nteams = RMG.UnpackPlayerConfig()
 	
+	-- player config may be 0 if rmg rule page was not initialized, get data directly in this case
 	if EMS.RD.Rules.RMG_PlayerConfig:GetValue() == 0 then
-		nplayers, players, nteams = RandomMapGenerator.GetPlayersAndTeams()
+		nplayers, players, nteams = RMG.GetPlayersAndTeams()
 	end
 	
-	RandomMapGenerator.GenerationData.Players = {}
-	RandomMapGenerator.GenerationData.NumberOfPlayers = nplayers
-	RandomMapGenerator.GenerationData.NumberOfTeams = nteams
+	RMG.GenerationData.Players = {}
+	RMG.GenerationData.NumberOfPlayers = nplayers
+	RMG.GenerationData.NumberOfTeams = nteams
 	
 	for p = 1, nplayers do
-		table.insert(RandomMapGenerator.GenerationData.Players, {id = players[p].id, team = players[p].team, ishuman = players[p].ishuman})
+		table.insert( RMG.GenerationData.Players, { Id = players[ p ].Id, Team = players[ p ].Team, IsHuman = players[ p ].IsHuman, IsReady = false, } )
 	end
-	
-	RandomMapGenerator.GenerationData.PlayerRadian = math.rad(360 / RandomMapGenerator.GenerationData.NumberOfPlayers) -- 180° = pi
  
 	-- generate no rivers if not enough teams
 	if nteams <= 1 then
-		RandomMapGenerator.GenerationData.TeamBorderType = 1 -- none
+		RMG.GenerationData.TeamBorderType = 1 -- none
 	end
- 
+	
+	-- get composition to allow custom overrides for 12+ players
+	RMG.GenerationData.Composition = RMG.GetComposition()
+	
+	RMG.GenerationData.NumberOfSlizes = RMG.GenerationData.Composition.NumberOfPlayers + RMG.GenerationData.Composition.NumberOfTeams --nplayers + ( ( nteams > 1 ) and nteams or 0 )
+	
+	-- no additional slize if no teamborder will be generated
+	RMG.GenerationData.MirrorRadian = math.rad( 360 / RMG.GenerationData.NumberOfSlizes ) -- 180° = pi
+	RMG.GenerationData.MirrorOffset = math.rad( 45 )
+	
+	-- no mirror offset if bridges will be generated, they look bettes at 90° angle
+	if RMG.GenerationData.TeamBorderType == 3 and RMG.GenerationData.GenerateRoads then
+		RMG.GenerationData.MirrorOffset = 0
+	end
+	
 	-- generate no roads if not enough players
 	if nplayers <= 1 then
-		RandomMapGenerator.GenerationData.GenerateRoads = false
+		RMG.GenerationData.GenerateRoads = false
 	end
 	
 	-- build misc structure tables
-	local noiseMin = RandomMapGenerator.GenerationData.ThresholdLowFlatland
-	local noiseMax = RandomMapGenerator.GenerationData.ThresholdFlatland
+	local heightmin = waterheight --RMG.GenerationData.WaterBaseHeight
+	local heightmax = RMG.GenerationData.ThresholdMountain
 	
-	if RandomMapGenerator.GenerationData.ThresholdPlateau < 1.0 then
-		noiseMax = RandomMapGenerator.GenerationData.ThresholdPlateau
-	end
+	--if RMG.GenerationData.ThresholdPlateau < 1.0 then
+		--heightmax = RMG.GenerationData.ThresholdPlateau
+	--end
 	
-	RandomMapGenerator.StructureSets = {
+	-- update strcturesets
+	--RMG.StructureSets.ClayPit.Entities[1].Resource = contentClayPit
+	
+	RMG.StructureSets = {
 		ClayPit = {
 			Entities = {{Type = Entities.XD_ClayPit1, Resource = contentClayPit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 6, Name = "white"},},
-			Blocking = 12,
+			Blocking = 18,
 			TerrainHeights = {
 				Area = 18,
 				[-6]={[-6]=  -3,[-5]=  -14,[-4]=  -24,[-3]=  -32,[-2]=  -34,[-1]=  -33,[0]=  -35,[1]=  -40,[2]=  -43,[3]=  -34,[4]=  -21,[5]=  -9},
@@ -2092,14 +352,14 @@ function RandomMapGenerator.InitGenerationData()
 				[ 7]={[-6]=  -2,[-5]=   -2,[-4]=   -3,[-3]=   -5,[-2]=   -5,[-1]=   -8,[0]=   -9,[1]=  -12,[2]=   -6,[3]=   -4,[4]=   -3,[5]=  -1},
 			},
 			TerrainTextures = {
-				TextureList = RandomMapGenerator.TextureSets.NormalEarthDark,
+				TextureList = RMG.TextureSets.NormalEarthDark,
 				Area = 11,
 			},
 			Water = {}, -- empty Water table uses preset for resource pits -> lowers water around pit - see CreateStructure(...)
 		},
 		StonePit = {
 			Entities = {{Type = Entities.XD_StonePit1, Resource = contentStonePit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 5, Name = "white"},},
-			Blocking = 12,
+			Blocking = 18,
 			TerrainHeights = {
 				Area = 18,
 				[0] = {[0] = -89, [1] = -103,[-1] = -71,[-10] = 0,[10] = 480,[-11] = 0,[11] = 480,[-12] = 0,[12] = 480,[-13] = 0,[13] = 480,[-14] = 0,[14] = 480,[-15] = 0,[15] = 480,[-16] = 0,[16] = 480,[-17] = 0,[17] = 480,[-18] = 0,[18] = 480,[-19] = 0,[19] = 480,[2] = -112,[-2] = -54,[-20] = 0,[20] = 480,[3] = -126,[-3] = -45,[4] = -126,[-4] = -39,[5] = -110,[-5] = -17,[6] = 17,[-6] = -2,[-7] = 0,[7] = 400,[-8] = 0,[8] = 452,[-9] = 0,[9] = 480,},
@@ -2145,7 +405,7 @@ function RandomMapGenerator.InitGenerationData()
 				[9] = {[0] = 485,[-1] = 448,[1] = 485,[-10] = 20,[10] = 480,[-11] = 0,[11] = 480,[-12] = 0,[12] = 480,[-13] = 0,[13] = 480,[-14] = 0,[14] = 480,[-15] = 0,[15] = 480,[-16] = 0,[16] = 480,[-17] = 0,[17] = 480,[-18] = 0,[18] = 480,[-19] = 0,[19] = 480,[-2] = 429,[2] = 480,[-20] = 0,[20] = 480,[-3] = 378,[3] = 480,[-4] = 352,[4] = 480,[-5] = 311,[5] = 480,[-6] = 246,[6] = 480,[-7] = 170,[7] = 480,[-8] = 110,[8] = 480,[9] = 480,[-9] = 62,},
 			},
 			TerrainTextures = {
-				TextureList = RandomMapGenerator.TextureSets.NormalRocky,
+				TextureList = RMG.TextureSets.NormalRocky,
 				RelativX = 3,
 				RelativY = 4,
 				Area = {x1 = -8, y1 = -8, x2 = 12, y2 = 12},
@@ -2154,7 +414,7 @@ function RandomMapGenerator.InitGenerationData()
 		},
 		IronPit = {
 			Entities = {{Type = Entities.XD_IronPit1, Resource = contentIronPit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 5, Name = "white"},},
-			Blocking = 12,
+			Blocking = 16,
 			TerrainHeights = {
 				Area = 16,
 				[-4]={[-4]= 0,[-3]=   0,[-2]=   -5},
@@ -2168,14 +428,14 @@ function RandomMapGenerator.InitGenerationData()
 				[4]={[-4]= 0,[-3]=   0,[-2]=    0,[-1]=   -2,[0]=   -4},
 			},
 			TerrainTextures = {
-				TextureList = RandomMapGenerator.TextureSets.NormalMudDarkSmooth,
+				TextureList = RMG.TextureSets.NormalMudDarkSmooth,
 				Area = 10,
 			},
 			Water = {},
 		},
 		SulfurPit = {
 			Entities = {{Type = Entities.XD_SulfurPit1, Resource = contentSulfurPit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 5, Name = "white"},},
-			Blocking = 12,
+			Blocking = 16,
 			TerrainHeights = {
 				Area = 16,
 				[-3]={[-5]= 0,[-4]=  -2,[-3]=   -2,[-2]=   -2,[-1]=   -2},
@@ -2187,104 +447,109 @@ function RandomMapGenerator.InitGenerationData()
 				[3]={[-5]= 0,[-4]=  -4,[-3]=  -40,[-2]=  -85,[-1]= -109,[0]= -107,[1]=  -64},
 			},
 			TerrainTextures = {
-				TextureList = RandomMapGenerator.TextureSets.NorthSand,
+				TextureList = RMG.TextureSets.NorthSand,
 				Area = 9,
 			},
 			Water = {},
 		},
 		ClayPile = {
 			Entities = {{Type = Entities.XD_Clay1, Resource = contentClayPile,},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		StonePile = {
 			Entities = {{Type = Entities.XD_Stone1, Resource = contentStonePile,},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		IronPile = {
 			Entities = {{Type = Entities.XD_Iron1, Resource = contentIronPile,},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		SulfurPile = {
 			Entities = {{Type = Entities.XD_Sulfur1, Resource = contentSulfurPile,},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		WoodPileExplored = {
 			Entities = {{Type = Entities.XD_ScriptEntity, Name = "woodpile",}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 2, Name = "white"},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		ClayPileExplored = {
 			Entities = {{Type = Entities.XD_Clay1, Resource = contentClayPile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		StonePileExplored = {
 			Entities = {{Type = Entities.XD_Stone1, Resource = contentStonePile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		IronPileExplored = {
 			Entities = {{Type = Entities.XD_Iron1, Resource = contentIronPile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		SulfurPileExplored = {
 			Entities = {{Type = Entities.XD_Sulfur1, Resource = contentSulfurPile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
-			Blocking = 4,
+			Blocking = 5,
 		},
 		Bridge1 = { -- x axis
-			Blocking = 18,
+			Blocking = 20,
 			Entities = {
 				{Type = Entities.XD_Bridge1,},
 				{Type = Entities.PB_Bridge1,},
 			},
 			TerrainHeights = {
-				Area = {x = 24, y = 10},
+				Area = {X = 30, Y = 15},
 				LerpDist = 5,
-				BaseHeight = RandomMapGenerator.GenerationData.TerrainBaseHeight,
-				[-15] = {[10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, },
-				[-14] = {[10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, },
-				[-13] = {[10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, },
-				[-12] = {[10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, },
-				[-11] = {[10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, },
-				[-10] = {[10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, },
-				[-9] = {[10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, },
-				[-8] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[-7] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[-6] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[-5] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[-4] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[-3] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[-2] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[-1] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[0] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[1] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[2] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[3] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[4] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[5] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[6] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[7] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[8] = {[10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, },
-				[9] = {[10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, },
-				[10] = {[10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, },
-				[11] = {[10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, },
-				[12] = {[10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, },
-				[13] = {[10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, },
-				[14] = {[10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, },
-				[15] = {[10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, },
+				BaseHeight = RMG.GenerationData.TerrainBaseHeight,
+				[-15] = {[15] = -50, [14] = -50, [13] = -50, [12] = -50, [11] = -50, [10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, [-11] = -50, [-12] = -50, [-13] = -50, [-14] = -50, [-15] = -50, },
+				[-14] = {[15] = -125, [14] = -125, [13] = -125, [12] = -125, [11] = -125, [10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, [-11] = -125, [-12] = -125, [-13] = -125, [-14] = -125, [-15] = -125, },
+				[-13] = {[15] = -225, [14] = -225, [13] = -225, [12] = -225, [11] = -225, [10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, [-11] = -225, [-12] = -225, [-13] = -225, [-14] = -225, [-15] = -225, },
+				[-12] = {[15] = -331, [14] = -331, [13] = -331, [12] = -331, [11] = -331, [10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, [-11] = -331, [-12] = -331, [-13] = -331, [-14] = -331, [-15] = -331, },
+				[-11] = {[15] = -438, [14] = -438, [13] = -438, [12] = -438, [11] = -438, [10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, [-11] = -438, [-12] = -438, [-13] = -438, [-14] = -438, [-15] = -438, },
+				[-10] = {[15] = -538, [14] = -538, [13] = -538, [12] = -538, [11] = -538, [10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, [-11] = -538, [-12] = -538, [-13] = -538, [-14] = -538, [-15] = -538, },
+				[-9] = {[15] = -613, [14] = -613, [13] = -613, [12] = -613, [11] = -613, [10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, [-11] = -613, [-12] = -613, [-13] = -613, [-14] = -613, [-15] = -613, },
+				[-8] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[-7] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[-6] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[-5] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[-4] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[-3] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[-2] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[-1] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[0] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[1] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[2] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[3] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[4] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[5] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[6] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[7] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[8] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
+				[9] = {[15] = -613, [14] = -613, [13] = -613, [12] = -613, [11] = -613, [10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, [-11] = -613, [-12] = -613, [-13] = -613, [-14] = -613, [-15] = -613, },
+				[10] = {[15] = -538, [14] = -538, [13] = -538, [12] = -538, [11] = -538, [10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, [-11] = -538, [-12] = -538, [-13] = -538, [-14] = -538, [-15] = -538, },
+				[11] = {[15] = -438, [14] = -438, [13] = -438, [12] = -438, [11] = -438, [10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, [-11] = -438, [-12] = -438, [-13] = -438, [-14] = -438, [-15] = -438, },
+				[12] = {[15] = -331, [14] = -331, [13] = -331, [12] = -331, [11] = -331, [10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, [-11] = -331, [-12] = -331, [-13] = -331, [-14] = -331, [-15] = -331, },
+				[13] = {[15] = -225, [14] = -225, [13] = -225, [12] = -225, [11] = -225, [10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, [-11] = -225, [-12] = -225, [-13] = -225, [-14] = -225, [-15] = -225, },
+				[14] = {[15] = -125, [14] = -125, [13] = -125, [12] = -125, [11] = -125, [10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, [-11] = -125, [-12] = -125, [-13] = -125, [-14] = -125, [-15] = -125, },
+				[15] = {[15] = -50, [14] = -50, [13] = -50, [12] = -50, [11] = -50, [10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, [-11] = -50, [-12] = -50, [-13] = -50, [-14] = -50, [-15] = -50, },
 			},
 			TerrainTextures = {
-				Area = {x = 10, y = 6,},
-				TextureList = "Lake",
+				Area = {X = 16, Y = 6,},
+				TextureList = "Coast",
 			},
 		},
 		Bridge2 = { -- y axis
-			Blocking = 18,
+			Blocking = 20,
 			Entities = {
 				{Type = Entities.XD_Bridge2,},
 				{Type = Entities.PB_Bridge2,},
 			},
 			TerrainHeights = {
-				Area = {x = 10, y = 24},
+				Area = {X = 15, Y = 30},
 				LerpDist = 5,
-				BaseHeight = RandomMapGenerator.GenerationData.TerrainBaseHeight,
+				BaseHeight = RMG.GenerationData.TerrainBaseHeight,
+				[-15] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[-14] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[-13] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[-12] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[-11] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
 				[-10] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
 				[-9] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
 				[-8] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
@@ -2306,22 +571,27 @@ function RandomMapGenerator.InitGenerationData()
 				[8] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
 				[9] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
 				[10] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[11] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[12] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[13] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[14] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				[15] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
 			},
 			TerrainTextures = {
-				Area = {x = 6, y = 10,},
-				TextureList = "Lake",
+				Area = {X = 6, Y = 16,},
+				TextureList = "Coast",
 			},
 		},
 		NeutralVillageCenter = {
-			Blocking = 12,
+			Blocking = 18,
 			Entities = {
 				{Type = Entities.XD_VillageCenter, Player = 0,}, {Type = Entities.XD_ScriptEntity, Explore = explorevc * 6, Name = "green"},
 			},
 			TerrainHeights = {
-				Area = {x = 18, y = 18,},
+				Area = {X = 18, Y = 18,},
 			},
 			TerrainTextures = {
-				Area = {x = 8, y = 8,},
+				Area = {X = 8, Y = 8,},
 				TextureList = "Road",
 			},
 		},
@@ -2329,67 +599,424 @@ function RandomMapGenerator.InitGenerationData()
 			PileAtPit = {
 				AreaMin = 16,
 				AreaMax = 32,
-				NoiseMin = noiseMin,
-				NoiseMax = noiseMax,
+				HeightMin = heightmin,
+				HeightMax = heightmax,
 			},
 			PileAtPile = {
 				AreaMin = 4,
-				AreaMax = 8,
-				NoiseMin = noiseMin,
-				NoiseMax = noiseMax,
+				AreaMax = 12,
+				HeightMin = heightmin,
+				HeightMax = heightmax,
 			},
 		},
 	}
 	
-	RandomMapGenerator.GenerationData.PlayerDistanceToMiddle = 0.667 -- in percent
-	RandomMapGenerator.GenerationData.PlayerClearance = 35 -- distance to team border
-	
-	if nplayers > 8 then
-		RandomMapGenerator.GenerationData.PlayerDistanceToMiddle = 0.75 -- in percent
-		RandomMapGenerator.GenerationData.PlayerClearance = 15 -- distance to team border
-	end
-	
-	if RandomMapGenerator.GenerationData.RandomPlayerPosition then
-		RandomMapGenerator.GenerationData.PlayerClearance = 0
-	end
+	-- TODO: depend on number of players and teams
+	RMG.GenerationData.PlayerDistanceToMiddle = 0.9 -- in percent
 	
 	-- build player structure tables
-	RandomMapGenerator.StructureSets.NeutralStruct = RandomMapGenerator.GetNeutralStruct()
-	RandomMapGenerator.FillNeutralStruct()
+	RMG.StructureSets.NeutralStruct = RMG.GetNeutralStruct()
+	RMG.FillNeutralStruct()
 	
-	RandomMapGenerator.StructureSets.PlayerStruct = RandomMapGenerator.GetPlayerStruct()
-	RandomMapGenerator.FillPlayerStruct()
+	RMG.StructureSets.PlayerStruct = RMG.GetPlayerStruct()
+	RMG.FillPlayerStruct()
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.GetNeutralStruct()
+function RMG.GetComposition()
+	
+	local nplayers = RMG.GenerationData.NumberOfPlayers
+	local nteams = RMG.GenerationData.NumberOfTeams
+	
+	-- define special compositions for 12+ players
+	local distance = math.min( ( nteams + 13 ) / 30 * Logic.WorldGetSize() / 200, 0.6 * Logic.WorldGetSize() / 200 )
+	local compositions = {
+		--[[[ 11 ] = {
+			[ 2 ] = {
+				NumberOfPlayers = 10, NumberOfTeams = 2, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 2, 3, 4, 5, 7, 8, 9, 10, 11 }, },
+				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, },
+				[  4 ] = { Slize =  4, AxisMirrorFlag = true, },
+				[  5 ] = { Slize =  5, },
+				[  6 ] = { Slize =  3, Distance = distance, Mirror = {}, },
+				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  8, },
+				[  9 ] = { Slize =  9, AxisMirrorFlag = true, },
+				[ 10 ] = { Slize = 10, },
+				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
+				TeamSlizes = { 0, 6 },
+			},
+		},]]
+		[ 12 ] = {
+			[ 2 ] = {
+				NumberOfPlayers = 10, NumberOfTeams = 2, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 2, 3, 4, 5, 7, 8, 9, 10, 11 }, },
+				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, },
+				[  4 ] = { Slize =  4, AxisMirrorFlag = true, },
+				[  5 ] = { Slize =  5, },
+				[  6 ] = { Slize =  3, Distance = distance, Mirror = { 12 }, },
+				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  8, },
+				[  9 ] = { Slize =  9, AxisMirrorFlag = true, },
+				[ 10 ] = { Slize = 10, },
+				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
+				[ 12 ] = { Slize =  9, AxisMirrorFlag = true, Distance = distance, },
+				TeamSlizes = { 0, 6 },
+			},
+			[  3 ] = {
+				NumberOfPlayers = 9, NumberOfTeams = 3, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 2, 3, 5, 6, 7, 9, 10, 11 }, },
+				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, },
+				[  4 ] = { Slize =  2, Distance = distance, Mirror = { 8, 12 }, },
+				[  5 ] = { Slize =  5, AxisMirrorFlag = true, },
+				[  6 ] = { Slize =  6, },
+				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  6, AxisMirrorFlag = true, Distance = distance, },
+				[  9 ] = { Slize =  9, },
+				[ 10 ] = { Slize = 10, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 11, },
+				[ 12 ] = { Slize = 10, Distance = distance, },
+				TeamSlizes = { 0, 4, 8 },
+			},
+			[  4 ] = {
+				NumberOfPlayers = 8, NumberOfTeams = 4, EqualTeams = true,
+				[  1 ] = { Slize =    1, Mirror = { 2, 4, 5, 7, 8, 10, 11 }, },
+				[  2 ] = { Slize =    2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  1.5, Distance = distance, Mirror = { 6, 9, 12 }, },
+				[  4 ] = { Slize =    4, },
+				[  5 ] = { Slize =    5, AxisMirrorFlag = true, },
+				[  6 ] = { Slize =  4.5, Distance = distance, },
+				[  7 ] = { Slize =    7, },
+				[  8 ] = { Slize =    8, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  7.5, Distance = distance, },
+				[ 10 ] = { Slize =   10, },
+				[ 11 ] = { Slize =   11, AxisMirrorFlag = true, },
+				[ 12 ] = { Slize = 10.5, Distance = distance, },
+				TeamSlizes = { 0, 3, 6, 9 },
+			},
+			[  6 ] = {
+				NumberOfPlayers = 6, NumberOfTeams = 6, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 3, 5, 7, 9, 11 }, },
+				[  2 ] = { Slize =  1, Distance = distance, Mirror = { 4, 6, 8, 10, 12 }, },
+				[  3 ] = { Slize =  3, AxisMirrorFlag = true, },
+				[  4 ] = { Slize =  3, AxisMirrorFlag = true, Distance = distance, },
+				[  5 ] = { Slize =  5, },
+				[  6 ] = { Slize =  5, Distance = distance, },
+				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
+				[  9 ] = { Slize =  9, },
+				[ 10 ] = { Slize =  9, Distance = distance, },
+				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
+				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
+				TeamSlizes = { 0, 2, 4, 6, 8, 10 },
+			},
+			[ 12 ] = {
+				NumberOfPlayers = 12, NumberOfTeams = 0, EqualTeams = true,
+				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
+				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, Team = 0, },
+				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
+				[  5 ] = { Slize =  5, Team = 0, },
+				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
+				[  7 ] = { Slize =  7, Team = 0, },
+				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  9, Team = 0, },
+				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 11, Team = 0, },
+				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
+				TeamSlizes = {},
+			},
+		},
+		[ 13 ] = {
+			[ 13 ] = {
+				NumberOfPlayers = 10, NumberOfTeams = 2, EqualTeams = true,
+				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
+				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, Team = 0, },
+				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
+				[  5 ] = { Slize =  5, Team = 0, },
+				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
+				[  7 ] = { Slize =  7, Team = 0, },
+				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  9, Team = 0, },
+				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 11, Team = 0, },
+				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
+				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.0, Mirror = {}, },
+				TeamSlizes = {},
+			},
+		},
+		[ 14 ] = {
+			[  7 ] = {
+				NumberOfPlayers = 7, NumberOfTeams = 7, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 3, 5, 7, 9, 11, 13 }, },
+				[  2 ] = { Slize =  1, Distance = distance, Mirror = { 4, 6, 8, 10, 12, 14 }, },
+				[  3 ] = { Slize =  3, AxisMirrorFlag = true, },
+				[  4 ] = { Slize =  3, AxisMirrorFlag = true, Distance = distance, },
+				[  5 ] = { Slize =  5, },
+				[  6 ] = { Slize =  5, Distance = distance, },
+				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
+				[  9 ] = { Slize =  9, },
+				[ 10 ] = { Slize =  9, Distance = distance, },
+				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
+				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
+				[ 13 ] = { Slize = 13, },
+				[ 14 ] = { Slize = 13, Distance = distance, },
+				TeamSlizes = { 0, 2, 4, 6, 8, 10, 12 },
+			},
+			[ 14 ] = {
+				NumberOfPlayers = 14, NumberOfTeams = 0, EqualTeams = true,
+				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
+				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, Team = 0, },
+				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
+				[  5 ] = { Slize =  5, Team = 0, },
+				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
+				[  7 ] = { Slize =  7, Team = 0, },
+				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  9, Team = 0, },
+				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 11, Team = 0, },
+				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
+				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14 }, },
+				[ 14 ] = { Slize =  6, Team = 0, Distance = 0.3, },
+				TeamSlizes = {},
+			},
+		},
+		[ 15 ] = {
+			[  3 ] = {
+				NumberOfPlayers = 9, NumberOfTeams = 3, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 3, 4, 6, 8, 9, 11, 13, 14 }, },
+				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, },
+				[  4 ] = { Slize =  1, Distance = distance, Mirror = { 2, 5, 7, 10, 12, 15 }, },
+				[  5 ] = { Slize =  3, Distance = distance, },
+				[  6 ] = { Slize =  5, AxisMirrorFlag = true, },
+				[  7 ] = { Slize =  6, },
+				[  8 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  5, AxisMirrorFlag = true, Distance = distance, },
+				[ 10 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
+				[ 11 ] = { Slize =  9, },
+				[ 12 ] = { Slize = 10, AxisMirrorFlag = true, },
+				[ 13 ] = { Slize = 11, },
+				[ 14 ] = { Slize =  9, Distance = distance, },
+				[ 15 ] = { Slize = 11, Distance = distance, },
+				TeamSlizes = { 0, 4, 8 },
+			},
+			[  5 ] = {
+				NumberOfPlayers = 10, NumberOfTeams = 5, EqualTeams = true,
+				[  1 ] = { Slize =    1, Mirror = { 2, 4, 5, 7, 8, 10, 11, 13, 14 }, },
+				[  2 ] = { Slize =    2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  1.5, Distance = distance, Mirror = { 6, 9, 12, 15 }, },
+				[  4 ] = { Slize =    4, },
+				[  5 ] = { Slize =    5, AxisMirrorFlag = true, },
+				[  6 ] = { Slize =  4.5, Distance = distance, },
+				[  7 ] = { Slize =    7, },
+				[  8 ] = { Slize =    8, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  7.5, Distance = distance, },
+				[ 10 ] = { Slize =   10, },
+				[ 11 ] = { Slize =   11, AxisMirrorFlag = true, },
+				[ 12 ] = { Slize = 10.5, Distance = distance, },
+				[ 13 ] = { Slize =   13, },
+				[ 14 ] = { Slize =   14, AxisMirrorFlag = true, },
+				[ 15 ] = { Slize = 13.5, Distance = distance, },
+				TeamSlizes = { 0, 3, 6, 9, 12 },
+			},
+			[ 15 ] = {
+				NumberOfPlayers = 15, NumberOfTeams = 0, EqualTeams = true,
+				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
+				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, Team = 0, },
+				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
+				[  5 ] = { Slize =  5, Team = 0, },
+				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
+				[  7 ] = { Slize =  7, Team = 0, },
+				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  9, Team = 0, },
+				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 11, Team = 0, },
+				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
+				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14, 15 }, },
+				[ 14 ] = { Slize =  5, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
+				[ 15 ] = { Slize =  7, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
+				TeamSlizes = {},
+			},
+		},
+		[ 16 ] = {
+			[  2 ] = {
+				NumberOfPlayers = 12, NumberOfTeams = 2, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15 }, },
+				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, },
+				[  4 ] = { Slize =  2, Distance = distance, Mirror = { 8, 12, 16 }, },
+				[  5 ] = { Slize =  4, AxisMirrorFlag = true, },
+				[  6 ] = { Slize =  5, },
+				[  7 ] = { Slize =  6, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  5, AxisMirrorFlag = true, Distance = distance, },
+				[  9 ] = { Slize =  8, },
+				[ 10 ] = { Slize =  9, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 10, },
+				[ 12 ] = { Slize =  9, Distance = distance, },
+				[ 13 ] = { Slize = 11, AxisMirrorFlag = true, },
+				[ 14 ] = { Slize = 12, },
+				[ 15 ] = { Slize = 13, AxisMirrorFlag = true, },
+				[ 16 ] = { Slize = 12, AxisMirrorFlag = true, Distance = distance, },
+				TeamSlizes = { 0, 7 },
+			},
+			[  4 ] = {
+				NumberOfPlayers = 12, NumberOfTeams = 4, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15 }, },
+				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, },
+				[  4 ] = { Slize =  2, Distance = distance, Mirror = { 8, 12, 16 }, },
+				[  5 ] = { Slize =  5, AxisMirrorFlag = true, },
+				[  6 ] = { Slize =  6, },
+				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  6, AxisMirrorFlag = true, Distance = distance, },
+				[  9 ] = { Slize =  9, },
+				[ 10 ] = { Slize = 10, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 11, },
+				[ 12 ] = { Slize = 10, Distance = distance, },
+				[ 13 ] = { Slize = 13, AxisMirrorFlag = true, },
+				[ 14 ] = { Slize = 14, },
+				[ 15 ] = { Slize = 15, AxisMirrorFlag = true, },
+				[ 16 ] = { Slize = 14, AxisMirrorFlag = true, Distance = distance, },
+				TeamSlizes = { 0, 4, 8, 12 },
+			},
+			[  8 ] = {
+				NumberOfPlayers = 8, NumberOfTeams = 8, EqualTeams = true,
+				[  1 ] = { Slize =  1, Mirror = { 3, 5, 7, 9, 11, 13, 15 }, },
+				[  2 ] = { Slize =  1, Distance = distance, Mirror = { 4, 6, 8, 10, 12, 14, 16 }, },
+				[  3 ] = { Slize =  3, AxisMirrorFlag = true, },
+				[  4 ] = { Slize =  3, AxisMirrorFlag = true, Distance = distance, },
+				[  5 ] = { Slize =  5, },
+				[  6 ] = { Slize =  5, Distance = distance, },
+				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
+				[  8 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
+				[  9 ] = { Slize =  9, },
+				[ 10 ] = { Slize =  9, Distance = distance, },
+				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
+				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
+				[ 13 ] = { Slize = 13, },
+				[ 14 ] = { Slize = 13, Distance = distance, },
+				[ 15 ] = { Slize = 15, AxisMirrorFlag = true, },
+				[ 16 ] = { Slize = 15, AxisMirrorFlag = true, Distance = distance, },
+				TeamSlizes = { 0, 2, 4, 6, 8, 10, 12, 14 },
+			},
+			[ 16 ] = {
+				NumberOfPlayers = 16, NumberOfTeams = 0, EqualTeams = true,
+				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
+				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
+				[  3 ] = { Slize =  3, Team = 0, },
+				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
+				[  5 ] = { Slize =  5, Team = 0, },
+				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
+				[  7 ] = { Slize =  7, Team = 0, },
+				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
+				[  9 ] = { Slize =  9, Team = 0, },
+				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
+				[ 11 ] = { Slize = 11, Team = 0, },
+				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
+				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14, 15, 16 }, },
+				[ 14 ] = { Slize =  3, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
+				[ 15 ] = { Slize =  6, Team = 0, Distance = 0.3, },
+				[ 16 ] = { Slize =  9, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
+				TeamSlizes = {},
+			},
+		},
+	}
+	
+	-- no team borders in ffa
+	nteams = nteams < nplayers and nteams or 0
+	
+	-- return special composition if it fits the setup
+	if compositions[ nplayers ] then
+
+		local composition = compositions[ nplayers ][ nteams ]
+
+		if composition then
+			
+			-- set teams, but not for ffa
+			if nteams > 0 then
+				for player = 1, nplayers do
+					composition[ player ].Team = RMG.GenerationData.Players[ player ].Team
+				end
+			end
+			
+			return compositions[ nplayers ][ nteams ]
+		end
+	end
+	
+	local currentteam = 0
+	local slize = 0
+	--local slizes = {}
+	local composition = { NumberOfPlayers = nplayers, NumberOfTeams = nteams, TeamSlizes = {}, }
+	
+	--local mirroroffset = RMG.GenerationData.MirrorOffset - RMG.GenerationData.MirrorRadian / 2
+	
+	-- create default generic composition
+	for player = 1, nplayers do
+		
+		-- teamborder gets it own slize
+		if nteams > 0 and RMG.GenerationData.Players[ player ].Team > currentteam then
+			
+			currentteam = RMG.GenerationData.Players[ player ].Team
+			table.insert( composition.TeamSlizes, slize )
+			--slizes[ slize ] = { T = currentteam }
+			
+			slize = slize + 1
+		end
+		
+		composition[ player ] = { Slize = slize, Team = currentteam, AxisMirrorFlag = math.mod( player, 2 ) == 0, }
+		
+		-- setup mirroring
+		if RMG.GenerationData.MirrorMap then
+			if player == 1 then
+				composition[ player ].Mirror = {}
+			else
+				table.insert( composition[ 1 ].Mirror, player )
+			end
+		end
+		
+		--slizes[ slize ] = { P = player }
+		slize = slize + 1
+	end
+	
+	return composition
+end
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function RMG.GetNeutralStruct()
 	return {
 		Childs = {
 			--[[{
 				Placement = {
 					RelativY = 20,
 				},
-				Data = RandomMapGenerator.StructureSets.ClayPit,
+				Data = RMG.StructureSets.ClayPit,
 			},
 			{
 				Placement = {
 					RelativY = -20,
 				},
-				Data = RandomMapGenerator.StructureSets.StonePit,
+				Data = RMG.StructureSets.StonePit,
 			},]]
 		},
 	}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.FillNeutralStruct()
+function RMG.FillNeutralStruct()
 	-- for modding
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetPlayerStruct()
+function RMG.GetPlayerStruct()
 	return {
 		Childs = {
 			{
 				Data = {
-					Blocking = 12,
+					Blocking = 18,
 					Entities = {
 						{Type = Entities.PB_Headquarters1, SkipDummy = true},
 						--{Type = Entities.PU_Serf, RelativX = -900, RelativY = -300, Rotation = 180,},
@@ -2398,10 +1025,10 @@ function RandomMapGenerator.GetPlayerStruct()
 						--{Type = Entities.PU_Serf, RelativX = -900, RelativY =  300, Rotation = 180,},
 					},
 					TerrainHeights = {
-					Area = {x = 18, y = 18,},
+					Area = {X = 18, Y = 18,},
 					},
 					TerrainTextures = {
-						Area = {x = 8, y = 8,},
+						Area = {X = 8, Y = 8,},
 						TextureList = "Road",
 					},
 				},
@@ -2410,7 +1037,7 @@ function RandomMapGenerator.GetPlayerStruct()
 	}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.FillPlayerStruct()
+function RMG.FillPlayerStruct()
 	
 	local amountClayPit		= EMS.RD.Rules.RMG_AmountClayPit:GetValue()
 	local amountClayPile	= EMS.RD.Rules.RMG_AmountClayPile:GetValue()
@@ -2423,56 +1050,53 @@ function RandomMapGenerator.FillPlayerStruct()
 	local amountWoodPile	= EMS.RD.Rules.RMG_AmountWoodPile:GetValue()
 	local amountVillageCenter = EMS.RD.Rules.RMG_AmountVC:GetValue()
 	
-	local noiseMin = RandomMapGenerator.GenerationData.ThresholdCoast
-	local noiseMax = RandomMapGenerator.GenerationData.ThresholdHill
+	-- triangle calculation for distance between players of same team
+	local maphalf = Logic.WorldGetSize() / 200
+	local b = maphalf * RMG.GenerationData.PlayerDistanceToMiddle
+	local alpha = RMG.GenerationData.MirrorRadian
+	local beta = ( math.rad( 180 ) - alpha ) / 2
+	local a = b / math.sin( beta ) * math.sin( alpha )
 	
-	local noiseIron = RandomMapGenerator.GenerationData.ThresholdHill
-	local noiseSulfur = RandomMapGenerator.GenerationData.ThresholdCoast
-
-	if RandomMapGenerator.GenerationData.ThresholdPlateau < RandomMapGenerator.GenerationData.ThresholdPike then
-		noiseMax = RandomMapGenerator.GenerationData.ThresholdPike
-		noiseIron = 1
-	elseif amountIronPit <= 0 then
-		noiseIron = RandomMapGenerator.GenerationData.ThresholdForest
-	end
+	local resoff = math.max( 5, RMG.GenerationData.NumberOfPlayers / 2 )
+	local maxdist = math.min( a / 2 - 10 - resoff, 120 )
+	-- maxdist at 12+ players is 89.44 so basicly 90 ( a good value in the old generator )
+	-- - 10 (blocking) - 5 (resoff) = 75
 	
-	if amountSulfurPit <= 0 then
-		noiseSulfur = RandomMapGenerator.GenerationData.ThresholdLowForest	
-	end
-	
-	local resmax = 90 -- highest distance
-	local resfac = ((Logic.WorldGetSize() / 100) * RandomMapGenerator.GenerationData.PlayerDistanceToMiddle * math.cos(math.rad((180 - 360 / RandomMapGenerator.GenerationData.NumberOfPlayers) / 2)) / 2 - RandomMapGenerator.GenerationData.PlayerClearance) / resmax -- involves triangle opration for two equal sides, the rest is 
-	local resoff = 5
-	local resdist = {}
+	local heightmin = -100
+	local heightmax = 100
 	
 	local currentindex = 1
 	
 	-- village
-	currentindex = RandomMapGenerator.AddResourcePitToPlayerStruct( amountVillageCenter, "NeutralVillageCenter", 0, "", 30, 90, resfac, resoff, RandomMapGenerator.GenerationData.ThresholdRoad, noiseMin, noiseMax, currentindex )
-	RandomMapGenerator.StructureSets.PlayerStruct.Childs[2].Childs = { { Data = { Entities = { { Type = Entities.PB_VillageCenter1, SkipDummy = true, } } } } }
+	currentindex = RMG.AddResourcePitToPlayerStruct( 1, "NeutralVillageCenter", 0, "", maxdist - 25, maxdist - 25, resoff, RMG.GenerationData.TerrainBaseHeight, heightmin, heightmax, currentindex )
+	RMG.StructureSets.PlayerStruct.Childs[2].Childs = { { Data = { Entities = { { Type = Entities.PB_VillageCenter1, SkipDummy = true, } } } } }
+	currentindex = RMG.AddResourcePitToPlayerStruct( amountVillageCenter - 1, "NeutralVillageCenter", 0, "", maxdist - 5, maxdist - 5, resoff, RMG.GenerationData.TerrainBaseHeight, heightmin, heightmax, currentindex )
 	
 	local woodpileindexbuffer, possiblewoodpileindices = {}, {}
 	
+	heightmin = -200
+	heightmax = 200
+	
 	-- clay
-	currentindex, woodpileindexbuffer = RandomMapGenerator.AddResourcePitToPlayerStruct( amountClayPit, "ClayPit", amountClayPile, "ClayPile", 50, 70, resfac, resoff, RandomMapGenerator.GenerationData.ThresholdCoast, noiseMin, noiseMax, currentindex )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountClayPit, "ClayPit", amountClayPile, "ClayPile", maxdist - 20, maxdist - 20, resoff, RMG.GenerationData.ThresholdCoast, 0, heightmax, currentindex )
 	for _,v in ipairs( woodpileindexbuffer ) do
 		table.insert( possiblewoodpileindices, v )
 	end
 	
 	-- stone
-	currentindex, woodpileindexbuffer = RandomMapGenerator.AddResourcePitToPlayerStruct( amountStonePit, "StonePit", amountStonePile, "StonePile", 60, 80, resfac, resoff, RandomMapGenerator.GenerationData.ThresholdHill, noiseMin, noiseMax, currentindex )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountStonePit, "StonePit", amountStonePile, "StonePile", maxdist - 15, maxdist - 15, resoff, RMG.GenerationData.ThresholdHill, heightmin, 0, currentindex )
 	for _,v in ipairs( woodpileindexbuffer ) do
 		table.insert( possiblewoodpileindices, v )
 	end
 	
 	-- iron
-	currentindex, woodpileindexbuffer = RandomMapGenerator.AddResourcePitToPlayerStruct( amountIronPit, "IronPit", amountIronPile, "IronPile", 70, 90, resfac, resoff, noiseIron, noiseMin, noiseMax, currentindex )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountIronPit, "IronPit", amountIronPile, "IronPile", maxdist - 5, maxdist - 5, resoff, RMG.GenerationData.ThresholdHill, 0, heightmax, currentindex )
 	for _,v in ipairs( woodpileindexbuffer ) do
 		table.insert( possiblewoodpileindices, v )
 	end
 	
 	-- sulfur
-	currentindex, woodpileindexbuffer = RandomMapGenerator.AddResourcePitToPlayerStruct( amountSulfurPit, "SulfurPit", amountSulfurPile, "SulfurPile", 70, 90, resfac, resoff, noiseSulfur, noiseMin, noiseMax, currentindex )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountSulfurPit, "SulfurPit", amountSulfurPile, "SulfurPile", maxdist - 0, maxdist, resoff, RMG.GenerationData.ThresholdCoast, heightmin, 0, currentindex )
 	for _,v in ipairs( woodpileindexbuffer ) do
 		table.insert( possiblewoodpileindices, v )
 	end
@@ -2483,7 +1107,7 @@ function RandomMapGenerator.FillPlayerStruct()
 	if table.getn( possiblewoodpileindices ) == 0 then
 		for i = 1, amountWoodPile do
 			
-			table.insert( RandomMapGenerator.StructureSets.PlayerStruct.Childs, { Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets.WoodPileExplored, } )
+			table.insert( RMG.StructureSets.PlayerStruct.Childs, { Placement = RMG.StructureSets.Placement.PileAtPit, Data = RMG.StructureSets.WoodPileExplored, } )
 		end
 	else
 		for i = 1, amountWoodPile do
@@ -2493,12 +1117,12 @@ function RandomMapGenerator.FillPlayerStruct()
 				currentindex = 1
 			end
 			
-			table.insert( RandomMapGenerator.StructureSets.PlayerStruct.Childs[ possiblewoodpileindices[ currentindex ] ].Childs[1].Childs, { Placement = RandomMapGenerator.StructureSets.Placement.PileAtPile, Data = RandomMapGenerator.StructureSets.WoodPileExplored, } )
+			table.insert( RMG.StructureSets.PlayerStruct.Childs[ possiblewoodpileindices[ currentindex ] ].Childs[1].Childs, { Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets.WoodPileExplored, } )
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AddResourcePitToPlayerStruct( _PitAmount, _PitType, _PileAmount, _PileType, _DistMin, _DistMax, _ResFac, _ResOff, _Noise, _NoiseMin, _NoiseMax, _Index )
+function RMG.AddResourcePitToPlayerStruct( _PitAmount, _PitType, _PileAmount, _PileType, _DistMin, _DistMax, _ResOff, _Noise, _NoiseMin, _NoiseMax, _Index )
 	
 	local possiblewoodpileindices = {}
 	
@@ -2509,33 +1133,34 @@ function RandomMapGenerator.AddResourcePitToPlayerStruct( _PitAmount, _PitType, 
 		
 		for i = 1, _PitAmount do
 		
-			local dist = math.random( _DistMin * _ResFac, _DistMax * _ResFac )
+			local dist = math.random( _DistMin, _DistMax )
+			local noise = math.random ( _NoiseMin, _NoiseMax )
 			local child = {
 				Placement = {
 					AreaMin = dist - _ResOff,
 					AreaMax = dist + _ResOff,
-					Noise = _Noise,
-					NoiseMin = _NoiseMin,
-					NoiseMax = _NoiseMax,
+					Height = _Noise + noise,
+					--HeightMin = _NoiseMin,
+					--HeightMax = _NoiseMax,
 					Grid = 4,
 				},
-				Data = RandomMapGenerator.StructureSets[ _PitType ],
+				Data = RMG.StructureSets[ _PitType ],
 				Childs = {},
 			}
 			local n = 1
-			if i <= pileamountleft then
-				n = 0
-			end
+			--if i <= pileamountleft then
+				--n = 0
+			--end
 			for j = n, pileamount do
 				if j == 1 then
-					table.insert( child.Childs, { Placement = RandomMapGenerator.StructureSets.Placement.PileAtPit, Data = RandomMapGenerator.StructureSets[ _PileType ], Childs = {}, } )
+					table.insert( child.Childs, { Placement = RMG.StructureSets.Placement.PileAtPit, Data = RMG.StructureSets[ _PileType ], Childs = {}, } )
 					table.insert( possiblewoodpileindices, _Index + i )
 				else
-					table.insert( child.Childs[1].Childs, { Placement = RandomMapGenerator.StructureSets.Placement.PileAtPile, Data = RandomMapGenerator.StructureSets[ _PileType ], } )
+					table.insert( child.Childs[ 1 ].Childs, { Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets[ _PileType ], } )
 				end
 			end
 
-			table.insert(RandomMapGenerator.StructureSets.PlayerStruct.Childs, child)
+			table.insert( RMG.StructureSets.PlayerStruct.Childs, child )
 		end
 		
 		_Index = _Index + _PitAmount
@@ -2545,22 +1170,22 @@ function RandomMapGenerator.AddResourcePitToPlayerStruct( _PitAmount, _PitType, 
 		for i = 1, _PileAmount do
 			if i == 1 then
 				
-				local dist = math.random( _DistMin * _ResFac, _DistMax * _ResFac )
+				local dist = math.random( _DistMin, _DistMax )
 				local child = {
 					Placement = {
 						AreaMin = dist - _ResOff,
 						AreaMax = dist + _ResOff,
-						Noise = _Noise,
-						NoiseMin = _NoiseMin,
-						NoiseMax = _NoiseMax,
+						Height = _Noise + noise,
+						--HeightMin = _NoiseMin,
+						--HeightMax = _NoiseMax,
 					},
-					Data = RandomMapGenerator.StructureSets[ _PileType .. "Explored" ],
+					Data = RMG.StructureSets[ _PileType .. "Explored" ],
 					Childs = {},
 				}
-				table.insert( RandomMapGenerator.StructureSets.PlayerStruct.Childs, child )
-				mainpileindex = table.getn( RandomMapGenerator.StructureSets.PlayerStruct.Childs )
+				table.insert( RMG.StructureSets.PlayerStruct.Childs, child )
+				mainpileindex = table.getn( RMG.StructureSets.PlayerStruct.Childs )
 			else
-				table.insert( RandomMapGenerator.StructureSets.PlayerStruct.Childs[ mainpileindex ].Childs, { Placement = RandomMapGenerator.StructureSets.Placement.PileAtPile, Data = RandomMapGenerator.StructureSets[ _PileType ], } )
+				table.insert( RMG.StructureSets.PlayerStruct.Childs[ mainpileindex ].Childs, { Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets[ _PileType ], } )
 			end
 		end
 		
@@ -2570,7 +1195,7 @@ function RandomMapGenerator.AddResourcePitToPlayerStruct( _PitAmount, _PitType, 
 	return _Index, possiblewoodpileindices
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.GetPlayersAndTeams()
+function RMG.GetPlayersAndTeams()
 	
 	local nplayers = 0
 	local players = {}
@@ -2580,13 +1205,13 @@ function RandomMapGenerator.GetPlayersAndTeams()
 	if XNetwork.Manager_DoesExist() == 1 then
 	
 		for p = 1, 16 do
-			if Logic.PlayerGetGameState(p) == 1 then
+			if Logic.PlayerGetGameState( p ) == 1 then
 				nplayers = nplayers + 1
 				
-				local team = XNetwork.GameInformation_GetLogicPlayerTeam(p)
+				local team = XNetwork.GameInformation_GetLogicPlayerTeam( p )
 				local isIn = false
 		
-				for k,v in pairs(teams) do
+				for k,v in pairs( teams ) do
 					if v == team then
 						isIn = true
 						break
@@ -2595,66 +1220,80 @@ function RandomMapGenerator.GetPlayersAndTeams()
 		
 				if not isIn then
 					nteams = nteams + 1
-					teams[nteams] = team
+					teams[ nteams ] = team
 				end
 			
-				players[nplayers] = {id = p, team = team, ishuman = 1}
+				players[ nplayers ] = { Id = p, Team = team, IsHuman = 1 }
 			end
 		end
  
 	else
-		-- just some testing in SP - amount must fit now due to new sorting system
-		nplayers = 4
-		players[1] = {id = 1, team = 5, ishuman = 1}
-		players[2] = {id = 6, team = 2, ishuman = 1}
-		players[3] = {id = 4, team = 5, ishuman = 1}
-		players[4] = {id = 3, team = 2, ishuman = 1}
-		--players[5] = {id = 5, team = 2, ishuman = 1}
-		--players[6] = {id = 2, team = 5, ishuman = 1}
-		--players[7] = {id = 7, team = 5, ishuman = 1}
-		--players[8] = {id = 8, team = 2, ishuman = 1}
-		--players[9] = {id = 3, team = 2, ishuman = 1}
-		--players[10] = {id = 2, team = 5, ishuman = 1}
-		nteams = 2
-		teams[1] = 5
+		-- just some testing in SP - amount must fit table size now due to new sorting system
+		players[1] = { Id = 1, Team = 1, IsHuman = 1 }
+		players[2] = { Id = 1, Team = 1, IsHuman = 1 }
+		players[3] = { Id = 1, Team = 1, IsHuman = 1 }
+		players[4] = { Id = 1, Team = 1, IsHuman = 1 }
+		players[5] = { Id = 5, Team = 2, IsHuman = 1 }
+		players[6] = { Id = 6, Team = 2, IsHuman = 1 }
+		players[7] = { Id = 7, Team = 2, IsHuman = 1 }
+		players[8] = { Id = 8, Team = 2, IsHuman = 1 }
+		--players[9] = { Id = 2, Team = 3, IsHuman = 1 }
+		--players[10]= { Id = 2, Team = 3, IsHuman = 1 }
+		--players[11]= { Id = 3, Team = 3, IsHuman = 1 }
+		--players[12]= { Id = 4, Team = 3, IsHuman = 1 }
+		--players[13]= { Id = 5, Team = 4, IsHuman = 1 }
+		--players[14]= { Id = 6, Team = 4, IsHuman = 1 }
+		--players[15]= { Id = 7, Team = 4, IsHuman = 1 }
+		--players[16]= { Id = 8, Team = 4, IsHuman = 1 }
+		
+		nplayers = table.getn( players )
+		
+		teams[1] = 1
 		teams[2] = 2
 		--teams[3] = 3
 		--teams[4] = 4
+		--teams[5] = 5
+		--teams[6] = 6
+		--teams[7] = 7
+		--teams[8] = 8
+		
+		nteams = table.getn( teams )
 	end
 	
 	-- sort MUST be done here !
 	-- sort team by id
-	table.sort(teams,
-	function(a, b)
-		return a < b;
+	table.sort( teams,
+	function( a, b )
+		return a < b
 	end
 	)
 	
 	-- sort players by team
-	table.sort(players,
-	function(a, b)
-		return (a.team < b.team) --or (a.team == b.team and a.id < b.id)
+	table.sort( players,
+	function( a, b )
+		return ( a.Team < b.Team ) --or (a.Team == b.Team and a.Id < b.Id)
 	end
 	)
 
 	return nplayers, players, nteams, teams
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.FinalizeGenerationData()
+function RMG.FinalizeGenerationData()
 	
-	local _generationData = RandomMapGenerator.GenerationData
+	local _generationdata = RMG.GenerationData
 	
 	-- set landscapeSet if not existing or key is valid
-	if not _generationData.LandscapeSet or RandomMapGenerator.LandscapeSets[_generationData.LandscapeSetKey] then
+	if not _generationdata.LandscapeSet or RMG.LandscapeSets[ _generationdata.LandscapeSetKey ] then
 		
-		_generationData.LandscapeSet = RandomMapGenerator.LandscapeSets[_generationData.LandscapeSetKey]
+		_generationdata.LandscapeSet = RMG.LandscapeSets[ _generationdata.LandscapeSetKey ]
 	end
 	
-	_generationData.Structures = { -- level 0 = world
+	_generationdata.Structures = { -- level 0 = world
 
 		Childs = {}, -- level 1
 		Current = {
-			Levels = {[0] = 1, [1] = 0}, -- 2nd is player to start with (set to 0 or 1)
+			Levels = { [ 0 ] = 1, [ 1 ] = 0 }, -- 2nd is player to start with (set to 0 or 1)
+			Players = { [ 0 ] = 0 },
 			Structs = {
 				Placement = {
 					X = 0,
@@ -2664,44 +1303,44 @@ function RandomMapGenerator.FinalizeGenerationData()
 			},
 		},
 	}
-	_generationData.PlayerStruct = RandomMapGenerator.StructureSets.PlayerStruct
-	_generationData.NeutralStruct = RandomMapGenerator.StructureSets.NeutralStruct
 	
+	_generationdata.PlayerStruct = RMG.StructureSets.PlayerStruct
+	_generationdata.NeutralStruct = RMG.StructureSets.NeutralStruct
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.StartGenerateMap()
+function RMG.StartGenerateMap()
 	
-	local _generationData = RandomMapGenerator.GenerationData
+	local _generationdata = RMG.GenerationData
 	
-	RandomMapGenerator.FillNoiseTable(_generationData)
-	RandomMapGenerator.FillPlayerLocationTable(_generationData)
+	RMG.FillNoiseTable(_generationdata)
+	RMG.FillPlayerLocationTable(_generationdata)
 	
-	if _generationData.TeamBorderType == 2 then
-		RandomMapGenerator.CreateFences(_generationData)
-	elseif _generationData.TeamBorderType == 3 then
-		RandomMapGenerator.InitRivers( _generationData )
-		RandomMapGenerator.FillRiverLocationTable(_generationData)
-		RandomMapGenerator.CreateRivers(_generationData)
-		RandomMapGenerator.ApplyNoiseOverride(_generationData, RandomMapGenerator.BlockingTypes.River, math.min)
+	if _generationdata.TeamBorderType == 2 then
+		RMG.CreateFences(_generationdata)
+	elseif _generationdata.TeamBorderType == 3 then
+		RMG.InitRivers( _generationdata )
+		RMG.FillRiverLocationTable(_generationdata)
+		RMG.CreateRivers(_generationdata)
+		RMG.ApplyNoiseOverride(_generationdata, RMG.BlockingTypes.River, math.min)
 	end
 	
-	if _generationData.GenerateRoads then
-		RandomMapGenerator.InitRoads( _generationData )
-		RandomMapGenerator.FillRoadLocationTable(_generationData)
-		RandomMapGenerator.CreateRoads(_generationData)
-		RandomMapGenerator.ApplyNoiseOverride(_generationData, RandomMapGenerator.BlockingTypes.Road)
+	if _generationdata.GenerateRoads then
+		RMG.InitRoads( _generationdata )
+		RMG.FillRoadLocationTable(_generationdata)
+		RMG.CreateRoads(_generationdata)
+		RMG.ApplyNoiseOverride(_generationdata, RMG.BlockingTypes.Road)
 	end
 	
-	RandomMapGenerator.SetTerrainTextures(_generationData)
+	RMG.SetTerrainTextures(_generationdata)
 	
-	if RandomMapGenerator.GenerateStructures(_generationData) or _generationData.DebugMode then
+	if RMG.GenerateStructures(_generationdata) or _generationdata.DebugMode then
 	
-		RandomMapGenerator.SetTerrainHeights(_generationData)
-		RandomMapGenerator.UpdateBlocking(_generationData)
+		RMG.SetTerrainHeights(_generationdata)
+		RMG.UpdateBlocking(_generationdata)
 	
-		RandomMapGenerator.CreateEntities(_generationData)
+		RMG.CreateEntities(_generationdata)
 		
-		RandomMapGenerator.Finalize(_generationData)
+		RMG.Finalize(_generationdata)
 		
 		return true
 	end
@@ -2709,68 +1348,130 @@ function RandomMapGenerator.StartGenerateMap()
 	return false
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GenerateMap()
-	RandomMapGenerator.InitGenerationData()
-	RandomMapGenerator.FinalizeGenerationData()
-	return RandomMapGenerator.StartGenerateMap()
+function RMG.GenerateMap()
+	RMG.InitGenerationData()
+	RMG.FinalizeGenerationData()
+	return RMG.StartGenerateMap()
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Noise Calculation
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.FillNoiseTable(_generationData)
+function RMG.FillNoiseTable( _generationdata )
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
 	
 	local lerpRadius = maphalf - 16
-	local noise
+	
+	local heightnoise
+	local vegetationnoise
+	
+	-- set heightnoise for map border
 	local bordernoise
-
-	if _generationData.TeamBorderType == 3 then -- river
-		bordernoise = _generationData.ThresholdSea
-	--elseif _generationData.TeamBorderType == 4 then -- mountain (WIP)
-		--bordernoise = _generationData.ThresholdPike
+	
+	if _generationdata.TeamBorderType == 3 then -- river
+		bordernoise = -0.5
+	--elseif _generationdata.TeamBorderType == 4 then -- mountain (WIP)
+		--bordernoise = 0.75
 	else
-		bordernoise = _generationData.ThresholdRoad
+		bordernoise = _generationdata.ThresholdRoad
 	end
-
+	
+	local composition = _generationdata.Composition
+	
+	-- if we need this once more, write this to RMG.GenerationData.Composition
+	local currentteam = 0
+	local slize = 0
+	local slizes = {}
+	local mirror = 0
+	
+	local mirroroffset = _generationdata.MirrorOffset - _generationdata.MirrorRadian / 2
+	
+	for player = 1, _generationdata.NumberOfPlayers do
+		
+		-- TODO: not very modding compatible solution
+		-- only for players on the outer ring
+		if not composition[ player ].Distance then
+			if composition[ player ].Team > currentteam then
+				
+				currentteam = composition[ player ].Team
+				slizes[ slize ] = { T = currentteam } -- can also be true or 1 or whatever
+				
+				slize = slize + 1
+			end
+			
+			slizes[ slize ] = { M = mirror}
+			slize = slize + 1
+			
+			-- mirror every seccond player slize on the outer ring
+			mirror = ( 1 - mirror )
+		end
+	end
+	
+	-- do the main grid
 	for x = 0, mapsize, 2 do
 		
-		_generationData.TerrainNodes[x] = {}
+		_generationdata.TerrainNodes[ x ] = {}
 		
 		for y = 0, mapsize, 2 do
 	
-			local distance = math.sqrt((maphalf - x)^2 + (maphalf - y)^2)
+			local distance = math.sqrt( ( maphalf - x ) ^ 2 + ( maphalf - y ) ^ 2 )
 			
 			if distance < maphalf then
 				
 				local mx, my = x, y
-				if _generationData.MirrorMap then
-					mx, my = RandomMapGenerator.MirrorNode(_generationData, x, y)
+				if _generationdata.MirrorMap then
+					
+					local sourceindex, axismirrorflag = RMG.GetMirrorSlize( _generationdata, x, y, maphalf, mirroroffset )
+					local targetindex = 1
+					
+					-- is team border slize
+					if slizes[ sourceindex ].T then
+						
+						-- first slize must be mirrored, if number of players on outer ring is odd
+						if sourceindex == 0 and math.mod( composition.NumberOfPlayers, 2 ) ~= 0 then
+							axismirrorflag = true
+						end	
+						
+						mx, my = RMG.MirrorNode( _generationdata, mx, my, sourceindex * _generationdata.MirrorRadian + mirroroffset, ( sourceindex + 1 ) * _generationdata.MirrorRadian + mirroroffset, axismirrorflag )
+						sourceindex = sourceindex + 1
+					end	
+					
+					-- a check on slizes[ sourceindex ].M is not neccessary, since we always increased source index to a player slize and last valid slize is allways a player slize
+					-- mirror every seccond player slize on the outer ring
+					axismirrorflag = slizes[ sourceindex ].M == 1
+					
+					mx, my = RMG.MirrorNode( _generationdata, mx, my, sourceindex * _generationdata.MirrorRadian + mirroroffset, targetindex * _generationdata.MirrorRadian, axismirrorflag )
 				end
 				
-				noise = RandomMapGenerator.GetSimplexNoise(4, mx, my, 0.5, _generationData.NoiseFactorXY)
+				heightnoise = RMG.GetSimplexNoise( 4, mx, my, 0.5, _generationdata.NoiseFactorXY )
+				vegetationnoise = RMG.GetSimplexNoise( 4, mx + mapsize, my, 0.5, _generationdata.NoiseFactorXY * 2.35 )
 				
+				-- modify heightnoise if close to map border
 				if distance > lerpRadius then
-					noise = Lerp( bordernoise, noise, (distance - lerpRadius) / 16 )
+					heightnoise = Lerp( bordernoise, heightnoise, ( distance - lerpRadius ) / 16 )
 				end
 				
 			else
-				noise = bordernoise
+				heightnoise = bordernoise
+				vegetationnoise = 0
 			end
 			
-			_generationData.TerrainNodes[x][y] = RandomMapGenerator.CreateTerrainNode(_generationData, x, y, noise)
+			_generationdata.TerrainNodes[ x ][ y ] = RMG.CreateTerrainNode( _generationdata, x, y, heightnoise, vegetationnoise )
 		end
 	end
 	
+	-- not every node needs the expensive noise calculation, average values of neighboring nodes create no visible difference but are much faster
 	for x = 1, mapsize, 2 do
 
-		_generationData.TerrainNodes[x] = {}
+		_generationdata.TerrainNodes[ x ] = {}
 
 		for y = 0, mapsize, 2 do
 		
-			noise = (_generationData.TerrainNodes[x-1][y].noise + _generationData.TerrainNodes[x+1][y].noise) / 2
-			_generationData.TerrainNodes[x][y] = RandomMapGenerator.CreateTerrainNode(_generationData, x, y, noise)
+			heightnoise = ( _generationdata.TerrainNodes[ x-1 ][ y ].HeightNoise + _generationdata.TerrainNodes[ x+1 ][ y ].HeightNoise ) / 2
+			vegetationnoise = (_generationdata.TerrainNodes[ x-1 ][ y ].VegetationNoise + _generationdata.TerrainNodes[ x+1 ][ y ].VegetationNoise ) / 2
+			
+			_generationdata.TerrainNodes[ x ][ y ] = RMG.CreateTerrainNode( _generationdata, x, y, heightnoise, vegetationnoise )
 			
 		end
 	end
@@ -2778,17 +1479,18 @@ function RandomMapGenerator.FillNoiseTable(_generationData)
 	for x = 0, mapsize do
 		for y = 1, mapsize, 2 do
 		
-			noise = (_generationData.TerrainNodes[x][y-1].noise + _generationData.TerrainNodes[x][y+1].noise) / 2
-			_generationData.TerrainNodes[x][y] = RandomMapGenerator.CreateTerrainNode(_generationData, x, y, noise)
+			heightnoise = ( _generationdata.TerrainNodes[ x ][ y-1 ].HeightNoise + _generationdata.TerrainNodes[ x ][ y+1 ].HeightNoise ) / 2
+			vegetationnoise = ( _generationdata.TerrainNodes[ x ][ y-1 ].VegetationNoise + _generationdata.TerrainNodes[ x ][ y+1 ].VegetationNoise) / 2
+			
+			_generationdata.TerrainNodes[ x ][ y ] = RMG.CreateTerrainNode( _generationdata, x, y, heightnoise, vegetationnoise )
 			
 		end
 	end
-
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Noise Utility
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetSimplexNoise(_octaves, _x, _y, _persistence, _scale)
+function RMG.GetSimplexNoise( _octaves, _x, _y, _persistence, _scale )
 
 	local maxAmp = 0
 	local amp = 1
@@ -2797,7 +1499,7 @@ function RandomMapGenerator.GetSimplexNoise(_octaves, _x, _y, _persistence, _sca
 
 	--add successively smaller, higher-frequency terms
 	for i = 1, _octaves do
-		noise = noise + SimplexNoise.Noise2D(SimplexNoise.perm[i], _x * freq, _y * freq) * amp
+		noise = noise + SimplexNoise.Noise2D( SimplexNoise.perm[ i ], _x * freq, _y * freq ) * amp
 		maxAmp = maxAmp + amp
 		amp = amp * _persistence
 		freq = freq * 2
@@ -2809,59 +1511,70 @@ function RandomMapGenerator.GetSimplexNoise(_octaves, _x, _y, _persistence, _sca
 	return noise
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.CreateTerrainNode(_generationData, _x, _y, _noise)--, _height)
+function RMG.CreateTerrainNode( _generationdata, _x, _y, _heightnoise, _vegetaionnoise )
 
-	return {x = _x, y = _y, noise = _noise, height = RandomMapGenerator.GetTerrainHeightFromNoise(_generationData, _noise), blocking = 0}
+	return { X = _x, Y = _y, HeightNoise = _heightnoise, Height = RMG.GetTerrainHeightFromNoise( _generationdata, _heightnoise ), VegetationNoise = _vegetaionnoise, Blocking = 0 }
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Player Locations
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.FillPlayerLocationTable(_generationData)
+function RMG.FillPlayerLocationTable( _generationdata )
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
-	local radhalf = _generationData.PlayerRadian / 2
-	local distance = math.min(maphalf - 50, maphalf * _generationData.PlayerDistanceToMiddle)
+	local distancetomiddle = math.min( maphalf - 30, maphalf * _generationdata.PlayerDistanceToMiddle )
 	
-	_generationData.Players[0] = {x = maphalf, y = maphalf, id = 0, team = 0}
+	_generationdata.Players[ 0 ] = { X = maphalf, Y = maphalf, Id = 0, Team = 0 }
 	
-	local nplayers = _generationData.NumberOfPlayers
+	local nplayers = _generationdata.NumberOfPlayers
+	local slize = 0
 	
 	for p = 1, nplayers do
 		
-		local delta, x, y
+		local composition = _generationdata.Composition[ p ]
+		local delta, x, y, distance
 
-		if _generationData.RandomPlayerPosition then
-			delta = math.random(0, math.rad(360)) 
-			distance = math.random(5, maphalf - 15)
+		if _generationdata.RandomPlayerPosition then
+			delta = math.random( 0, math.rad( 360 ) )
+			distance = math.random( 5, maphalf - 15 )
 		else
-			delta = (p - 1) * _generationData.PlayerRadian + radhalf
+			delta = composition.Slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+			distance = composition.Distance or distancetomiddle
 		end
 		
-		x = distance * math.cos(delta) + maphalf
-		y = distance * math.sin(delta) + maphalf
+		x = distance * math.cos( delta ) + maphalf
+		y = distance * math.sin( delta ) + maphalf
 		
-		if _generationData.RandomPlayerPosition then
-			x, y = SnapToGrid(4, x, y)
+		if _generationdata.RandomPlayerPosition then
+			x, y = SnapToGrid( 4, x, y )
 		else
-			x, y = RandomMapGenerator.FindBestPoint(_generationData, x, y, 8, 4)
+			x, y = RMG.FindBestPoint( _generationdata, x, y, 8, 4 )
 		end
 		
-		_generationData.Players[p].x = x
-		_generationData.Players[p].y = y
+		_generationdata.Players[ p ].X = x
+		_generationdata.Players[ p ].Y = y
 		
-		if p == 1 or not _generationData.MirrorMap then
-		_generationData.Structures.Childs[p] = {
-			Placement = {
-				AbsolutX = x,
-				AbsolutY = y,
-			},
-			Childs = {_generationData.PlayerStruct,},
-		}
+		if composition.Mirror or not _generationdata.MirrorMap then
+			
+			-- lookup table for player id
+			table.insert( _generationdata.Structures.Current.Players, p )
+			
+			-- actual structure must be continuous
+			table.insert( _generationdata.Structures.Childs,
+				{
+					Placement = {
+						AbsolutX = x,
+						AbsolutY = y,
+					},
+					Childs = { _generationdata.PlayerStruct, },
+				}
+			)
 		end
+		
+		slize = slize + 1
 	end
 	
-	_generationData.Structures.Childs[0] = {
+	_generationdata.Structures.Childs[ 0 ] = {
 		Placement = {
 			AbsolutX = 0,
 			AbsolutY = 0,
@@ -2871,75 +1584,97 @@ function RandomMapGenerator.FillPlayerLocationTable(_generationData)
 	
 	return true
 end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.MirrorPosition(_generationData, _x, _y, _slize)
-	return RandomMapGenerator.Mirror(_generationData, _x, _y, Logic.WorldGetSize(), _slize)
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function RMG.MirrorPosition( _generationdata, _x, _y, _sourceindex, _targetindex, _mirror )
+	return RMG.Mirror( _generationdata, _x, _y, _sourceindex, _targetindex, Logic.WorldGetSize(), _mirror )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.MirrorNode(_generationData, _x, _y, _slize)
-	return RandomMapGenerator.Mirror(_generationData, _x, _y, Logic.WorldGetSize() / 100, _slize)
+function RMG.MirrorNode( _generationdata, _x, _y, _sourceindex, _targetindex, _mirror )
+	return RMG.Mirror( _generationdata, _x, _y, _sourceindex, _targetindex, Logic.WorldGetSize() / 100, _mirror )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.Mirror(_generationData, _x, _y, _mapsize, _slize)
+function RMG.Mirror( _generationdata, _x, _y, _sourceindex, _targetindex, _mapsize, _mirror )
 	
 	local maphalf = _mapsize / 2
-	if _y == maphalf and _x >= maphalf then
-		return _x, _y
+	local sourceradian = _sourceindex -- * _generationdata.MirrorRadian
+	local targetradian = _targetindex -- * _generationdata.MirrorRadian
+	
+	-- allign position to map center as 0,0
+	_x, _y = _x - maphalf, _y - maphalf
+	local dist = math.sqrt( _x ^ 2 + _y ^ 2 )
+	
+	-- point mirror
+	_x, _y = RMG.GetMirrorPosition( dist, sourceradian, targetradian, math.atan2( _y, _x ), maphalf, 0, _offset )
+	
+	if _mirror then --math.mod( _sourceindex - _targetindex, 2 ) ~= 0 then
+		
+		-- set mirror axis to middle of point mirrored area
+		_x, _y = _x - maphalf, _y - maphalf
+		sourceradian = targetradian + _generationdata.MirrorRadian * 0.5
+		targetradian = sourceradian + 180
+		
+		-- axis mirror
+		_x, _y = RMG.GetMirrorPosition( dist, sourceradian, targetradian, math.atan2( _y, _x ), maphalf, 1, _offset )
 	end
 	
-	_slize = _slize or 1
+	-- do not round the outcome
+	--_x, _y = Round( _x ), Round( _y )
 	
-	-- handle unter and overshots
-	while _slize > _generationData.NumberOfPlayers do
-		_slize = _slize - _generationData.NumberOfPlayers
-	end
-	while _slize < 1 do
-		_slize = _slize + _generationData.NumberOfPlayers
-	end
-
-	local x, y = _x - maphalf, _y - maphalf
-	local distance = math.sqrt(x ^ 2 + y ^ 2)
-	
-	--if distance == 0 then
-		--return _x, _y
-	--end
-	
-	local delta = math.atan2(y, x)
-	
-	if delta < 0 then
-		delta = 2 * math.pi + delta 
-	end
-	
-	local slize = math.ceil(delta / _generationData.PlayerRadian)
-	
-	local difference = slize - _slize
-	local theta = delta - difference * _generationData.PlayerRadian
-	
-	-- mirror slize if one index is even and the other is odd so we get matching edges
-	-- note that an uneven number of slizes allways generates one odd edge
-	-- this edge will be covered by a team dividing River if TeamBorderType is true
-	if math.mod(slize, 2) ~= math.mod(_slize, 2) then
-		local gamma = math.mod(theta, _generationData.PlayerRadian)
-		theta = theta - 2 * gamma + _generationData.PlayerRadian -- this results from try and error late at night - dont ask me, it just works
-	end
-	
-	return distance * math.cos(theta) + maphalf, distance * math.sin(theta) + maphalf -- mirrored x and y
+	return _x, _y
 end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.FindBestPoint(_generationData, _x, _y, _dist, _grid, _value)
+----------------------------------------------------------------------------------------------------------------
+-- this is a copy from MTT in rad not deg - but the params are switched somehow !?	
+function RMG.GetMirrorPosition( _Dist, _SourceRadian, _TargetRadian, _Radian, _Maphalf, _Mode, _Offset )
 	
-	_value = _value or 0
+	if _Mode == 1 then
+		_Radian = -( _Radian - _SourceRadian * 2 )
+	else
+		_Radian = _TargetRadian + ( _Radian - _SourceRadian )
+	end
+	
+	local x = _Dist * math.cos( _Radian ) + _Maphalf
+	local y = _Dist * math.sin( _Radian ) + _Maphalf
+	
+	return x, y
+end
+----------------------------------------------------------------------------------------------------------------
+-- returns:
+-- int: slize index, bool: radian lies in 2nd half of slize
+function RMG.GetMirrorSlize( _generationdata, _x, _y, _maphalf, _offset )
+	
+	local radian = math.atan2( _y - _maphalf, _x - _maphalf )
+	
+	if radian < 0 then
+		radian = radian + math.rad( 360 )
+	end
+	
+	local slize = math.floor( ( radian - _offset ) / _generationdata.MirrorRadian )
+	
+	if slize < 0 then
+		slize = slize + _generationdata.NumberOfSlizes
+	elseif slize >= _generationdata.NumberOfSlizes then
+		slize = slize - _generationdata.NumberOfSlizes
+	end
+	
+	return slize, ( radian - _offset ) >= ( slize + 0.5 ) * _generationdata.MirrorRadian
+end
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function RMG.FindBestPoint( _generationdata, _x, _y, _dist, _grid, _heightnoise )
+	
+	_heightnoise = _heightnoise or 0
 	_grid = _grid or 1
 	_x, _y, _dist = SnapToGrid(_grid, _x, _y, _dist)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local px, py = _x, _y
-	local noise = _generationData.TerrainNodes[_x][_y].noise
+	local noise = _generationdata.TerrainNodes[ _x ][ _y ].HeightNoise
   
-	for x = math.max(_x -_dist, 0), math.min(_x + _dist, mapsize), _grid do
-		for y = math.max(_y - _dist, 0), math.min(_y + _dist, mapsize), _grid do
-			if math.abs(_generationData.TerrainNodes[x][y].noise - _value) < math.abs(noise - _value) then
-				noise = _generationData.TerrainNodes[x][y].noise
+	for x = math.max( _x -_dist, 0 ), math.min( _x + _dist, mapsize ), _grid do
+		for y = math.max( _y - _dist, 0 ), math.min( _y + _dist, mapsize ), _grid do
+			
+			if math.abs( _generationdata.TerrainNodes[ x ][ y ].HeightNoise - _heightnoise ) < math.abs( noise - _heightnoise ) then
+				
+				noise = _generationdata.TerrainNodes[ x ][ y ].HeightNoise
 				px, py = x, y
 			end
 		end
@@ -2948,9 +1683,9 @@ function RandomMapGenerator.FindBestPoint(_generationData, _x, _y, _dist, _grid,
 	return px, py
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
--- Rivers & Roads
+-- Teamborders
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.CreateFences(_generationData)
+function RMG.CreateFences( _generationdata )
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -2961,182 +1696,240 @@ function RandomMapGenerator.CreateFences(_generationData)
 	local currentTeam = 0
 
 	local radea = {}
-	local currentRadius = 1
+	local composition = _generationdata.Composition
 	
 	-- create fence lines from circle radius to map border
-	for player = 1, _generationData.NumberOfPlayers do
+	for _, slize in ipairs( composition.TeamSlizes ) do
 		
-		local delta = (player - 1) * _generationData.PlayerRadian
+		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
 		
-		-- per player
-		if _generationData.GateLayout == 1 then
-			table.insert(radea, delta)
-		end
-
-		if _generationData.Players[player].team > currentTeam then
-			currentTeam = _generationData.Players[player].team
+		table.insert( radea, delta )
+		
+		for i = r + 2, maphalf - 2, 2 do
+			local x = ( i - 1 ) * math.cos( delta ) + maphalf
+			local y = ( i - 1 ) * math.sin( delta ) + maphalf
 			
-			-- per team
-			if _generationData.GateLayout == 2 then
-				table.insert(radea, delta)
-			end
-			
-			for i = r + 2, maphalf, 2 do
-				local x = (i - 1) * math.cos(delta) + maphalf
-				local y = (i - 1) * math.sin(delta) + maphalf
-				
-				Logic.CreateEntity(Entities["XD_WoodenFence0"..math.random(1,8)], x * 100, y * 100, math.deg(delta), 0)
-			end
+			Logic.CreateEntity( Entities[ "XD_WoodenFence0"..math.random( 1, 8 ) ], x * 100, y * 100, math.deg( delta ), 0 )
 		end
 	end
+	--[[local slize = 0
+
+	for player = 1, composition.NumberOfPlayers do
+		
+		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+		
+		-- per player
+		if _generationdata.GateLayout == 2 then
+			table.insert( radea, delta )
+		end
+
+		if _generationdata.Players[ player ].Team > currentTeam then
+			currentTeam = _generationdata.Players[ player ].Team
+			
+			-- per team
+			if _generationdata.GateLayout == 1 then
+				table.insert( radea, delta )
+			end
+			
+			for i = r + 2, maphalf - 2, 2 do
+				local x = ( i - 1 ) * math.cos( delta ) + maphalf
+				local y = ( i - 1 ) * math.sin( delta ) + maphalf
+				
+				Logic.CreateEntity( Entities[ "XD_WoodenFence0"..math.random( 1, 8 ) ], x * 100, y * 100, math.deg( delta ), 0 )
+			end
+				
+			slize = slize + 1
+		end
+		
+		slize = slize + 1
+	end]]
 	
-	local a = math.rad(360) / ((math.pi * r * 2) / 2) -- 360° / (umfang / Zaunlänge)
-	local b = radea[currentRadius + 1]
-	local c = radea[currentRadius] -- should always be 0
+	local currentRadius = 1
+	local a = math.rad( 360 ) / ( ( math.pi * r * 2 ) / 2 ) -- 360° / (umfang / Zaunlänge)
+	local b = radea[ currentRadius + 1 ]
+	local c = radea[ currentRadius ] -- should always be 0
 	
 	-- create fence circle
-	for delta = 0, math.rad(360), a do
+	for delta = 0, math.rad( 360 ), a do
 		
 		if delta > b then
 			currentRadius = currentRadius + 1
-			c = b--radea[currentRadius]
+			c = b
 			
-			if currentRadius >= table.getn(radea) then
-				b = radea[1] + math.rad(360)
+			if currentRadius >= table.getn( radea ) then
+				b = radea[ 1 ] + math.rad( 360 )
 			else
-				b = radea[currentRadius + 1]
+				b = radea[ currentRadius + 1 ]
 			end
 		end
 		
 		-- difference
 		-- defines the entry size: <= 2 = closed, 2.5 = small, 3 = medium, 4 = large, 6 = very large
-		local d = (b - c) / _generationData.GateSize
+		local d = ( b - c ) / _generationdata.GateSize
 		
-		local x = r * math.cos(delta) + maphalf
-		local y = r * math.sin(delta) + maphalf
+		local x = r * math.cos( delta ) + maphalf
+		local y = r * math.sin( delta ) + maphalf
 		
 		-- create fence or gate
 		if delta > c + d and delta < b - d then
 		
 			-- leave gap or create gate
 			if EMS_CustomMapConfig.Peacetime > 0 then
-				Logic.CreateEntity(Entities.XD_WoodenFence15, x * 100, y * 100, math.deg(delta) + 90, 0)
+				Logic.CreateEntity( Entities.XD_WoodenFence15, x * 100, y * 100, math.deg( delta ) + 90, 0 )
 			end
 			
 		else
-			Logic.CreateEntity(Entities["XD_WoodenFence0"..math.random(1,8)], x * 100, y * 100, math.deg(delta) + 90, 0)
+			Logic.CreateEntity( Entities[ "XD_WoodenFence0"..math.random( 1, 8 ) ], x * 100, y * 100, math.deg( delta ) + 90, 0 )
 		end
 	end
 	
+	-- flatten middle
 	r = r + 10
 	local l = 10 -- lerp
 	
-	for x = -r-l, r+l do
-		for y = -r-l, r+l do
+	for x = -r - l, r + l do
+		for y = -r - l, r + l do
 			
-			local distance = math.sqrt(x^2 + y^2)
+			local distance = math.sqrt( x ^ 2 + y ^ 2 )
 			
 			if distance < r + l then
 				
 				-- the lazy aproach ...
-				local noise = _generationData.TerrainNodes[maphalf + x][maphalf + y].noise
-				local noise2 = noise / 1.8
+				local heightnoise = _generationdata.TerrainNodes[ maphalf + x ][ maphalf + y ].HeightNoise
+				local heightnoise2 = heightnoise / 1.8
+				
+				local vegetationnoise = _generationdata.TerrainNodes[ maphalf + x ][ maphalf + y ].VegetationNoise + 1
+				local vegetationnoise2 = vegetationnoise / 1.4 - 1
 				
 				if distance > r then
 					
-					noise2 = Lerp( noise, noise2, (distance - r) / l )
+					heightnoise2 = Lerp( heightnoise, heightnoise2, ( distance - r ) / l )
+					vegetationnoise2 = Lerp( vegetationnoise, vegetationnoise2, ( distance - r ) / l )
 				end
 				
-				_generationData.TerrainNodes[maphalf + x][maphalf + y] = RandomMapGenerator.CreateTerrainNode(_generationData, x + maphalf, y + maphalf, noise2)
+				_generationdata.TerrainNodes[ maphalf + x ][ maphalf + y ] = RMG.CreateTerrainNode( _generationdata, x + maphalf, y + maphalf, heightnoise2, vegetationnoise2 )
 			end
 		end
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.InitRivers( _generationData )
+function RMG.InitRivers( _generationdata )
 	
-	_generationData.Rivers = {}
-	_generationData.Rivers.StartPoints = {} -- start points
-	_generationData.Rivers.Paths = {} -- connections
+	_generationdata.Rivers = {}
+	_generationdata.Rivers.StartPoints = {} -- start points
+	_generationdata.Rivers.Paths = {} -- connections
 	
-	_generationData.Rivers.Nodes = {}
-	_generationData.Rivers.MirrorAngles = {}
+	_generationdata.Rivers.Nodes = {}
+	_generationdata.Rivers.MirrorRadea = {}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.FillRiverLocationTable(_generationData)
+function RMG.FillRiverLocationTable( _generationdata )
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
-	local radhalf = _generationData.PlayerRadian / 2
-	local currentTeam = 0
-	local teamIndex = 0
+	
+	local composition = _generationdata.Composition
 	
 	-- find the points at the egde of the map between different teams
-	for player = 1, _generationData.NumberOfPlayers do
-		if _generationData.Players[player].team > currentTeam then
-			currentTeam = _generationData.Players[player].team
-			teamIndex = teamIndex + 1
-			
-			local delta = (player - 1) * _generationData.PlayerRadian
+	for i, slize in ipairs( composition.TeamSlizes ) do
+		
+		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
 
-			-- add mirror angles
-			if _generationData.MirrorMap and delta ~= 0 then
-				
-				table.insert( _generationData.Rivers.MirrorAngles, math.deg( delta ) )
-			end
+		-- add mirror angles
+		if _generationdata.MirrorMap and delta ~= _generationdata.MirrorOffset then
 			
-			if not _generationData.MirrorMap or teamIndex == 1 then
+			table.insert( _generationdata.Rivers.MirrorRadea, delta - _generationdata.MirrorOffset )
+		end
+	
+		if not _generationdata.MirrorMap or i == 1 then
+		
+			local x = maphalf * math.cos( delta ) + maphalf
+			local y = maphalf * math.sin( delta ) + maphalf
 			
-				local x = maphalf * math.cos(delta) + maphalf
-				local y = maphalf * math.sin(delta) + maphalf
-				
-				-- dont use FindBestPoint here, since the river might not touch the map border then
-				x, y = SnapToGrid(4, x, y)
-				_generationData.Rivers.StartPoints[teamIndex] = {x = x, y = y}
-				
-				_generationData.Rivers.Paths[teamIndex] = {teamIndex, _generationData.NumberOfTeams + 1}
-			end
+			-- dont use FindBestPoint here, since the river might not touch the map border then
+			x, y = SnapToGrid( 4, x, y )
+			_generationdata.Rivers.StartPoints[ i ] = { X = x, Y = y }
+			
+			-- start at the middle, since this is much cheaper due to negative side effects of water as map border
+			_generationdata.Rivers.Paths[ i ] = { _generationdata.NumberOfTeams + 1, i }
 		end
 	end
+	--[[local currentTeam = 0
+	local teamIndex = 0
+	local slize = 0
+
+	for player = 1, _generationdata.NumberOfPlayers do
+		if _generationdata.Players[ player ].Team > currentTeam then
+			
+			currentTeam = _generationdata.Players[ player ].Team
+			teamIndex = teamIndex + 1
+			
+			local delta = ( slize ) * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+
+			-- add mirror angles
+			if _generationdata.MirrorMap and delta ~= _generationdata.MirrorOffset then
+				
+				table.insert( _generationdata.Rivers.MirrorRadea, delta - _generationdata.MirrorOffset )
+			end
+			
+			if not _generationdata.MirrorMap or teamIndex == 1 then
+			
+				local x = maphalf * math.cos( delta ) + maphalf
+				local y = maphalf * math.sin( delta ) + maphalf
+				
+				-- dont use FindBestPoint here, since the river might not touch the map border then
+				x, y = SnapToGrid( 4, x, y )
+				_generationdata.Rivers.StartPoints[ teamIndex ] = { X = x, Y = y }
+				
+				-- start at the middle, since this is much cheaper due to negative side effects of water as map border
+				_generationdata.Rivers.Paths[ teamIndex ] = { _generationdata.NumberOfTeams + 1, teamIndex }
+			end
+			
+			slize = slize + 1
+		end
+		
+		slize = slize + 1
+	end]]
 	
 	-- add the central point in the middle of the map, where all rivers merge together
 	-- must be the exact center if rivers will be mirrored
 	local x, y = maphalf, maphalf
-	if not _generationData.MirrorMap then
-		x, y = RandomMapGenerator.FindBestPoint(_generationData, maphalf, maphalf, 16, 4, -1)
+	
+	if not _generationdata.MirrorMap then
+		x, y = RMG.FindBestPoint( _generationdata, maphalf, maphalf, 16, 4, -1 )
 	end
-	_generationData.Rivers.StartPoints[_generationData.NumberOfTeams + 1] = {x = x, y = y}
+	
+	_generationdata.Rivers.StartPoints[ _generationdata.NumberOfTeams + 1 ] = { X = x, Y = y }
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.CreateRivers(_generationData)
+function RMG.CreateRivers( _generationdata )
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
 	
-	for i = 1, table.getn(_generationData.Rivers.Paths) do
+	for i = 1, table.getn(_generationdata.Rivers.Paths) do
 		
-		local a, b = _generationData.Rivers.Paths[i][1], _generationData.Rivers.Paths[i][2]
-		local x1, y1, x2, y2 = _generationData.Rivers.StartPoints[a].x, _generationData.Rivers.StartPoints[a].y, _generationData.Rivers.StartPoints[b].x, _generationData.Rivers.StartPoints[b].y
+		local a, b = _generationdata.Rivers.Paths[ i ][ 1 ], _generationdata.Rivers.Paths[ i ][ 2 ]
+		local x1, y1, x2, y2 = _generationdata.Rivers.StartPoints[ a ].X, _generationdata.Rivers.StartPoints[ a ].Y, _generationdata.Rivers.StartPoints[ b ].X, _generationdata.Rivers.StartPoints[ b ].Y
 		
-		local river = AStar.FindPath( _generationData.TerrainNodes[x1][y1], _generationData.TerrainNodes[x2][y2], _generationData.TerrainNodes, RandomMapGenerator.AStar_GetNeighborNodes_River, RandomMapGenerator.AStar_GetPathCost_River )
+		local river = AStar.FindPath( _generationdata.TerrainNodes[ x1 ][ y1 ], _generationdata.TerrainNodes[ x2 ][ y2 ], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_River, RMG.AStar_GetPathCost_River )
 		
 		if river then
 		
-			local height = _generationData.TerrainBaseHeight - 663
-			local noise = RandomMapGenerator.GetTerrainNoiseFromHeight(_generationData, height)
+			local riverheight = _generationdata.TerrainBaseHeight - 663
 
-			local currNode = river[1]
-			RandomMapGenerator.AddRiverNodes( _generationData, currNode.x, currNode.y, 16, 6, noise, height )
+			local currNode = river[ 1 ]
+			RMG.AddRiverNodes( _generationdata, currNode.X, currNode.Y, riverheight )
 
  			local prevNode = currNode
  
-			for j = 2, table.getn(river) do
+			for j = 2, table.getn( river ) do
 			
-				currNode = river[j]
-				RandomMapGenerator.AddRiverNodes( _generationData, currNode.x, currNode.y, 16, 6, noise, height )
+				currNode = river[ j ]
+				RMG.AddRiverNodes( _generationdata, currNode.X, currNode.Y, riverheight )
 				
 				-- add the middle between two nodes so rivers and roads do not miss each other with two diagonals
-				RandomMapGenerator.AddRiverNodes( _generationData, (currNode.x + prevNode.x) / 2, (currNode.y + prevNode.y) / 2 )
+				RMG.AddRiverNodes( _generationdata, (currNode.X + prevNode.X) / 2, (currNode.Y + prevNode.Y) / 2 )
 				
 				prevNode = currNode
 			end
@@ -3144,39 +1937,40 @@ function RandomMapGenerator.CreateRivers(_generationData)
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AddRiverNodes( _generationData, _x, _y, _a, _b, _noise, _height )
+-- _height, _heightnoise, _vegetaionnoise are optional
+function RMG.AddRiverNodes( _generationdata, _x, _y, _height, _heightnoise, _vegetaionnoise )
 	
-	RandomMapGenerator.AddRiverNode( _generationData, _x, _y, 0, _a, _b, _noise, _height )
+	RMG.AddRiverNode( _generationdata, _x, _y, 0, _height, _heightnoise, _vegetaionnoise )
 	
-	for _, targetangle in ipairs( _generationData.Rivers.MirrorAngles ) do
-		
-		RandomMapGenerator.AddRiverNode( _generationData, _x, _y, targetangle, _a, _b, _noise, _height )
+	for _, targetradian in ipairs( _generationdata.Rivers.MirrorRadea ) do
+		RMG.AddRiverNode( _generationdata, _x, _y, targetradian, _height, _heightnoise, _vegetaionnoise )
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AddRiverNode( _generationData, _x, _y, _targetangle, _a, _b, _noise, _height )
+function RMG.AddRiverNode( _generationdata, _x, _y, _targetradian, _height, _heightnoise, _vegetaionnoise )
 	
 	local maphalf = Logic.WorldGetSize() / 200
 	
 	_x, _y = _x - maphalf, _y - maphalf
-	_x, _y = MMT.GetMirrorPosition( math.sqrt( _x ^ 2 + _y ^ 2 ), 0, _targetangle, MMT.AllignAngle( math.deg( math.atan2( _y, _x ) ), targetangle ), maphalf, 0 )
+	_x, _y = RMG.GetMirrorPosition( math.sqrt( _x ^ 2 + _y ^ 2 ), 0, _targetradian, math.atan2( _y, _x ), maphalf, 0 )
 	_x, _y = Round( _x ), Round( _y )
 	
-	table.insert( _generationData.Rivers.Nodes, {x = _x, y = _y} )
+	table.insert( _generationdata.Rivers.Nodes, {X = _x, Y = _y} )
 	
-	if _noise then
-		RandomMapGenerator.SetNoiseOverride( _generationData, _x, _y, _a, _b, _noise, _height )
+	if _height then
+		RMG.SetNoiseOverride( _generationdata, _x, _y, 20, 4, _height, _heightnoise, _vegetaionnoise )
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.InitRoads( _generationData )
+function RMG.InitRoads( _generationdata )
 	
-	_generationData.Roads = {}
-	_generationData.Roads.StartPoints = {}
-	_generationData.Roads.Paths = {}
+	_generationdata.Roads = {}
+	_generationdata.Roads.StartPoints = {}
+	_generationdata.Roads.Paths = {}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.FillRoadLocationTable(_generationData)
+-- TODO: add road system to composition
+function RMG.FillRoadLocationTable( _generationdata )
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -3184,62 +1978,67 @@ function RandomMapGenerator.FillRoadLocationTable(_generationData)
 	local delta, x, y
  
 	-- check for specific case with only 2 players on 2 teams
-	if _generationData.NumberOfPlayers == 2 and _generationData.NumberOfTeams == 2 then
+	if _generationdata.NumberOfPlayers == 2 and _generationdata.NumberOfTeams == 2 then
 	
-		_generationData.Roads.Paths = {{1, 2}, {3, 1}, {4, 1}, {3, 2}, {4, 2}} -- from player 1 to player 2 and from imaginary player 3 and 4 to each player 1 and 2
+		_generationdata.Roads.Paths = {{1, 2}, {3, 1}, {4, 1}, {3, 2}, {4, 2}} -- from player 1 to player 2 and from imaginary player 3 and 4 to each player 1 and 2
 		
-		_generationData.Roads.StartPoints[1] = _generationData.Players[1]
-		_generationData.Roads.StartPoints[2] = _generationData.Players[2]
+		_generationdata.Roads.StartPoints[1] = _generationdata.Players[1]
+		_generationdata.Roads.StartPoints[2] = _generationdata.Players[2]
 		
-		delta = _generationData.PlayerRadian / 2 -- 90°
+		delta = _generationdata.MirrorRadian / 2 -- 90°
 		x = distance * math.cos(delta) + maphalf
 		y = distance * math.sin(delta) + maphalf
 		
-		x, y = RandomMapGenerator.FindBestPoint(_generationData, x, y, 16, 4, 0)
-		_generationData.Roads.StartPoints[3] = {x = x, y = y}
+		x, y = RMG.FindBestPoint(_generationdata, x, y, 16, 4, 0)
+		_generationdata.Roads.StartPoints[3] = {X = x, Y = y}
   
 		delta = delta * 3 -- 270°
 		x = distance * math.cos(delta) + maphalf
 		y = distance * math.sin(delta) + maphalf
 		
-		x, y = RandomMapGenerator.FindBestPoint(_generationData, x, y, 16, 4, 0)
-		_generationData.Roads.StartPoints[4] = {x = x, y = y}
+		x, y = RMG.FindBestPoint(_generationdata, x, y, 16, 4, 0)
+		_generationdata.Roads.StartPoints[4] = {X = x, Y = y}
 	
 	-- otherwise use the generic system
 	else
    
 		-- players
-		for p = 1, _generationData.NumberOfPlayers do
+		for p = 1, _generationdata.NumberOfPlayers do
 		
-			_generationData.Roads.StartPoints[p] = _generationData.Players[p]
-			table.insert(_generationData.Roads.Paths, {_generationData.NumberOfPlayers + 1, p}) -- from middle to player is faster than player to middle when rivers are generated, without its equal fast
+			_generationdata.Roads.StartPoints[p] = _generationdata.Players[p]
+			--table.insert(_generationdata.Roads.Paths, {_generationdata.NumberOfPlayers + 1, p}) -- from middle to player is faster than player to middle when rivers are generated, without its equal fast
    
-			if p < _generationData.NumberOfPlayers then
+			if p < _generationdata.NumberOfPlayers then
 			
-				table.insert(_generationData.Roads.Paths, {p, p + 1})
+				table.insert(_generationdata.Roads.Paths, {p, p + 1})
 			else
 			
-				table.insert(_generationData.Roads.Paths, {1, p})
+				table.insert(_generationdata.Roads.Paths, {1, p})
 			end
 		end
   
 		-- center of map
-		x, y = RandomMapGenerator.FindBestPoint(_generationData, maphalf, maphalf, 16, 4, 0)
-		_generationData.Roads.StartPoints[_generationData.NumberOfPlayers + 1] = {x = x, y = y}
+		if _generationdata.MirrorMap then
+			x, y = maphalf, maphalf
+		else
+			x, y = RMG.FindBestPoint( _generationdata, maphalf, maphalf, 16, 4, 0 )
+		end
+		
+		_generationdata.Roads.StartPoints[ _generationdata.NumberOfPlayers + 1 ] = { X = x, Y = y }
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.CreateRoads(_generationData)
+function RMG.CreateRoads( _generationdata )
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local bridges = {}
 	
-	for i = 1, table.getn(_generationData.Roads.Paths) do
+	for i = 1, table.getn( _generationdata.Roads.Paths ) do
 		
-		local a, b = _generationData.Roads.Paths[i][1], _generationData.Roads.Paths[i][2]
-		local x1, y1, x2, y2 = _generationData.Roads.StartPoints[a].x, _generationData.Roads.StartPoints[a].y, _generationData.Roads.StartPoints[b].x, _generationData.Roads.StartPoints[b].y
+		local a, b = _generationdata.Roads.Paths[ i ][ 1 ], _generationdata.Roads.Paths[ i ][ 2 ]
+		local x1, y1, x2, y2 = _generationdata.Roads.StartPoints[a].X, _generationdata.Roads.StartPoints[a].Y, _generationdata.Roads.StartPoints[b].X, _generationdata.Roads.StartPoints[b].Y
 
-		local road = AStar.FindPath ( _generationData.TerrainNodes[x1][y1], _generationData.TerrainNodes[x2][y2], _generationData.TerrainNodes, RandomMapGenerator.AStar_GetNeighborNodes_Road, RandomMapGenerator.AStar_GetPathCost_Road )
+		local road = AStar.FindPath ( _generationdata.TerrainNodes[x1][y1], _generationdata.TerrainNodes[x2][y2], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road )
 		
 		if road then
   
@@ -3255,18 +2054,18 @@ function RandomMapGenerator.CreateRoads(_generationData)
 				nodeA = road[j]
 				nodeB = road[j-1]
 				
-				x1, y1, x2, y2 = nodeA.x, nodeA.y, (nodeA.x + nodeB.x) / 2, (nodeA.y + nodeB.y) / 2
+				x1, y1, x2, y2 = nodeA.X, nodeA.Y, (nodeA.X + nodeB.X) / 2, (nodeA.Y + nodeB.Y) / 2
 				
-				if _generationData.Rivers then
+				if _generationdata.Rivers then
 				
-					for k = 1, table.getn(_generationData.Rivers.Nodes) do
+					for k = 1, table.getn(_generationdata.Rivers.Nodes) do
 					
-						nodeB = _generationData.Rivers.Nodes[k]
+						nodeB = _generationdata.Rivers.Nodes[k]
 						
-						if (x1 == nodeB.x or x2 == nodeB.x) and (y1 == nodeB.y or y2 == nodeB.y) then
+						if (x1 == nodeB.X or x2 == nodeB.X) and (y1 == nodeB.Y or y2 == nodeB.Y) then
 						
 							n = j
-							--x, y = nodeA.x, nodeA.y
+							--x, y = nodeA.X, nodeA.Y
 							break
 						end
 					end
@@ -3279,7 +2078,7 @@ function RandomMapGenerator.CreateRoads(_generationData)
 				nodeB = road[math.max(n - 4, 1)]
 				local nodeC = road[math.min(n + 4, table.getn(road))]
 				
-				local x, y = math.abs(nodeB.x - nodeC.x), math.abs(nodeB.y - nodeC.y)
+				local x, y = math.abs(nodeB.X - nodeC.X), math.abs(nodeB.Y - nodeC.Y)
 				local b, c = math.max(n - 8, 1), math.min(n + 8, table.getn(road))
 				
 				local nodeB = road[b]
@@ -3290,11 +2089,11 @@ function RandomMapGenerator.CreateRoads(_generationData)
 				if x > y then
 				
 					ax, ay = 16, 0
-					bridge = {Placement = {AbsolutX = nodeA.x, AbsolutY = nodeA.y,}, Data = RandomMapGenerator.StructureSets.Bridge1,}
+					bridge = {Placement = {AbsolutX = nodeA.X, AbsolutY = nodeA.Y,}, Data = RMG.StructureSets.Bridge1,}
 				else
 				
 					ax, ay = 0, 16
-					bridge = {Placement = {AbsolutX = nodeA.x, AbsolutY = nodeA.y,}, Data = RandomMapGenerator.StructureSets.Bridge2,}
+					bridge = {Placement = {AbsolutX = nodeA.X, AbsolutY = nodeA.Y,}, Data = RMG.StructureSets.Bridge2,}
 				end
 				
 				local isblocked = false
@@ -3309,12 +2108,12 @@ function RandomMapGenerator.CreateRoads(_generationData)
 				if not isblocked then
 					table.insert(bridges, bridge)
 				end
-				--table.insert(_generationData.Structures.Childs[0].Childs, bridge)
+				--table.insert(_generationdata.Structures.Childs[0].Childs, bridge)
 			end
    
-				--[[x, y = nodeA.x - ax, nodeA.y - ay
+				--[[x, y = nodeA.X - ax, nodeA.Y - ay
     
-				if (x - nodeB.x) ^ 2 + (y - nodeB.y) ^ 2 > (x - nodeC.x) ^ 2 + (y - nodeC.y) ^ 2 then
+				if (x - nodeB.X) ^ 2 + (y - nodeB.Y) ^ 2 > (x - nodeC.X) ^ 2 + (y - nodeC.Y) ^ 2 then
 					nodeA = nodeB -- save
 					nodeB = nodeC -- switch
 					nodeC = nodeA -- nodeB
@@ -3324,11 +2123,11 @@ function RandomMapGenerator.CreateRoads(_generationData)
 				end
      
 				-- now B is the lower node
-				local raod1 = AStar.FindPath ( _generationData.TerrainNodes[x][y], _generationData.TerrainNodes[nodeB.x][nodeB.y], _generationData.TerrainNodes, RandomMapGenerator.AStar_GetNeighborNodes_Road, RandomMapGenerator.AStar_GetPathCost_Road )
+				local raod1 = AStar.FindPath ( _generationdata.TerrainNodes[x][y], _generationdata.TerrainNodes[nodeB.X][nodeB.Y], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road )
    
 				x, y = x + ax * 2, y + ay * 2
    
-				local road2 = AStar.FindPath ( _generationData.TerrainNodes[x][y], _generationData.TerrainNodes[nodeC.x][nodeC.y], _generationData.TerrainNodes, RandomMapGenerator.AStar_GetNeighborNodes_Road, RandomMapGenerator.AStar_GetPathCost_Road )
+				local road2 = AStar.FindPath ( _generationdata.TerrainNodes[x][y], _generationdata.TerrainNodes[nodeC.X][nodeC.Y], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road )
 			end
    
 			for i = c, b, -1 do
@@ -3336,35 +2135,37 @@ function RandomMapGenerator.CreateRoads(_generationData)
 			end
 
 			for i = 1, table.getn(road1) do
-				table.insert(road, {x = road1[i].x, y = road1[i].y})
+				table.insert(road, {X = road1[i].X, Y = road1[i].Y})
 			end
 			
 			for i = 1, table.getn(road2) do
-				table.insert(road, {x = road2[i].x, y = road2[i].y})
+				table.insert(road, {X = road2[i].X, Y = road2[i].Y})
 			end]]
 			
-			local height = RandomMapGenerator.GetTerrainHeightFromNoise(_generationData, _generationData.ThresholdRoad) - 150
-			local noise = _generationData.ThresholdRoad
+			local currNode = road[ 1 ]
 			
-			local currNode = road[1]
+			local height = _generationdata.TerrainNodes[ currNode.X ][ currNode.Y ].Height - 100
+			local heightnoise = _generationdata.ThresholdRoad
 			
-			if _generationData.TerrainNodes[currNode.x][currNode.y].blocking ~= RandomMapGenerator.BlockingTypes.River then
-				RandomMapGenerator.SetNoiseOverride(_generationData, currNode.x, currNode.y, 6, 1, noise, height)
+			if _generationdata.TerrainNodes[ currNode.X ][ currNode.Y ].Blocking ~= RMG.BlockingTypes.River then
+				RMG.SetNoiseOverride( _generationdata, currNode.X, currNode.Y, 6, 1, height, heightnoise )
 			end
 			
 			local prevNode = currNode
 			
-			for j = 2, table.getn(road) do
+			for j = 2, table.getn( road ) do
 		
-				currNode = road[j]
+				currNode = road[ j ]
 				
 				-- same as for rivers we need at least the middle node to make shure river and road dont miss each other at a diagonal
 				for k = 4, 1, -1 do
 				
-					local x,y = Lerp(currNode.x, prevNode.x, k/4), Lerp(currNode.y, prevNode.y, k/4)
+					local x, y = Lerp( currNode.X, prevNode.X, k / 4 ), Lerp( currNode.Y, prevNode.Y, k / 4 )
+					height = _generationdata.TerrainNodes[ x ][ y ].Height - 100
 					
-					if _generationData.TerrainNodes[x][y].blocking ~= RandomMapGenerator.BlockingTypes.River then
-						RandomMapGenerator.SetNoiseOverride(_generationData, x, y, 6, 1, noise, height)
+					-- do not override rivers
+					if _generationdata.TerrainNodes[ x ][ y ].Blocking ~= RMG.BlockingTypes.River then
+						RMG.SetNoiseOverride( _generationdata, x, y, 6, 1, height, heightnoise )
 					end
 				end
 				
@@ -3373,79 +2174,79 @@ function RandomMapGenerator.CreateRoads(_generationData)
 		end
 	end
 	
-	for _,v in pairs(bridges) do
-		table.insert(_generationData.Structures.Childs[0].Childs, v)
+	for _,v in pairs( bridges ) do
+		table.insert( _generationdata.Structures.Childs[ 0 ].Childs, v )
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetNoiseOverride(_generationData, _nodeX, _nodeY, _radius, _lerpRadius, _noise, _height)
+-- _height, _heightnoise, _vegetaionnoise are optional
+function RMG.SetNoiseOverride( _generationdata, _nodeX, _nodeY, _radius, _lerpRadius, _height, _heightnoise, _vegetationnoise )
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	
-	local x1, x2, y1, y2 = math.max(_nodeX - _radius, 0), math.min(_nodeX + _radius, mapsize), math.max(_nodeY - _radius, 0), math.min(_nodeY + _radius, mapsize)
+	local x1, x2, y1, y2 = math.max( _nodeX - _radius , 0 ), math.min( _nodeX + _radius, mapsize ), math.max( _nodeY - _radius, 0 ), math.min( _nodeY + _radius, mapsize )
 	local radiusSq = _radius ^ 2
 	
 	for x = x1, x2 do
 		for y = y1, y2 do
-			if IsInRangeSq(x, y, _nodeX, _nodeY, radiusSq) then -- acts like the first check
+			if IsInRangeSq(x, y, _nodeX, _nodeY, radiusSq) then
 			
 				local dist = RTFGetDistance(x, y, _nodeX, _nodeY)
-			
-			--if dist < _radius then
-				
 				local factor = 0 -- 1 = old, 0 = new
 				
-				if dist > _lerpRadius then -- seccond check
+				-- is outside of inner radius
+				if dist > _lerpRadius then
 					factor = (dist - _lerpRadius) / (_radius - _lerpRadius)
 				end
 				
-				local override = _generationData.TerrainNodes[x][y].override
+				local override = _generationdata.TerrainNodes[ x ][ y ].Override
 				
-				if override then --and override.noise == _noise
-					_generationData.TerrainNodes[x][y].override.factor = math.min(override.factor, factor)
+				if override then
+					_generationdata.TerrainNodes[ x ][ y ].Override.Factor = math.min( override.Factor, factor )
 				else
-					_generationData.TerrainNodes[x][y].override = {noise = _noise, height = _height, factor = factor}
+					_generationdata.TerrainNodes[ x ][ y ].Override = { HeightNoise = _heightnoise, Height = _height, VegetationNoise = _vegetationnoise, Factor = factor }
 				end
-				
 			end
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.ApplyNoiseOverride(_generationData, _mode, _func)
+function RMG.ApplyNoiseOverride( _generationdata, _blockingtype, _heightfunc, _heightnoisefunc, _vegetationnoisefunc )
 
 	local mapsize = Logic.WorldGetSize() / 100
+	local keys = { "Height", "HeightNoise", "VegetationNoise" }
+	local funcs = { _heightfunc, _heightnoisefunc, _vegetationnoisefunc }
 	
 	for x = 0, mapsize do
 		for y = 0, mapsize do
 		
-			local override = _generationData.TerrainNodes[x][y].override
+			local override = _generationdata.TerrainNodes[ x ][ y ].Override
 			
 			if override then
-			
-				local height = CurvedLerp(_generationData.TerrainNodes[x][y].height, override.height, override.factor)
 				
-				if _func then
-					height = _func(_generationData.TerrainNodes[x][y].height, height)
+				local updateblocking = false
+				
+				for i, key in ipairs( keys ) do
+					if override[ key ] then
+						
+						local value = CurvedLerp( _generationdata.TerrainNodes[ x ][ y ][ key ], override[ key ], override.Factor )
+						
+						if funcs[ i ] then
+							value = funcs[ i ]( _generationdata.TerrainNodes[ x ][ y ][ key ], value )
+						end
+						
+						_generationdata.TerrainNodes[ x ][ y ][ key ] = value
+						updateblocking = true
+					end
 				end
 				
-				local noise
-				
-				if _mode == RandomMapGenerator.BlockingTypes.River then -- river
-					noise = RandomMapGenerator.GetTerrainNoiseFromHeight(_generationData, height)
-				else
-					noise = CurvedLerp(_generationData.TerrainNodes[x][y].noise, override.noise, override.factor)
+				-- set blocking if weight is more than 50%
+				-- note that factor is inverted
+				if updateblocking and override.Factor < 0.5 then
+					_generationdata.TerrainNodes[ x ][ y ].Blocking = _blockingtype
 				end
 				
-				_generationData.TerrainNodes[x][y].noise = noise
-				_generationData.TerrainNodes[x][y].height = height
-				
-				-- we set blocking on rivers and roads
-				if override.factor < 0.5 then
-					_generationData.TerrainNodes[x][y].blocking = _mode
-				end
-				
-				_generationData.TerrainNodes[x][y].override = nil
+				_generationdata.TerrainNodes[ x ][ y ].Override = nil
 			end
 		end
 	end
@@ -3453,32 +2254,32 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- AStar Utility
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AStar_GetNeighborNodes( _thisNode, _nodes, _steps )
- 
- local mapsize = Logic.WorldGetSize() / 100
- local maphalf = mapsize / 2
- local neighbors = {}
- local node
- local x1, x2, y1, y2 = math.max(_thisNode.x - _steps, 0), math.min(_thisNode.x + _steps, mapsize), math.max(_thisNode.y - _steps, 0), math.min(_thisNode.y + _steps, mapsize)
- 
- for x = x1, x2, _steps do
-  for y = y1, y2, _steps do
-   node = _nodes[x][y]
-   if (node.x ~= _thisNode.x or node.y ~= _thisNode.y) and IsValidMapIndex( 0, node.x, node.y ) then
-    table.insert ( neighbors, node )
-   end
-  end
- end
+function RMG.AStar_GetNeighborNodes( _thisnode, _nodes, _steps )
+	
+	local mapsize = Logic.WorldGetSize() / 100
+	local maphalf = mapsize / 2
+	local neighbors = {}
+	local node
+	local x1, x2, y1, y2 = math.max( _thisnode.X - _steps, 0), math.min( _thisnode.X + _steps, mapsize ), math.max( _thisnode.Y - _steps, 0 ), math.min( _thisnode.Y + _steps, mapsize )
+	
+	for x = x1, x2, _steps do
+		for y = y1, y2, _steps do
+			node = _nodes[ x ][ y ]
+			if ( node.X ~= _thisnode.X or node.Y ~= _thisnode.Y ) and IsValidMapIndex( 0, node.X, node.Y ) then
+				table.insert ( neighbors, node )
+			end
+		end
+	end
  
 	return neighbors
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AStar_GetNeighborNodes_Road( _thisNode, _nodes )
- return RandomMapGenerator.AStar_GetNeighborNodes( _thisNode, _nodes, 4 )
+function RMG.AStar_GetNeighborNodes_Road( _thisnode, _nodes )
+	return RMG.AStar_GetNeighborNodes( _thisnode, _nodes, 4 )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AStar_GetNeighborNodes_River( _thisNode, _nodes )
- return RandomMapGenerator.AStar_GetNeighborNodes( _thisNode, _nodes, 4 )
+function RMG.AStar_GetNeighborNodes_River( _thisnode, _nodes )
+	return RMG.AStar_GetNeighborNodes( _thisnode, _nodes, 4 )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
  -- fast distance calculation for neighboring nodes
@@ -3486,107 +2287,222 @@ end
  -- where if both are not equal, the result is eather 1 or -1 which results in 1 so dist = 1 + 1 * 0.414 = 1.414
  -- river nodes have a higher distance since only every 4th node is used so 4 + 16 * 0.104 = 5.657 = 4 * 1.414
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AStar_GetPathDist( _nodeA, _nodeB, _straight, _diagonalFraction )
- return _straight + math.abs( (_nodeA.x - _nodeB.x) * (_nodeA.y - _nodeB.y) ) * _diagonalFraction
+function RMG.AStar_GetPathDist( _nodeA, _nodeB, _straight, _diagonalfraction )
+	return _straight + math.abs( ( _nodeA.X - _nodeB.X ) * ( _nodeA.Y - _nodeB.Y ) ) * _diagonalfraction
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AStar_GetPathCost_Road ( _nodeA, _nodeB )
- local cost = math.abs(( _nodeA.noise + _nodeB.noise ) / 2 ) * 25.0; -- adjust factor by needs
- return RandomMapGenerator.AStar_GetPathDist ( _nodeA, _nodeB, 1.0, 1.41421353816986083984375 ) * cost;
+function RMG.AStar_GetPathCost_Road ( _nodeA, _nodeB )
+	 -- adjust factor by needs, be carefull this has heavy impact on performance
+	 -- higher factor = better result but slower vs lower factor = worse result but faster
+	local cost = math.abs( ( _nodeA.Height + _nodeB.Height ) / 2 - RMG.GenerationData.TerrainBaseHeight ) * 0.04
+	return RMG.AStar_GetPathDist ( _nodeA, _nodeB, 1.0, 1.41421353816986083984375 ) * cost
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.AStar_GetPathCost_River ( _nodeA, _nodeB )
- local cost = (( _nodeA.noise + _nodeB.noise ) / 4.0 + 0.5) * 2.5 -- adjust factor by needs
- return RandomMapGenerator.AStar_GetPathDist ( _nodeA, _nodeB, 4.0, 0.103553391993045806884765625 ) * cost
+function RMG.AStar_GetPathCost_River ( _nodeA, _nodeB )
+	 -- adjust factor by needs, be carefull this has heavy impact on performance
+	 -- higher factor = better result but slower vs lower factor = worse result but faster
+	local cost = ( ( _nodeA.HeightNoise + _nodeB.HeightNoise ) / 4 + 0.5 ) * 2.5
+	return RMG.AStar_GetPathDist ( _nodeA, _nodeB, 4.0, 0.103553391993045806884765625 ) * cost
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Set Terrain Textures
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.SetTerrainTextures(_generationData)
+function RMG.SetTerrainTextures( _generationdata )
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
-
+	
+	-- set terrain textures
  	for x = 0, mapsize, 4 do
 		for y = 0, mapsize, 4 do
-			if math.sqrt((x - maphalf)^2 + (y - maphalf)^2) < maphalf then
-				RandomMapGenerator.SetRandomTexture(x, y, _generationData.LandscapeSet.Textures[RandomMapGenerator.GetBiomeKey(_generationData, _generationData.TerrainNodes[x][y].noise)])
+			if math.sqrt( ( x - maphalf ) ^ 2 + ( y - maphalf ) ^ 2 ) < maphalf then
+				
+				RMG.SetRandomTexture( x, y, RMG.GetTerrainNodeLandscapeSetData( _generationdata, _generationdata.TerrainNodes[ x ][ y ], "Textures", true ) )
 			end
 		end
 	end
 	
-	Logic.WaterSetType(0, 0, mapsize, mapsize, _generationData.LandscapeSet.Water)
-	Logic.WaterSetAbsoluteHeight(0, 0, mapsize, mapsize, _generationData.WaterBaseHeight)
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetRandomVertexColor(_generationData, _nodeX, _nodeY)
+	-- set water textures
+	local watertype = _generationdata.LandscapeSet.Water
 	
-	local colors = _generationData.LandscapeSet.VertexColors
-	local key = RandomMapGenerator.GetBiomeKey(_generationData, _generationData.TerrainNodes[_nodeX][_nodeY].noise)
-	
-	if colors and colors[key] then
-	
-		local color = GetRandomValueFromTable(colors[key])
-		Logic.SetTerrainVertexColor(_nodeX, _nodeY, color.r, color.g, color.b)
+	if watertype then
+		Logic.WaterSetType( 0, 0, mapsize, mapsize, watertype )
 	end
+	
+	-- set water height
+	Logic.WaterSetAbsoluteHeight( 0, 0, mapsize, mapsize, _generationdata.WaterBaseHeight )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetRandomTexture(_nodeX, _nodeY, _textures)
+function RMG.SetRandomTexture( _nodeX, _nodeY, _textures )
 
 	if _textures then
 	
-		Logic.SetTerrainNodeType(_nodeX, _nodeY, GetRandomValueFromTable(_textures))
+		Logic.SetTerrainNodeType( _nodeX, _nodeY, RMG.GetRandomValueFromTable( _textures ) )
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function GetRandomValueFromTable(_table)
-
-	if type(_table) == "table" then
+function RMG.SetRandomVertexColor( _nodeX, _nodeY, _colors )
 	
-		return _table[math.random(1, table.getn(_table))]
+	if _colors then
+	
+		local color = RMG.GetRandomValueFromTable( _colors )
+		Logic.SetTerrainVertexColor( _nodeX, _nodeY, color.R, color.G, color.B )
+	end
+end
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function RMG.GetTerrainNodeLandscapeSetData( _generationdata, _terrainnode, _tablekey, _usedefaults )
+	
+	local heightkey, vegetationkey = RMG.GetBiomeKeys( _generationdata, _terrainnode )
+	
+	return RMG.GetLandscapeSetData( _generationdata, _tablekey, heightkey, vegetationkey, _usedefaults )
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- generic getter function for landscape set data
+-- note that the output can still be nil
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.GetLandscapeSetData( _generationdata, _tablekey, _heightkey, _vegetationkey, _usedefaults )
+	
+	local datatable = _generationdata.LandscapeSet[ _tablekey ]
+	
+	-- no landscapset is defined
+	if not datatable then
+		
+		if not _usedefaults then
+			return
+		end
+		
+		-- use default landscape set
+		datatable = RMG.LandscapeSets.Normal[ _tablekey ]
+	end
+	
+	local heighttable = datatable[ _heightkey ]
+	
+	-- landscape set is missing requested height table
+	if not heighttable then
+		
+		if not _usedefaults then
+			return
+		end
+		
+		-- try with default height table
+		heighttable = datatable[ "Normal" ]
+		
+		if not heighttable then
+			
+			if not _usedefaults then
+				return
+			end
+			
+			-- use default landscape set
+			heighttable = RMG.LandscapeSets.Normal[ _tablekey ]
+		end
+	end
+	
+	local vegetationtable = heighttable[ _vegetationkey ]
+	
+	-- heighttable is mission requested vegetation table
+	if not vegetationtable then
+		
+		-- use default vegetation key, no matter what
+		vegetationtable = heighttable[ "Normal" ]
+	end
+	
+	return vegetationtable
+end
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function RMG.GetRandomValueFromTable( _table )
+	return GetRandomValueFromTable( GetRandomValueFromTable( _table.Sets or _table, _table.Weights ) )
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function GetRandomValueFromTable( _table, _weights )
+
+	if type( _table ) == "table" then
+		
+		if type( _weights ) == "table" then
+			
+			local totalweight = 0
+			
+			for i = 1, table.getn( _table ) do
+				totalweight = totalweight + ( _weights[ i ] or 1 )
+			end
+			
+			local randomvalue = math.random( 1, totalweight )
+			local weight = 0
+			
+			for i = 1, table.getn( _table ) do
+				
+				weight = weight + ( _weights[ i ] or 1 )
+				
+				if weight >= randomvalue then
+					return _table[ i ]
+				end
+			end
+		end
+		
+		return _table[ math.random( 1, table.getn( _table ) ) ]
 	end
 	
 	return _table
 end
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ -- this way, we can use the same biome logic for terrain and entities
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+function RMG.GetBiomeKeys( _generationdata, _terrainnode )
+	
+	return RMG.GetHeightKey( _generationdata, _terrainnode ), RMG.GetVegetationKey( _generationdata, _terrainnode )
+end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetBiomeKey(_generationData, _noise) -- this way, we can use the same biome logic for terrain and entities
+function RMG.GetHeightKey( _generationdata, _terrainnode )
 
-	if _noise > _generationData.ThresholdPike then
-		return "Pike"
-	elseif _noise > _generationData.ThresholdHighMeadow then
-		return "HighMeadow"
-	elseif _noise > _generationData.ThresholdHighForest then
-		return "HighForest"
-	elseif _noise > _generationData.ThresholdMountain then
-		return "Mountain"
-	elseif _noise > _generationData.ThresholdHill then
-		return "Hill"
-	elseif _noise > _generationData.ThresholdForest then
-		return "Forest"
-	elseif _noise > _generationData.ThresholdMeadow then
-		return "Meadow"
-	elseif _noise > _generationData.ThresholdRoad then
-		return "Flatland"
-	elseif _noise < _generationData.ThresholdSea then
-		return "Sea"
-	elseif _noise < _generationData.ThresholdLake then
-		return "Lake"
-	elseif _noise < _generationData.ThresholdCoast then
-		return "Coast"
-	elseif _noise < _generationData.ThresholdLowForest then
-		return "LowForest"
-	elseif _noise < _generationData.ThresholdLowMeadow then
-		return "LowMeadow"
-	elseif _noise < _generationData.ThresholdRoad then
-		return "LowFlatland"
-	elseif _noise == _generationData.ThresholdRoad then
+	-- height noise equals threshold road indicates a road, no matter the actual height
+	local heightnoise = _terrainnode.HeightNoise
+	
+	if heightnoise == _generationdata.ThresholdRoad then
 		return "Road"
 	end
+	
+	-- otherwise get key from terrain height
+	local height= _terrainnode.Height
+	local heightkey = "Normal"
+	
+	if height > _generationdata.ThresholdPike then
+		heightkey = "Pike"
+	elseif height > _generationdata.ThresholdMountain then
+		heightkey = "Mountain"
+	elseif height > _generationdata.ThresholdHill then
+		heightkey = "Hill"
+	elseif height < _generationdata.ThresholdSea then
+		heightkey = "Sea"
+	elseif height < _generationdata.ThresholdLake then
+		heightkey = "Lake"
+	elseif height < _generationdata.ThresholdCoast then
+		heightkey = "Coast"
+	end
+	
+	return heightkey
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.GetVegetationKey( _generationdata, _terrainnode )
+	
+	local vegetationnoise = _terrainnode.VegetationNoise
+	local vegetationkey = "Medium"
+	
+	if vegetationnoise > _generationdata.ThresholdVeryStrongGroth then
+		vegetationkey = "VeryStrong"
+	elseif vegetationnoise > _generationdata.ThresholdStrongGroth then
+		vegetationkey = "Strong"
+	elseif vegetationnoise < _generationdata.ThresholdVeryWeakGroth then
+		vegetationkey = "VeryWeak"
+	elseif vegetationnoise < _generationdata.ThresholdWeakGroth then
+		vegetationkey = "Weak"
+	end
+	
+	return vegetationkey
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Set Terrain Heights
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.SetTerrainHeights(_generationData)
+function RMG.SetTerrainHeights(_generationdata)
  
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -3594,21 +2510,18 @@ function RandomMapGenerator.SetTerrainHeights(_generationData)
 	for x = 0, mapsize do
 		for y = 0, mapsize do
 		
-			Logic.SetTerrainNodeHeight(x, y, _generationData.TerrainNodes[x][y].height)
+			Logic.SetTerrainNodeHeight( x, y, _generationdata.TerrainNodes[ x ][ y ].Height )
 			
 			-- this is more a textures thing but since textures use a 4 stepped loop we do it here
-			if math.sqrt((x - maphalf)^2 + (y - maphalf)^2) < maphalf then
-				RandomMapGenerator.SetRandomVertexColor(_generationData, x, y)
-
-				--if _generationData.TerrainNodes[x][y].blocking ~= 0 then
-					--Logic.SetTerrainVertexColor(x, y, 255, 128, 128)
-				--end
+			if math.sqrt( ( x - maphalf ) ^ 2 + ( y - maphalf ) ^ 2 ) < maphalf then
+				
+				RMG.SetRandomVertexColor( x, y, RMG.GetTerrainNodeLandscapeSetData( _generationdata, _generationdata.TerrainNodes[ x ][ y ], "VertexColors" ) )
 			end
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetTerrainHeightFromNoise(_generationData, _noise)
+function RMG.GetTerrainHeightFromNoise(_generationdata, _noise)
 	
 	-- experimental 
 	--[[if _noise > 0 then
@@ -3617,53 +2530,46 @@ function RandomMapGenerator.GetTerrainHeightFromNoise(_generationData, _noise)
 		_noise = math.sin((_noise + 0.5) * math.pi) / 2 - 0.5
 	end]]
 		
-	if _noise < 0 then --_generationData.ThresholdRoad then
-		_noise = math.min( _noise - _generationData.ThresholdLowFlatland, 0 ) / ( 1 + _generationData.ThresholdLowFlatland )
+	--[[if _noise < 0 then --_generationdata.ThresholdRoad then
+		_noise = math.min( _noise - _generationdata.ThresholdLowFlatland, 0 ) / ( 1 + _generationdata.ThresholdLowFlatland )
 	else
-		_noise = math.max( math.min(_noise, _generationData.ThresholdPlateau) - _generationData.ThresholdFlatland, 0 ) / ( 1 - _generationData.ThresholdFlatland ) * (2 - _generationData.ThresholdPlateau)
+		_noise = math.max( math.min(_noise, _generationdata.ThresholdPlateau) - _generationdata.ThresholdFlatland, 0 ) / ( 1 - _generationdata.ThresholdFlatland ) * (2 - _generationdata.ThresholdPlateau)
+	end]]
+	
+	local noise = ( math.abs( _noise ) * 1.2 ) ^ 2
+	
+	if _noise < 0.0 then
+		noise = -noise
 	end
 	
-	return math.max(_noise * _generationData.NoiseFactorZ + _generationData.TerrainBaseHeight, 0)
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
- -- this must be the reverse function to RandomMapGenerator.GetTerrainHeightFromNoise
-function RandomMapGenerator.GetTerrainNoiseFromHeight(_generationData, _height)
-
-	local _height = math.max(math.min((_height - _generationData.TerrainBaseHeight) / _generationData.NoiseFactorZ, 1), -1)
-	
-	if _height < 0 then
-		return _height * ( 1 + _generationData.ThresholdLowFlatland ) + _generationData.ThresholdLowFlatland
-	end
-	
-	return _height * ( 1 - _generationData.ThresholdFlatland ) + _generationData.ThresholdFlatland
+	return math.max( noise * _generationdata.NoiseFactorZ + _generationdata.TerrainBaseHeight, 0 )
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Generate Structures
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.GenerateStructures(_generationData)
+function RMG.GenerateStructures( _generationdata )
 		
 	local success = false
 	local failure = false
 	
 	while not success and not failure do
-		success, failure = RandomMapGenerator.GenerateStructure(_generationData)
+		success, failure = RMG.GenerateStructure( _generationdata )
 	end
 	
 	if failure then
-		GUI.AddStaticNote("@color:255,0,0,255 RandomMapGenerator ERROR: Auf der Karte ist nicht genug Platz um alle Strukturen platzieren zu können. @cr @color:255,255,255 Ändert den Seed oder verwendet eine größere Karte.")-- oder verringert die Anzahl an Strukturen.")
+		GUI.AddStaticNote( "@color:255,0,0,255 RMG ERROR: Auf der Karte ist nicht genug Platz um alle Strukturen platzieren zu können. @cr @color:255,255,255 Ändert den Seed oder verwendet eine größere Karte." )-- oder verringert die Anzahl an Strukturen.")
 		return false
 	end
 	
 	return true
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GenerateStructure(_generationData)
+function RMG.GenerateStructure( _generationdata )
  
-	local struct = RandomMapGenerator.GetCurrentStruct(_generationData)
-	local parent = RandomMapGenerator.GetCurrentParentData(_generationData)
+	local struct = RMG.GetCurrentStruct( _generationdata )
+	local parent = RMG.GetCurrentParentData( _generationdata )
  
 	local placement, x, y, forcePlacement
-	local noise, noiseMin, noiseMax, symetric = 0, -1, 1, true
  
 	if not struct.Placement then
 	
@@ -3684,10 +2590,6 @@ function RandomMapGenerator.GenerateStructure(_generationData)
 		else
 		
 			forcePlacement = false
-			
-			symetric = not placement.Asymetric
-			noiseMin = placement.NoiseMin or -1
-			noiseMax = placement.NoiseMax or  1
 		end
 	end
 
@@ -3706,10 +2608,10 @@ function RandomMapGenerator.GenerateStructure(_generationData)
 		
 		if placement.AreaMax then
 			
-			node = RandomMapGenerator.GetRandomPosition(_generationData, struct, parent, placement.Grid)
+			node = RMG.GetRandomPosition( _generationdata, struct, parent, placement.Grid )
 			
 			if node then
-				x, y = node.x, node.y
+				x, y = node.X, node.Y
 			end
 		
 		else
@@ -3719,41 +2621,55 @@ function RandomMapGenerator.GenerateStructure(_generationData)
 	end
 	
 	if forcePlacement or node then
-  
-		if _generationData.MirrorMap and RandomMapGenerator.StructGetCurrentPlayer(_generationData) > 0 then
-			for p = 2, _generationData.NumberOfPlayers do
+		
+		local playerindex = RMG.StructGetCurrentPlayer( _generationdata )
+		
+		if playerindex > 0 and _generationdata.MirrorMap then
+			
+			local composition = _generationdata.Composition
+			local player = composition[ playerindex ]
+
+			if player.Mirror then
 				
-				local mx, my = RandomMapGenerator.MirrorNode(_generationData, x, y, p)
-				mx, my = Round(mx), Round(my)
-				RandomMapGenerator.CreateStructure(_generationData, struct, mx, my, _generationData.Players[p])--, true) -- this works without doNotRegister since player 1 is set at last below
+				-- mirror offset + 0.5 would be source of player 1, but we need it 0 based and this is an optimized version to write 
+				local offset = -0.5 * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+				local sourceradian = player.Slize * _generationdata.MirrorRadian + offset
+				
+				for _, mirror in ipairs( player.Mirror ) do
+					
+					local targetradian = composition[ mirror ].Slize * _generationdata.MirrorRadian + offset
+					local mx, my = RMG.MirrorNode( _generationdata, x, y, sourceradian, targetradian, composition[ mirror ].AxisMirrorFlag )
+					
+					RMG.CreateStructure( _generationdata, struct, Round( mx ), Round( my ), _generationdata.Players[ mirror ] )
+				end
 			end
 		end
 		
 		-- if MirrorMap is true, this is player 1 and needs to be the last call to get the positioning for mirror sources right
-		RandomMapGenerator.CreateStructure(_generationData, struct, x, y, _generationData.Players[RandomMapGenerator.StructGetCurrentPlayer(_generationData)])
+		RMG.CreateStructure( _generationdata, struct, x, y, _generationdata.Players[ playerindex ] )
 				
 		-- never change anything in the following lines !!!
-		local level = _generationData.Structures.Current.Levels[0]
+		local level = _generationdata.Structures.Current.Levels[ 0 ]
 		
-		if struct.Childs and table.getn(struct.Childs) > 0 then
+		if struct.Childs and table.getn( struct.Childs ) > 0 then
 			
 			level = level + 1
-			_generationData.Structures.Current.Levels[0] = level
-			_generationData.Structures.Current.Levels[level] = 1
+			_generationdata.Structures.Current.Levels[ 0 ] = level
+			_generationdata.Structures.Current.Levels[ level ] = 1
      
 			return false, false
 		else
   
 			while level > 0 do
-				if _generationData.Structures.Current.Levels[level] < table.getn(RandomMapGenerator.GetStructByLevel(_generationData, level-1).Childs) then
+				if _generationdata.Structures.Current.Levels[ level ] < table.getn( RMG.GetStructByLevel( _generationdata, level - 1 ).Childs ) then
 				
-					_generationData.Structures.Current.Levels[level] = _generationData.Structures.Current.Levels[level] + 1
+					_generationdata.Structures.Current.Levels[ level ] = _generationdata.Structures.Current.Levels[ level ] + 1
      
 					return false, false
 				else
 				
-					_generationData.Structures.Current.Levels[level] = 1
-					_generationData.Structures.Current.Levels[0] = _generationData.Structures.Current.Levels[0] - 1
+					_generationdata.Structures.Current.Levels[ level ] = 1
+					_generationdata.Structures.Current.Levels[ 0 ] = _generationdata.Structures.Current.Levels[ 0 ] - 1
 					level = level - 1
 					-- do not call return here, there could be more levels finished
 				end
@@ -3766,81 +2682,83 @@ function RandomMapGenerator.GenerateStructure(_generationData)
 
 	return false, true
 end
-
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetCurrentParent(_generationData)
- return RandomMapGenerator.GetStructByLevel(_generationData, _generationData.Structures.Current.Levels[0] - 1)
+function RMG.GetCurrentStruct( _generationdata )
+	return RMG.GetStructByLevel( _generationdata, _generationdata.Structures.Current.Levels[ 0 ] )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetCurrentStruct(_generationData)
- return RandomMapGenerator.GetStructByLevel(_generationData, _generationData.Structures.Current.Levels[0])
+function RMG.GetStructByLevel( _generationdata, _level )
+	
+	local struct = _generationdata.Structures
+	
+	for l = 1, _level do
+		struct = struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ]
+	end
+	
+	return struct
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetStructByLevel(_generationData, _level)
- local struct = _generationData.Structures
- 
- for l = 1, _level do
-  struct = struct.Childs[_generationData.Structures.Current.Levels[l]]
- end
- return struct
+function RMG.GetCurrentParentData( _generationdata )
+	return RMG.GetStructDataByLevel(_generationdata, _generationdata.Structures.Current.Levels[0] - 1)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetCurrentParentData(_generationData)
- return RandomMapGenerator.GetStructDataByLevel(_generationData, _generationData.Structures.Current.Levels[0] - 1)
+function RMG.GetStructDataByLevel( _generationdata, _level )
+	
+	local struct = _generationdata.Structures.Current.Structs
+	
+	for l = 1, _level do
+		struct = struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ]
+	end
+	
+	return struct
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetCurrentStructData(_generationData)
- return RandomMapGenerator.GetStructDataByLevel(_generationData, _generationData.Structures.Current.Levels[0])
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetStructDataByLevel(_generationData, _level)
- local struct = _generationData.Structures.Current.Structs
- 
- for l = 1, _level do
-  struct = struct.Childs[_generationData.Structures.Current.Levels[l]]
- end
- return struct
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetCurrentStructData(_generationData, _nodeX, _nodeY, _radius)
+function RMG.SetCurrentStructData( _generationdata, _nodeX, _nodeY, _radius )
 	
 	local mapsize = Logic.WorldGetSize() / 100
-	local x1, x2, y1, y2 = math.max(_nodeX - _radius, 0), math.min(_nodeX + _radius, mapsize), math.max(_nodeY - _radius, 0), math.min(_nodeY + _radius, mapsize)
+	local x1, x2, y1, y2 = math.max( _nodeX - _radius, 0 ), math.min( _nodeX + _radius, mapsize ), math.max( _nodeY - _radius, 0 ), math.min( _nodeY + _radius, mapsize )
 	
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			if RTFGetDistance(x, y, _nodeX, _nodeY) < _radius then
+			if RTFGetDistance( x, y, _nodeX, _nodeY ) < _radius then
 			
-				_generationData.TerrainNodes[x][y].blocking = RandomMapGenerator.BlockingTypes.Structure
+				_generationdata.TerrainNodes[ x ][ y ].Blocking = RMG.BlockingTypes.Structure
 			end
 		end
 	end
 	
-	RandomMapGenerator.SetStructDataBylevel(_generationData, _generationData.Structures.Current.Levels[0], _nodeX, _nodeY, _radius)
+	RMG.SetStructDataBylevel( _generationdata, _generationdata.Structures.Current.Levels[ 0 ], _nodeX, _nodeY, _radius )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.SetStructDataBylevel(_generationData, _level, _x, _y, _Blocking)
- local struct = _generationData.Structures.Current.Structs
- for l = 1, _level do
-  if not struct.Childs then
-   struct.Childs = {}
-  end
-  if not struct.Childs[_generationData.Structures.Current.Levels[l]] then
-   struct.Childs[_generationData.Structures.Current.Levels[l]] = {}
-  end
-  struct = struct.Childs[_generationData.Structures.Current.Levels[l]]
- end
- struct.X = _x
- struct.Y = _y
- struct.Blocking = _Blocking
+function RMG.SetStructDataBylevel( _generationdata, _level, _x, _y, _blocking )
+	
+	local struct = _generationdata.Structures.Current.Structs
+	
+	for l = 1, _level do
+		
+		if not struct.Childs then
+			struct.Childs = {}
+		end
+		
+		if not struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ] then
+			struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ] = {}
+		end
+		
+		struct = struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ]
+	end
+	
+	struct.X = _x
+	struct.Y = _y
+	
+	struct.Blocking = _blocking
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.StructGetCurrentPlayer(_generationData)
- return math.min(_generationData.Structures.Current.Levels[1], 16)
+function RMG.StructGetCurrentPlayer( _generationdata )
+	return _generationdata.Structures.Current.Players[ _generationdata.Structures.Current.Levels[ 1 ] ] --math.min( _generationdata.Structures.Current.Levels[ 1 ], 16 )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.IsAvailableMapIndex(_generationData, _nodeX, _nodeY, _radius)
+function RMG.IsAvailableMapIndex( _generationdata, _nodeX, _nodeY, _radius )
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local x1, x2, y1, y2 = _nodeX - _radius, _nodeX + _radius, _nodeY - _radius, _nodeY + _radius
@@ -3849,10 +2767,12 @@ function RandomMapGenerator.IsAvailableMapIndex(_generationData, _nodeX, _nodeY,
 		return false
 	end
 	
+	local radiussq = _radius ^ 2
+	
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			if RTFGetDistance(x, y, _nodeX, _nodeY) < _radius and _generationData.TerrainNodes[x][y].blocking ~= 0 then
+			if IsInRangeSq( x, y, _nodeX, _nodeY, radiussq ) and _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
 				return false
 			end
 		end
@@ -3861,28 +2781,28 @@ function RandomMapGenerator.IsAvailableMapIndex(_generationData, _nodeX, _nodeY,
 	return true
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.CreateStructure(_generationData, _struct, _x, _y, _player, _doNotRegister)
+function RMG.CreateStructure( _generationdata, _struct, _x, _y, _player, _doNotRegister )
  
 	-- Data
 	if _struct.Data then
 		local data = _struct.Data
 		
 		if not _doNotRegister then
-			RandomMapGenerator.SetCurrentStructData(_generationData, _x, _y, data.Blocking or 0)
+			RMG.SetCurrentStructData( _generationdata, _x, _y, data.Blocking or 0 )
 		end
 		
 		-- Entities
 		if data.Entities then
-			for i = 1, table.getn(data.Entities) do
+			for i = 1, table.getn( data.Entities ) do
 				
 				local entity = {}
-				entity.data = data.Entities[i]
-				entity.x = _x * 100
-				entity.y = _y * 100
-				entity.p = data.Entities[i].Player or _player.id
+				entity.Data = data.Entities[ i ]
+				entity.X = _x * 100
+				entity.Y = _y * 100
+				entity.P = data.Entities[ i ].Player or _player.Id
 				
-				if _player.ishuman == 1 or ((not entity.data.SkipDummy) and (not entity.data.Explore)) then
-					table.insert(_generationData.Entities, entity)
+				if _player.IsHuman == 1 or ( ( not entity.Data.SkipDummy ) and ( not entity.Data.Explore ) ) then
+					table.insert( _generationdata.Entities, entity )
 				end
 			end
 		end
@@ -3893,17 +2813,17 @@ function RandomMapGenerator.CreateStructure(_generationData, _struct, _x, _y, _p
 			local heights = data.TerrainHeights
 			local area = heights.Area or 10
 			local lerpdist = heights.LerpDist or 8
-			local x1, y1, x2, y2, areasq, isrect = RandomMapGenerator.GetAreaData(area)
+			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData( area )
 			
 			local height, dist
-			local baseheight = heights.BaseHeight or math.max(_generationData.WaterBaseHeight + 100, _generationData.TerrainNodes[_x][_y].height)--_generationData.TerrainBaseHeight--
+			local baseheight = heights.BaseHeight or math.max( _generationdata.WaterBaseHeight + 100, _generationdata.TerrainNodes[ _x ][ _y ].Height )--_generationdata.TerrainBaseHeight--
 			
 			for x = x1, x2 do
 				for y = y1, y2 do
-					if IsValidMapIndex(0, x + _x, y + _y) and (isrect or IsInRangeSq(0, 0, x, y, areasq)) then
+					if IsValidMapIndex( 0, x + _x, y + _y ) and ( isrect or IsInRangeSq( 0, 0, x, y, areasq ) ) then
 						
-						if heights[x] then
-							height = heights[x][y] or 0
+						if heights[ x ] then
+							height = heights[ x ][ y ] or 0
 						else
 							height = 0
 						end
@@ -3911,16 +2831,16 @@ function RandomMapGenerator.CreateStructure(_generationData, _struct, _x, _y, _p
 						height = height + baseheight
 						
 						if isrect then
-							dist = math.min(math.abs(x1 - x), math.abs(y1 - y), math.abs(x2 - x), math.abs(y2 - y)) -- shortest dist to border
+							dist = math.min( math.abs( x1 - x ), math.abs( y1 - y ), math.abs( x2 - x ), math.abs( y2 - y ) ) -- shortest dist to border
 						else
-							dist = area - RTFGetDistance(0, 0, x, y) -- 0 because its a relativ index
+							dist = area - RTFGetDistance( 0, 0, x, y ) -- 0 because its a relativ index
 						end
 						
 						if dist < lerpdist then
-							height = CurvedLerp(height, _generationData.TerrainNodes[x + _x][y + _y].height, (dist + .0) / (lerpdist +.0))
+							height = CurvedLerp( height, _generationdata.TerrainNodes[ x + _x ][ y + _y ].Height, ( dist ) / ( lerpdist ) )
 						end
 						
-						_generationData.TerrainNodes[x + _x][y + _y].height = height
+						_generationdata.TerrainNodes[ x + _x ][ y + _y ].Height = height
 					end
 				end
 			end
@@ -3933,22 +2853,22 @@ function RandomMapGenerator.CreateStructure(_generationData, _struct, _x, _y, _p
 			
 			local area = textures.Area or 10
 			local x, y = textures.RelativX or 0, textures.RelativY or 0
-			local x1, y1, x2, y2, areasq, isrect = RandomMapGenerator.GetAreaData(area)
+			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData( area )
    
-			local px, py = SnapToGrid(4, _x + x, _y + y)
-			x1, y1 = FloorToGrid(4, px + x1, py + y1)
-			x2, y2 = CeilToGrid(4, px + x2, py + y2)
+			local px, py = SnapToGrid( 4, _x + x, _y + y )
+			x1, y1 = FloorToGrid( 4, px + x1, py + y1 )
+			x2, y2 = CeilToGrid( 4, px + x2, py + y2 )
 			
 			local textureList = textures.TextureList or TerrainTypes.EdgeColor01_AT
 			
-			if type(textureList) == "string" then
-				textureList = _generationData.LandscapeSet.Textures[textureList]
+			if type( textureList ) == "string" then
+				textureList = _generationdata.LandscapeSet.Textures[ textureList ].Normal
 			end
 			
 			for x = x1, x2, 4 do
 				for y = y1, y2, 4 do
-					if isrect or IsInRangeSq(x, y, _x, _y, areasq) then
-						RandomMapGenerator.SetRandomTexture(x, y, textureList)
+					if isrect or IsInRangeSq( x, y, _x, _y, areasq ) then
+						RMG.SetRandomTexture( x, y, textureList )
 					end
 				end
 			end
@@ -3960,67 +2880,71 @@ function RandomMapGenerator.CreateStructure(_generationData, _struct, _x, _y, _p
 			local water = data.Water
 			
 			local area = water.Area or 4 -- default for resource pits
-			local x1, y1, x2, y2, areasq, isrect = RandomMapGenerator.GetAreaData(area)
+			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData( area )
 			
-			local px, py = SnapToGrid(4, _x, _y)
-			x1, y1 = FloorToGrid(4, px + x1, py + y1)
-			x2, y2 = CeilToGrid(4, px + x2, py + y2)
+			local px, py = SnapToGrid( 4, _x, _y )
+			x1, y1 = FloorToGrid( 4, px + x1, py + y1 )
+			x2, y2 = CeilToGrid( 4, px + x2, py + y2 )
    
 			local height = water.Height or 0
-			Logic.WaterSetAbsoluteHeight(x1, y1, x2, y2, height)
+			Logic.WaterSetAbsoluteHeight( x1, y1, x2, y2, height )
    
 			if water.Type then
-				Logic.WaterSetType(x1, y1, x2, y2, water.Type)
+				Logic.WaterSetType( x1, y1, x2, y2, water.Type )
 			end
 		end
   
 	else
-		RandomMapGenerator.SetCurrentStructData(_generationData, _x, _y, 0)
+		RMG.SetCurrentStructData( _generationdata, _x, _y, 0 )
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetAreaData(_area)
- local x1, y1, x2, y2, areasq, isrect
- 
- if type(_area) == "number" then
-  x1, y1, x2, y2 = -_area, -_area, _area, _area
-  areasq = _area ^ 2
-  isrect = false
- else --if type(_area) == "table" then
-  areasq = 0--2 * _area ^ 2
-  isrect = true
-  if _area.x then
-   x1, y1, x2, y2 = -_area.x, -_area.y, _area.x, _area.y
-  else --if _area.x1 then
-   x1, y1, x2, y2 = _area.x1, _area.y1, _area.x2, _area.y2
-  end
- end
- 
- return x1, y1, x2, y2, areasq, isrect
+function RMG.GetAreaData(_area)
+	
+	local x1, y1, x2, y2, areasq, isrect
+	
+	if type( _area ) == "number" then
+		
+		x1, y1, x2, y2 = -_area, -_area, _area, _area
+		areasq = _area ^ 2
+		isrect = false
+	else --if type( _area ) == "table" then
+		
+		areasq = 0--2 * _area ^ 2
+		isrect = true
+		
+		if _area.X then
+			x1, y1, x2, y2 = -_area.X, -_area.Y, _area.X, _area.Y
+		else --if _area.x1 then
+			x1, y1, x2, y2 = _area.x1, _area.y1, _area.x2, _area.y2
+		end
+	end
+	
+	return x1, y1, x2, y2, areasq, isrect
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
--- this function shall only be called if _struct.Placemant is valid
-function RandomMapGenerator.GetRandomPosition(_generationData, _struct, _parent, _grid)
+-- this function must only be called if _struct.Placemant is valid
+function RMG.GetRandomPosition( _generationdata, _struct, _parent, _grid )
 	
 	-- important for indexing
 	_grid = _grid or 1
 	
 	-- get the overall area
-	local x1, y1, x2, y2, areasq1, isrect1 = RandomMapGenerator.GetAreaData(_struct.Placement.AreaMax)
+	local x1, y1, x2, y2, areasq1, isrect1 = RMG.GetAreaData( _struct.Placement.AreaMax )
 	
 	-- and the excluded inner area
 	local x3, y3, x4, y4, areasq2, isrect2 = 0,0,0,0,0,true
 	
 	if _struct.Placement.AreaMin then
-		x3, y3, x4, y4, areasq2, isrect2 = RandomMapGenerator.GetAreaData(_struct.Placement.AreaMin)
+		x3, y3, x4, y4, areasq2, isrect2 = RMG.GetAreaData( _struct.Placement.AreaMin )
 	end
 	
-	local bestNoise = _struct.Placement.Noise
+	local bestheight= _struct.Placement.Height
 		
-	if not bestNoise then
-		local noiseMax = _struct.Placement.NoiseMax or 1
-		local noiseMin = _struct.Placement.NoiseMin or -noiseMax
-		bestNoise = (noiseMin + noiseMax) / 2
+	if not bestheight then
+		local heightmax = _struct.Placement.HeightMax or 1
+		local heightmin = _struct.Placement.HeightMin or -heightmax
+		bestheight = ( heightmin + heightmax ) / 2
 	end
 	
 	local blocking = 0
@@ -4030,10 +2954,10 @@ function RandomMapGenerator.GetRandomPosition(_generationData, _struct, _parent,
 	end
 	
 	local maphalf = Logic.WorldGetSize() / 200
-	local l = {}
+	local nodes = {}
 	
-	x1, y1 = CeilToGrid(_grid, x1, y1)
-	x2, y2 = FloorToGrid(_grid, x2, y2)
+	x1, y1 = CeilToGrid( _grid, x1, y1 )
+	x2, y2 = FloorToGrid( _grid, x2, y2 )
 	
 	local step = _grid or 1
 	
@@ -4042,199 +2966,170 @@ function RandomMapGenerator.GetRandomPosition(_generationData, _struct, _parent,
 		
 			-- is inside outer area ?
 			local nx, ny = Round( x +_parent.X ), Round( y +_parent.Y )
-			if (isrect1 or IsInRangeSq(0, 0, x, y, areasq1)) and RTFGetDistance(nx, ny, maphalf, maphalf) <= maphalf - blocking then --IsValidMapIndex(0, xn, yn) and 
+			if ( isrect1 or IsInRangeSq( 0, 0, x, y, areasq1 ) ) and RTFGetDistance( nx, ny, maphalf, maphalf ) <= maphalf - blocking then --IsValidMapIndex(0, xn, yn) and 
 			
 				-- is outside inner area ?
-				if not ((isrect2 and x > x3 and y > y3 and x < x4 and y < y4) or (not isrect2 and IsInRangeSq(0, 0, x, y, areasq2))) then
+				if not ( ( isrect2 and x > x3 and y > y3 and x < x4 and y < y4 ) or ( not isrect2 and IsInRangeSq( 0, 0, x, y, areasq2 ) ) ) then
 					
-					local dif = math.abs(_generationData.TerrainNodes[nx][ny].noise - bestNoise)
-					table.insert(l, {dif = dif, x = nx, y = ny})
+					local node = _generationdata.TerrainNodes[ nx ][ ny ]
+					local cost = RMG.GetNodeBlockingCost( _generationdata, nx, ny, blocking ) * 100
+					
+					local dif = math.abs( node.Height - bestheight ) + cost
+					table.insert( nodes, { Dif = dif, X = nx, Y = ny } )
 				end
 			end
 		end
 	end
 	
-	table.sort(l,
-    function(e, e2)
-        return e.dif < e2.dif;
+	table.sort( nodes,
+    function( e, e2 )
+        return e.Dif < e2.Dif
     end
-	);
+	)
 	
-	for _,v in pairs(l) do
-		if RandomMapGenerator.IsAvailableMapIndex(_generationData, v.x, v.y, blocking) then
-			return v
+	return nodes[ 1 ]
+	
+	--for _,v in pairs( nodes ) do
+	--	if RMG.IsAvailableMapIndex( _generationdata, v.X, v.Y, blocking ) then
+	--		return v
+	--	end
+	--end
+	
+	--return false
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.GetNodeBlockingCost( _generationdata, _nodeX, _nodeY, _radius )
+	
+	local mapsize = Logic.WorldGetSize() / 100
+	local x1, x2, y1, y2 = _nodeX - _radius, _nodeX + _radius, _nodeY - _radius, _nodeY + _radius
+	
+	local cost = 0
+	local radiussq = _radius ^ 2
+	
+	for x = x1, x2 do
+		for y = y1, y2 do
+			
+			if IsInRangeSq( x, y, _nodeX, _nodeY, _radius ) and _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
+				cost = cost + 1
+			end
 		end
 	end
 	
-	return false
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetRandomPositionAtDistance(_key, _x, _y, _r)
- local a = SimplexNoise.GetRandomByNoise(-_r, _r, _key)
- --local a = math.random(-_r, _r)
- local b = math.floor(math.sqrt(_r^2 - a^2) + 0.5)
- 
- if SinDeg(a) < 0 then
-  b = -b
- end
-  
- return _x + a, _y + b
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.GetRandomPositionInDistance(_key, _x, _y, _rMin, _rMax)
- if not _rMax then
-  _rMax = _rMin
-  _rMin = 0
- end
- local a = SimplexNoise.GetRandomByNoise(-_rMax, _rMax, _key)
- --local a = math.random(-_rMax, _rMax)
- local bMin = 0
- if math.abs(a) < _rMin then
-  bMin = math.sqrt(_rMin^2 - a^2)
- end
- local bMax = math.sqrt(_rMax^2 - a^2)
- local b = math.floor(SimplexNoise.GetRandomByNoise(bMin, bMax, _key+1) + 0.5)
- --local b = math.floor(math.random(bMin, bMax) + 0.5)
- if SinDeg(a) < 0 then
-  b = -b
- end
- return _x + a, _y + b
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
--- this function assumes that y1 < y3 < y4 < y2
-function RandomMapGenerator.GetRandomPositionInArea(_key, _x1, _y1, _x2, _y2, _x3, _y3, _x4, _y4)
- if not _x3 then
-  return SimplexNoise.GetRandomByNoise(_x1, _x2, _key), SimplexNoise.GetRandomByNoise(_y1, _y2, _key + 1)
-  --return math.random(_x1, _x2), math.random(_y1, _y2)
- end
- local x = SimplexNoise.GetRandomByNoise(_x1, _x2, _key)
- --local x = math.random(_x1, _x2)
- if x < _x3 or x > _x4 then
-  return x, SimplexNoise.GetRandomByNoise(_y1, _y2, _key + 1)
-  --return x, math.random(_y1, _y2)
- else
-  local gap = _y4 - _y3
-  local y = SimplexNoise.GetRandomByNoise(_y1, _y2 - gap, _key + 1)
-  --local y = math.random(_y1, _y2 - gap)
-  if y > _y3 - _y1 then
-   y = y + gap
-  end
-  return x, y
- end
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function SinDeg(_value)
- return math.sin(math.rad(_value))
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function CosDeg(_value)
- return math.cos(math.rad(_value))
+	return cost
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Update Blocking
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.UpdateBlocking(_generationData)
+function RMG.UpdateBlocking( _generationdata )
 
 	local mapsize = Logic.WorldGetSize() / 100
-	Logic.UpdateBlocking(1, 1, mapsize-1, mapsize-1)
+	Logic.UpdateBlocking( 1, 1, mapsize - 1, mapsize - 1 )
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Create Entities
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.CreateEntities(_generationData)
+function RMG.CreateEntities( _generationdata )
 	
 	-- structural entities
-	for _,v in ipairs(_generationData.Entities) do
-		RandomMapGenerator.CreateEntity(_generationData, v)
+	for _, entity in ipairs( _generationdata.Entities ) do
+		RMG.CreateEntity( _generationdata, entity )
 	end
 	
 	-- environmental entities
 	-- skip if density is 0
-	local density = _generationData.ForestDensity
+	local entitydensity = _generationdata.ForestDensity
 	
-	if density > 0 then
+	if entitydensity > 0 then
 		
 		local mapsize = Logic.WorldGetSize() / 100
 		local maphalf = mapsize / 2
 		local maphalfsqared = maphalf ^ 2
 		
-		-- base value is here
-		local step = 5 / density
-		
-		-- density only for forests ! global would hit the entity limit quite quickly
-		for i = 8, mapsize - 8, step do
+		-- do not generate close to the border, to prevent blocking of lareg entities outside the map, which would crash the game
+		for x = 8, mapsize - 8 do
+			for y = 8, mapsize - 8 do
 			
-			local x = Round(i)
-			
-			for j = 8, mapsize - 8, step do
+				local blocking = _generationdata.TerrainNodes[ x ][ y ].Blocking
 				
-				local y = Round(j)
-				local biome = RandomMapGenerator.GetBiomeKey(_generationData, _generationData.TerrainNodes[x][y].noise)
-				
-				if biome == "Forest" or biome == "LowForest" or biome == "HighForest" then
-					if _generationData.TerrainNodes[x][y].blocking == 0 and IsInRangeSq(x, y, maphalf, maphalf, maphalfsqared) then
+				if blocking ~= RMG.BlockingTypes.Structure and blocking ~= RMG.BlockingTypes.Road and IsInRangeSq( x, y, maphalf, maphalf, maphalfsqared ) then
 					
-						local entitytable = _generationData.LandscapeSet.Entities[RandomMapGenerator.GetBiomeKey(_generationData, _generationData.TerrainNodes[x][y].noise)]
-						RandomMapGenerator.CreateRandomEntity(i * 100, j * 100, entitytable)
+					local landscapesetdata = RMG.GetTerrainNodeLandscapeSetData( _generationdata, _generationdata.TerrainNodes[ x ][ y ], "Entities" )
+					
+					if landscapesetdata then
+						
+						local density = landscapesetdata.Density or 3
+						
+						if math.mod( x, density ) == 0 and math.mod( y, density ) == 0 then
+							
+							RMG.CreateRandomEntity( x * 100, y * 100, landscapesetdata, density * 33 )
+						end
 					end
 				end
 			end
 		end
+	end
+	
+	-- crate wood piles
+	local woodpilecounter = 1
+	
+	for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.XD_ScriptEntity ) ) do
 		
-		-- and now everything else in the known way
-		for x = 8, mapsize - 8, 3 do
-			for y = 8, mapsize - 8, 3 do
-			
-				local biome = RandomMapGenerator.GetBiomeKey(_generationData, _generationData.TerrainNodes[x][y].noise)
+		local name = GetEntityName( id )
+		
+		if name == "woodpile" then
 				
-				if biome ~= "Forest" and biome ~= "LowForest" and biome ~= "HighForest" then
-					if _generationData.TerrainNodes[x][y].blocking == 0 and IsInRangeSq(x, y, maphalf, maphalf, maphalfsqared) then
-					
-						local entitytable = _generationData.LandscapeSet.Entities[RandomMapGenerator.GetBiomeKey(_generationData, _generationData.TerrainNodes[x][y].noise)]
-						RandomMapGenerator.CreateRandomEntity(x * 100, y * 100, entitytable)
-					end
-				end
-			end
+			Logic.SetEntityName( id, "woodpile"..woodpilecounter )
+			CreateWoodPile( "woodpile"..woodpilecounter, EMS.RD.Rules.RMG_ContentWoodPile:GetValue() )
+			woodpilecounter = woodpilecounter + 1
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.CreateEntity(_generationData, _entity)
+function RMG.CreateRandomEntity( _x, _y, _entities, _offset )
+	
+	_offset = _offset or 100
+	
+	if _entities then
+		Logic.CreateEntity( RMG.GetRandomValueFromTable( _entities ), _x + math.random( -_offset, _offset ), _y + math.random( -_offset, _offset ), math.random( 0, 360 ), 0 )
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.CreateEntity( _generationdata, _entity )
 
-	local entity = _entity.data
-	local etype = GetRandomValueFromTable(entity.Type)
-	local x, y = _entity.x, _entity.y
+	local entity = _entity.Data
+	local etype = GetRandomValueFromTable( entity.Type )
+	local x, y = _entity.X, _entity.Y
 	
 	if entity.Grid then
-		x, y = SnapToGrid(entity.Grid, x, y)
+		x, y = SnapToGrid( entity.Grid, x, y )
 	end
 	
-	x = x + (entity.RelativX or 0)
-	y = y + (entity.RelativY or 0)
+	x = x + ( entity.RelativX or 0 )
+	y = y + ( entity.RelativY or 0 )
 	
 	local rotation = entity.Rotation or 0
 	
 	if rotation == -1 then
-		rotation = math.random(0, 360)
+		rotation = math.random( 0, 360 )
 	end
 	
 	if entity.Angle then
-		rotation = SnapToGrid(entity.Angle, rotation)
+		rotation = SnapToGrid( entity.Angle, rotation )
 	end
 	
-	local player = _entity.p
+	local player = _entity.P
 	local id
 	
-	if entity.Soldiers and type(entity.Soldiers) == "number" then
-		id = Tools.CreateGroup(player, etype, entity.Soldiers, x, y, rotation)
+	if entity.Soldiers and type( entity.Soldiers ) == "number" then
+		id = Tools.CreateGroup( player, etype, entity.Soldiers, x, y, rotation )
 	else
-		id = Logic.CreateEntity(etype, x, y, rotation, player)
+		id = Logic.CreateEntity( etype, x, y, rotation, player )
 	end
 	
 	if entity.Explore then
 		local name = entity.Name or ""
-		Logic.SetEntityExplorationRange(id, entity.Explore)
-		Logic.SetEntityName(id, "rmg_explore"..player.."_"..name)
+		Logic.SetEntityExplorationRange( id, entity.Explore )
+		Logic.SetEntityName( id, "rmg_explore" )--..player.."_"..name ) -- TODO: this is ugly
 		return
 	end
 	
@@ -4243,182 +3138,167 @@ function RandomMapGenerator.CreateEntity(_generationData, _entity)
 	--end
 	
 	if entity.Resource then
-		Logic.SetResourceDoodadGoodAmount(id, entity.Resource)
+		Logic.SetResourceDoodadGoodAmount( id, entity.Resource )
 	end
 	
 	if entity.Name then
-		Logic.SetEntityName(id, entity.Name)
+		Logic.SetEntityName( id, entity.Name )
 	end
 	
 	if entity.Health then
-		SetHealth(id, entity.Health)
-	end
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RandomMapGenerator.CreateRandomEntity(_x, _y, _entities)
-
-	if _entities then
-		Logic.CreateEntity(GetRandomValueFromTable(_entities), _x + math.random(-100, 100), _y + math.random(-100, 100), math.random(0, 360), 0)
+		SetHealth( id, entity.Health )
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Finalize
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.Finalize(_generationData)
+function RMG.Finalize( _generationdata )
 
 	GUI.RebuildMinimapTerrain()
+	local playerindex = 0
 	
 	-- set initial camera position
 	if GUI.GetPlayerID() == 17 then -- observer
-		Camera.ScrollSetLookAt(Logic.WorldGetSize() / 2, Logic.WorldGetSize() / 2)
+		Camera.ScrollSetLookAt( Logic.WorldGetSize() / 2, Logic.WorldGetSize() / 2 )
 	else
-		for i = 1, _generationData.NumberOfPlayers do
+		for i = 1, _generationdata.NumberOfPlayers do
 		
-			local player = _generationData.Players[i]
+			local player = _generationdata.Players[ i ]
 			
-			if player.id == GUI.GetPlayerID() then
-				Camera.ScrollSetLookAt(player.x * 100, player.y * 100)
+			if player.Id == GUI.GetPlayerID() then
+				
+				playerindex = i
+				
+				Camera.ScrollSetLookAt( player.X * 100, player.Y * 100 )
 				break
 			end
 		end
 	end
 	
 	-- update blocking 
-	--CppLogic.Logic.BlockingUpdateWeatherChange()
-	-- work around
 	local gfx = Logic.GetWeatherState()
 	if CUtilMemory then -- try to get it more precise
-		gfx = CUtilMemory.GetMemory(tonumber("0x85A3A0", 16))[0][11][10]:GetInt()
+		gfx = CUtilMemory.GetMemory( tonumber( "0x85A3A0", 16 ) )[ 0 ][ 11 ][ 10 ]:GetInt()
 	end
 	
 	local weather = Logic.GetWeatherState()
 	if weather == 3 then
-		Logic.AddWeatherElement(1, 5, 0, gfx, 5.0, 10.0)
+		Logic.AddWeatherElement( 1, 5, 0, gfx, 5.0, 10.0 )
 	else
-		Logic.AddWeatherElement(3, 5, 0, gfx, 5.0, 10.0)
+		Logic.AddWeatherElement( 3, 5, 0, gfx, 5.0, 10.0 )
 	end
 	-- supress feedback sound does not work because the system queus the sounds if the volume is down - wtf
-	--RandomMapGenerator.SoundBackup = GDB.GetValue("Config\\Sound\\FeedbackVolume")
-	--Trigger.RequestTrigger( Events.LOGIC_EVENT_EVERY_SECOND, nil, RandomMapGenerator.ResetFeedbackSound, 1, {}, {GDB.GetValue("Config\\Sound\\FeedbackVolume")} )
-	--StartSimpleJob("RMG_ResetFeedbackSound")
-	--GDB.SetValueNoSave( "Config\\Sound\\FeedbackVolume", 0)
-	--SoundOptions.UpdateSound()
 
 	-- peacetime with rivers
-	if EMS_CustomMapConfig.Peacetime > 0 and _generationData.TeamBorderType == 3 then
-		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.PB_Bridge1)) do
-			DestroyEntity(id)
+	if EMS_CustomMapConfig.Peacetime > 0 and _generationdata.TeamBorderType == 3 then
+		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge1 ) ) do
+			DestroyEntity( id )
 		end
-		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.PB_Bridge2)) do
-			DestroyEntity(id)
+		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge2 ) ) do
+			DestroyEntity( id )
 		end
-		for p = 1, RandomMapGenerator.GenerationData.NumberOfPlayers do
-			ForbidTechnology(Technologies.B_Bridge, p)
+		for p = 1, RMG.GenerationData.NumberOfPlayers do
+			ForbidTechnology( Technologies.B_Bridge, p )
 		end
 	end
 	
 	-- debug
-	if _generationData.DebugMode then
+	if _generationdata.DebugMode then
 		
-		Game.GameTimeSetFactor(1)
-		for i = 1,18 do Display.GfxSetSetFogParams(i,0,1,0,0,0,2999999,4999999) end
+		Game.GameTimeSetFactor( 1 )
+		for i = 1,18 do Display.GfxSetSetFogParams( i,0,0,0,0,0,0,0 ) end
 
-		--[[local mapsize = Logic.WorldGetSize() / 100
+		local mapsize = Logic.WorldGetSize() / 100
 		for x = 0, mapsize do
 			for y = 0, mapsize do
-				if _generationData.TerrainNodes[x][y].blocking ~= 0 then
-					Logic.SetTerrainVertexColor(x, y, 255, 0, 0)
+				if _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
+					--Logic.SetTerrainVertexColor( x, y, 191, 63, 63 )
 				end
 			end
-		end]]
-		
+		end
 	else
 		
-		-- clear _generationData
-		_generationData.Entities = nil
-		_generationData.Rivers = nil
-		_generationData.Roads = nil
-		_generationData.Structures = nil
-		_generationData.TerrainNodes = nil
+		-- clear _generationdata
+		_generationdata.Entities = nil
+		_generationdata.Rivers = nil
+		_generationdata.Roads = nil
+		_generationdata.Structures = nil
+		_generationdata.TerrainNodes = nil
 		
-		RandomMapGenerator.TextureSets = nil
-		RandomMapGenerator.VertexColorSets = nil
-		RandomMapGenerator.EntitySets = nil
-		RandomMapGenerator.LandscapeSets = nil
+		RMG.TextureSets = nil
+		RMG.VertexColorSets = nil
+		RMG.EntitySets = nil
+		RMG.LandscapeSets = nil
 	end
 	
-	-- start game
-	if GUI.GetPlayerID() == EMS.GV.HostId or not CNetwork then
-		RandomMapGenerator.EMS_GL_StartRequestYes()
+	if CNetwork then
+		CNetwork.SendCommand( "RMG.PlayerFeedbackReady", playerindex )
+	else
+		RMG.EMS_GL_StartRequestYes()
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG_ResetFeedbackSound(_volume)
---function RandomMapGenerator.ResetFeedbackSound(_volume)
-	if Counter.Tick2("FeedbackSoundCounter", 15) then
-		GDB.SetValueNoSave( "Config\\Sound\\FeedbackVolume", RandomMapGenerator.SoundBackup)
-		--GDB.SetValueNoSave( "Config\\Sound\\FeedbackVolume", _volume)
-		SoundOptions.UpdateSound()
-		return true
+function RMG.PlayerFeedbackReady( _name, _playerindex )
+	
+	RMG.GenerationData.Players[ _playerindex ].IsReady = true
+	
+	-- check if every human player is ready
+	for i, player in ipairs( RMG.GenerationData.Players ) do
+		if player.IsHuman == 1 and not player.IsReady then
+			return
+		end
+	end
+	
+	-- host: start game
+	if GUI.GetPlayerID() == EMS.GV.HostId or not CNetwork then
+		RMG.EMS_GL_StartRequestYes()
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Game Start Callback
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.Callback_OnGameStart()
+function RMG.Callback_OnGameStart()
 	
-	local woodpilecounter = 1
-	
-	for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.XD_ScriptEntity)) do
+	for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.XD_ScriptEntity ) ) do
 		
-		local name = GetEntityName(id)
-		if name then
-			if string.find(name, "rmg_explore") then
-				-- code for minimap markers
-				--[[if Logic.GetEntityExplorationRange(id) > 0 and string.find(name, "rmg_explore"..GUI.GetPlayerID().."_") then
-				
-					local pos = GetPosition(id)
-					local col = 0
-					
-					if string.find(name, "blue") then
-						col = 1
-					elseif string.find(name, "white") then
-						col = 2
-					end
-					
-					GUI.CreateMinimapMarker(pos.X, pos.Y, col)
-				end]]
+		local name = GetEntityName( id )
+		
+		if not name or name == "rmg_explore" then
 			
-				DestroyEntity(id)
+			DestroyEntity( id )
+		
+			-- code for minimap markers
+			--[[if Logic.GetEntityExplorationRange( id ) > 0 and string.find( name, "rmg_explore" .. GUI.GetPlayerID() .. "_" ) then
+			
+				local pos = GetPosition( id )
+				local col = 0
 				
-			elseif string.find(name, "woodpile") then
+				if string.find( name, "blue" ) then
+					col = 1
+				elseif string.find( name, "white" ) then
+					col = 2
+				end
 				
-				Logic.SetEntityName(id, "woodpile"..woodpilecounter)
-				CreateWoodPile("woodpile"..woodpilecounter, EMS.RD.Rules.RMG_ContentWoodPile:GetValue())
-				woodpilecounter = woodpilecounter + 1
-			end
-		else
-			DestroyEntity(id)
+				GUI.CreateMinimapMarker( pos.X, pos.Y, col )
+			end]]
 		end
 	end
-	
-	--RandomMapGenerator = nil
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Peacetime Callback
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RandomMapGenerator.Callback_OnPeacetimeEnded()
+function RMG.Callback_OnPeacetimeEnded()
 	
-	if RandomMapGenerator.GenerationData.TeamBorderType == 2 then
+	if RMG.GenerationData.TeamBorderType == 2 then
 	
-		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.XD_WoodenFence15)) do
-			DestroyEntity(id)
+		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.XD_WoodenFence15 ) ) do
+			DestroyEntity( id )
 		end
 		
-	elseif RandomMapGenerator.GenerationData.TeamBorderType == 3 then
+	elseif RMG.GenerationData.TeamBorderType == 3 then
 		
-		for p = 1, RandomMapGenerator.GenerationData.NumberOfPlayers do
-			AllowTechnology(Technologies.B_Bridge, p)
+		for p = 1, RMG.GenerationData.NumberOfPlayers do
+			AllowTechnology( Technologies.B_Bridge, RMG.GenerationData.Players[ p ].Id )
 		end
 	end
 end
@@ -4536,25 +3416,25 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- override EMS StartRequest
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RandomMapGenerator.EMS_GL_StartRequestYes = EMS.GL.StartRequestYes
+RMG.EMS_GL_StartRequestYes = EMS.GL.StartRequestYes
 EMS.GL.StartRequestYes = function()
-	if EMS.UseCNetwork then -- TODO: refactor Sync.Call, so sync call works as a substitute.
-		Sync.Call("EMS.GL.SetRulesByConfig", Sync.TableToString(EMS.RD.GetRuleConfig()));
+	
+	if EMS.UseCNetwork then
+		Sync.Call( "EMS.GL.SetRulesByConfig", Sync.TableToString( EMS.RD.GetRuleConfig() ) );
 	else
-		Sync.Call("EMS.GL.SetRulesByConfig", EMS.RD.GetRuleConfig());
+		Sync.Call( "EMS.GL.SetRulesByConfig", EMS.RD.GetRuleConfig() );
 	end
 	
 	if CNetwork then
-		CNetwork.SendCommand("RandomMapGenerator.GenerateMap")
+		CNetwork.SendCommand( "RMG.GenerateMap" )
 	else
-		RandomMapGenerator.GenerateMap()
+		RMG.GenerateMap()
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 if CNetwork then
-	CNetwork.SetNetworkHandler("RandomMapGenerator.GenerateMap", function (_name)
-		RandomMapGenerator.GenerateMap(_name);
-	end)
+	CNetwork.SetNetworkHandler( "RMG.GenerateMap", RMG.GenerateMap )
+	CNetwork.SetNetworkHandler( "RMG.PlayerFeedbackReady", RMG.PlayerFeedbackReady )
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
  -- load these files at the end due to dependencies
@@ -4562,17 +3442,17 @@ end
 Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_guil.lua")
 Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_ruledata.lua")
 
-RandomMapGenerator.GL_Setup()
-RandomMapGenerator.SetRulesToDefault()
+RMG.GL_Setup()
+RMG.SetRulesToDefault()
 
 -- init on rule page changed, not immediately because player data is not yet available >:(
-RandomMapGenerator.EMS_GL_ToggleRulePage = EMS.GL.ToggleRulePage
+RMG.EMS_GL_ToggleRulePage = EMS.GL.ToggleRulePage
 EMS.GL.ToggleRulePage = function( _value )
-	RandomMapGenerator.PackPlayerConfig( unpack({ RandomMapGenerator.GetPlayersAndTeams() }) )
+	RMG.PackPlayerConfig( unpack({ RMG.GetPlayersAndTeams() }) )
 	XGUIEng.ShowWidget("RMG6", 1)
 	EMS.GL.DbgShow_PlayerConfig()
 	
-	EMS.GL.ToggleRulePage = RandomMapGenerator.EMS_GL_ToggleRulePage
-	RandomMapGenerator.EMS_GL_ToggleRulePage = nil
+	EMS.GL.ToggleRulePage = RMG.EMS_GL_ToggleRulePage
+	RMG.EMS_GL_ToggleRulePage = nil
 	EMS.GL.ToggleRulePage( _value )
 end
