@@ -310,7 +310,7 @@ function RMG.InitGenerationData()
 	RMG.GenerationData.MirrorOffset = math.rad( 45 )
 	
 	-- no mirror offset if bridges will be generated, they look bettes at 90° angle
-	if RMG.GenerationData.TeamBorderType == 3 and RMG.GenerationData.GenerateRoads then
+	if RMG.GenerationData.TeamBorderType == 3 and RMG.GenerationData.GenerateRoads and not RMG.IsCustomMap then
 		RMG.GenerationData.MirrorOffset = 0
 	end
 	
@@ -1230,13 +1230,13 @@ function RMG.GetPlayersAndTeams()
 	else
 		-- just some testing in SP - amount must fit table size now due to new sorting system
 		players[1] = { Id = 1, Team = 1, IsHuman = 1 }
-		players[2] = { Id = 1, Team = 1, IsHuman = 1 }
-		players[3] = { Id = 1, Team = 1, IsHuman = 1 }
-		players[4] = { Id = 1, Team = 1, IsHuman = 1 }
-		players[5] = { Id = 5, Team = 2, IsHuman = 1 }
-		players[6] = { Id = 6, Team = 2, IsHuman = 1 }
-		players[7] = { Id = 7, Team = 2, IsHuman = 1 }
-		players[8] = { Id = 8, Team = 2, IsHuman = 1 }
+		players[2] = { Id = 2, Team = 1, IsHuman = 1 }
+		players[3] = { Id = 3, Team = 2, IsHuman = 1 }
+		players[4] = { Id = 4, Team = 2, IsHuman = 1 }
+		--players[5] = { Id = 5, Team = 2, IsHuman = 1 }
+		--players[6] = { Id = 6, Team = 2, IsHuman = 1 }
+		--players[7] = { Id = 7, Team = 2, IsHuman = 1 }
+		--players[8] = { Id = 8, Team = 2, IsHuman = 1 }
 		--players[9] = { Id = 2, Team = 3, IsHuman = 1 }
 		--players[10]= { Id = 2, Team = 3, IsHuman = 1 }
 		--players[11]= { Id = 3, Team = 3, IsHuman = 1 }
@@ -1309,6 +1309,8 @@ function RMG.FinalizeGenerationData()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function RMG.StartGenerateMap()
+	
+	Memory.EnableBlockingUpdateWeatherChange()
 	
 	local _generationdata = RMG.GenerationData
 	
@@ -1812,6 +1814,56 @@ function RMG.CreateFences( _generationdata )
 		end
 	end
 end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.SimpleNoiseOverride( _generationdata, _x, _y, _innerrange, _outerrange, _targetheightnoise, _targetheightrange, _targetvegetationnoise, _targetvegetationrange, _overrideheightfunc, _offsetheight, _overridevegetationfunc, _offsetvegetation )
+	
+	_overrideheightfunc = _overrideheightfunc or function( _noise, _targetrange, _targetnoise )
+		return _noise * _targetrange + _targetnoise
+	end
+	_overridevegetationfunc = _overridevegetationfunc or function( _noise, _targetrange, _targetnoise )
+		return _noise * _targetrange + _targetnoise
+	end
+	
+	local mapsize = Logic.WorldGetSize() / 100
+	local x1, y1, x2, y2 = math.max( _x - _outerrange, 0 ), math.max( _y - _outerrange, 0 ), math.min( _x + _outerrange, mapsize ), math.min( _y + _outerrange, mapsize )
+	
+	for x = x1, x2 do
+		for y = y1, y2 do
+			
+			local distance = SimpleGetDistance( x, y, _x, _y )
+			
+			if distance < _outerrange then
+				
+				-- override height
+				if _targetheightnoise then
+					
+					local heightnoise = _generationdata.TerrainNodes[ x ][ y ].HeightNoise
+					local heightnoiseoverride = _overrideheightfunc( heightnoise, _targetheightrange, _targetheightnoise, _offsetheight )
+					
+					if distance > _innerrange then
+						heightnoiseoverride = Lerp( heightnoise, heightnoiseoverride, ( distance - _innerrange ) / ( _outerrange - _innerrange ) )
+					end
+					
+					_generationdata.TerrainNodes[ x ][ y ].HeightNoise = heightnoiseoverride
+					_generationdata.TerrainNodes[ x ][ y ].Height = RMG.GetTerrainHeightFromNoise( _generationdata, heightnoiseoverride )
+				end
+				
+				-- override
+				if _targetvegetationnoise then
+					
+					local vegetationnoise =  _generationdata.TerrainNodes[ x ][ y ].VegetationNoise
+					local vegetationnoiseoverride = _overridevegetationfunc( vegetationnoise, _targetvegetationrange, _targetvegetationnoise, _offsetvegetation )
+					
+					if distance > _innerrange then
+						vegetationnoiseoverride = Lerp( vegetationnoise, vegetationnoiseoverride, ( distance - _innerrange ) / ( _outerrange - _innerrange ) )
+					end
+					
+					_generationdata.TerrainNodes[ x ][ y ].VegetationNoise = vegetationnoiseoverride
+				end
+			end
+		end
+	end
+end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RMG.InitRivers( _generationdata )
 	
@@ -2191,7 +2243,7 @@ function RMG.SetNoiseOverride( _generationdata, _nodeX, _nodeY, _radius, _lerpRa
 		for y = y1, y2 do
 			if IsInRangeSq(x, y, _nodeX, _nodeY, radiusSq) then
 			
-				local dist = RTFGetDistance(x, y, _nodeX, _nodeY)
+				local dist = SimpleGetDistance(x, y, _nodeX, _nodeY)
 				local factor = 0 -- 1 = old, 0 = new
 				
 				-- is outside of inner radius
@@ -2536,7 +2588,7 @@ function RMG.GetTerrainHeightFromNoise(_generationdata, _noise)
 		_noise = math.max( math.min(_noise, _generationdata.ThresholdPlateau) - _generationdata.ThresholdFlatland, 0 ) / ( 1 - _generationdata.ThresholdFlatland ) * (2 - _generationdata.ThresholdPlateau)
 	end]]
 	
-	local noise = ( math.abs( _noise ) * 1.2 ) ^ 2
+	local noise = ( _noise * 1.2 ) ^ 2
 	
 	if _noise < 0.0 then
 		noise = -noise
@@ -2721,7 +2773,7 @@ function RMG.SetCurrentStructData( _generationdata, _nodeX, _nodeY, _radius )
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			if RTFGetDistance( x, y, _nodeX, _nodeY ) < _radius then
+			if SimpleGetDistance( x, y, _nodeX, _nodeY ) < _radius then
 			
 				_generationdata.TerrainNodes[ x ][ y ].Blocking = RMG.BlockingTypes.Structure
 			end
@@ -2833,7 +2885,7 @@ function RMG.CreateStructure( _generationdata, _struct, _x, _y, _player, _doNotR
 						if isrect then
 							dist = math.min( math.abs( x1 - x ), math.abs( y1 - y ), math.abs( x2 - x ), math.abs( y2 - y ) ) -- shortest dist to border
 						else
-							dist = area - RTFGetDistance( 0, 0, x, y ) -- 0 because its a relativ index
+							dist = area - SimpleGetDistance( 0, 0, x, y ) -- 0 because its a relativ index
 						end
 						
 						if dist < lerpdist then
@@ -2966,7 +3018,7 @@ function RMG.GetRandomPosition( _generationdata, _struct, _parent, _grid )
 		
 			-- is inside outer area ?
 			local nx, ny = Round( x +_parent.X ), Round( y +_parent.Y )
-			if ( isrect1 or IsInRangeSq( 0, 0, x, y, areasq1 ) ) and RTFGetDistance( nx, ny, maphalf, maphalf ) <= maphalf - blocking then --IsValidMapIndex(0, xn, yn) and 
+			if ( isrect1 or IsInRangeSq( 0, 0, x, y, areasq1 ) ) and SimpleGetDistance( nx, ny, maphalf, maphalf ) <= maphalf - blocking then --IsValidMapIndex(0, xn, yn) and 
 			
 				-- is outside inner area ?
 				if not ( ( isrect2 and x > x3 and y > y3 and x < x4 and y < y4 ) or ( not isrect2 and IsInRangeSq( 0, 0, x, y, areasq2 ) ) ) then
@@ -3169,14 +3221,15 @@ function RMG.Finalize( _generationdata )
 				
 				playerindex = i
 				
-				Camera.ScrollSetLookAt( player.X * 100, player.Y * 100 )
+				RMG.SetCameraStart( player )
 				break
 			end
 		end
 	end
 	
-	-- update blocking 
-	local gfx = Logic.GetWeatherState()
+	-- update blocking
+	Memory.BlockingUpdateWeatherChange()
+	--[[local gfx = Logic.GetWeatherState()
 	if CUtilMemory then -- try to get it more precise
 		gfx = CUtilMemory.GetMemory( tonumber( "0x85A3A0", 16 ) )[ 0 ][ 11 ][ 10 ]:GetInt()
 	end
@@ -3187,35 +3240,36 @@ function RMG.Finalize( _generationdata )
 	else
 		Logic.AddWeatherElement( 3, 5, 0, gfx, 5.0, 10.0 )
 	end
-	-- supress feedback sound does not work because the system queus the sounds if the volume is down - wtf
+	-- supress feedback sound does not work because the system queus the sounds if the volume is down - wtf]]
 
 	-- peacetime with rivers
-	if EMS_CustomMapConfig.Peacetime > 0 and _generationdata.TeamBorderType == 3 then
-		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge1 ) ) do
-			DestroyEntity( id )
-		end
-		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge2 ) ) do
-			DestroyEntity( id )
-		end
-		for p = 1, RMG.GenerationData.NumberOfPlayers do
-			ForbidTechnology( Technologies.B_Bridge, p )
-		end
-	end
+	RMG.DeleteBridges( _generationdata )
 	
 	-- debug
 	if _generationdata.DebugMode then
 		
-		Game.GameTimeSetFactor( 1 )
-		for i = 1,18 do Display.GfxSetSetFogParams( i,0,0,0,0,0,0,0 ) end
-
-		local mapsize = Logic.WorldGetSize() / 100
-		for x = 0, mapsize do
-			for y = 0, mapsize do
-				if _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
-					--Logic.SetTerrainVertexColor( x, y, 191, 63, 63 )
+		function RMG.Debug()
+			
+			if Counter.Tick2( "RMG_Debug", 11 ) then
+				Game.GameTimeSetFactor( 1 )
+				for i = 1,18 do Display.GfxSetSetFogParams( i,0,0,0,0,0,0,0 ) end
+				
+				XGUIEng.ShowWidget( "GameClock", 1 )
+				
+				local mapsize = Logic.WorldGetSize() / 100
+				for x = 0, mapsize do
+					for y = 0, mapsize do
+						if _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
+							--Logic.SetTerrainVertexColor( x, y, 191, 63, 63 )
+						end
+					end
 				end
+				
+				return true
 			end
 		end
+		
+		StartSimpleJob( RMG.Debug )
 	else
 		
 		-- clear _generationdata
@@ -3235,6 +3289,26 @@ function RMG.Finalize( _generationdata )
 		CNetwork.SendCommand( "RMG.PlayerFeedbackReady", playerindex )
 	else
 		RMG.EMS_GL_StartRequestYes()
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- for override purposes
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.SetCameraStart( _player )
+	Camera.ScrollSetLookAt( _player.X * 100, _player.Y * 100 )
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.DeleteBridges( _generationdata )
+	if EMS_CustomMapConfig.Peacetime > 0 and _generationdata.TeamBorderType == 3 then
+		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge1 ) ) do
+			DestroyEntity( id )
+		end
+		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge2 ) ) do
+			DestroyEntity( id )
+		end
+		for p = 1, RMG.GenerationData.NumberOfPlayers do
+			ForbidTechnology( Technologies.B_Bridge, p )
+		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3397,7 +3471,7 @@ function MakeIndexValid(...)
  return unpack(arg)
 end
 
-function RTFGetDistance(_x1, _y1, _x2, _y2)
+function SimpleGetDistance(_x1, _y1, _x2, _y2)
 	return math.sqrt((_x1 - _x2)^2 + (_y1 - _y2)^2)
 end
 -- bool <-> number conversion
@@ -3455,4 +3529,50 @@ EMS.GL.ToggleRulePage = function( _value )
 	EMS.GL.ToggleRulePage = RMG.EMS_GL_ToggleRulePage
 	RMG.EMS_GL_ToggleRulePage = nil
 	EMS.GL.ToggleRulePage( _value )
+end
+
+-- temporary until I officially release memory.lua
+Memory = {}
+function Memory.EnableBlockingUpdateWeatherChange()
+	
+	-- override GUI.DEBUG_ActivateUpgradeSingleBuildingState at 0x5381CB
+	
+	--5381CB | A1 AC5D8900 | mov eax,dword ptr ds:[895DAC]
+	Memory.SetByte( tonumber( "5381CB", 16 ), 0, tonumber( "A1", 16 ) )
+	Memory.SetByte( tonumber( "5381CB", 16 ), 1, tonumber( "AC", 16 ) )
+	Memory.SetByte( tonumber( "5381CB", 16 ), 2, tonumber( "5D", 16 ) )
+	Memory.SetByte( tonumber( "5381CB", 16 ), 3, tonumber( "89", 16 ) )
+	Memory.SetByte( tonumber( "5381CB", 16 ), 4, tonumber( "00", 16 ) )
+	--5381D0 | 8B48 24     | mov ecx,dword ptr ds:[eax+24]
+	Memory.SetByte( tonumber( "5381D0", 16 ), 0, tonumber( "8B", 16 ) )
+	Memory.SetByte( tonumber( "5381D0", 16 ), 1, tonumber( "48", 16 ) )
+	Memory.SetByte( tonumber( "5381D0", 16 ), 2, tonumber( "24", 16 ) )
+	--5381D3 | 6A 00       | push 0
+	Memory.SetByte( tonumber( "5381D3", 16 ), 0, tonumber( "6A", 16 ) )
+	Memory.SetByte( tonumber( "5381D3", 16 ), 1, tonumber( "00", 16 ) )
+	--5381D5 | E8 39140400 | call settlershok.579613
+	Memory.SetByte( tonumber( "5381D5", 16 ), 0, tonumber( "E8", 16 ) )
+	Memory.SetByte( tonumber( "5381D5", 16 ), 1, tonumber( "39", 16 ) )
+	Memory.SetByte( tonumber( "5381D5", 16 ), 2, tonumber( "14", 16 ) )
+	Memory.SetByte( tonumber( "5381D5", 16 ), 3, tonumber( "04", 16 ) )
+	Memory.SetByte( tonumber( "5381D5", 16 ), 4, tonumber( "00", 16 ) )
+	--5381DA | 33C0        | xor eax,eax
+	Memory.SetByte( tonumber( "5381DA", 16 ), 0, tonumber( "33", 16 ) )
+	Memory.SetByte( tonumber( "5381DA", 16 ), 1, tonumber( "C0", 16 ) )
+	--5381DC | C3          | ret
+	Memory.SetByte( tonumber( "5381DC", 16 ), 0, tonumber( "C3", 16 ) )
+	-- fill rest of func with ret for readability in debugger
+	Memory.SetByte( tonumber( "5381DD", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381DE", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381DF", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381E0", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381E1", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381E2", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381E3", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381E4", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381E5", 16 ), 0, tonumber( "C3", 16 ) )
+	Memory.SetByte( tonumber( "5381E6", 16 ), 0, tonumber( "C3", 16 ) )
+	
+	-- make func
+	Memory.BlockingUpdateWeatherChange = GUI.DEBUG_ActivateUpgradeSingleBuildingState
 end
