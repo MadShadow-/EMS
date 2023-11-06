@@ -296,7 +296,7 @@ function RMG.InitGenerationData()
 	end
  
 	-- generate no rivers if not enough teams
-	if nteams <= 1 then
+	if nteams <= 1 and not RMG.IsCustomMap then
 		RMG.GenerationData.TeamBorderType = 1 -- none
 	end
 	
@@ -315,7 +315,7 @@ function RMG.InitGenerationData()
 	end
 	
 	-- generate no roads if not enough players
-	if nplayers <= 1 then
+	if nplayers <= 1 and not RMG.IsCustomMap then
 		RMG.GenerationData.GenerateRoads = false
 	end
 	
@@ -1310,7 +1310,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function RMG.StartGenerateMap()
 	
-	Memory.EnableBlockingUpdateWeatherChange()
+	FixVillageCenters()
 	
 	local _generationdata = RMG.GenerationData
 	
@@ -3228,8 +3228,12 @@ function RMG.Finalize( _generationdata )
 	end
 	
 	-- update blocking
-	Memory.BlockingUpdateWeatherChange()
-	--[[local gfx = Logic.GetWeatherState()
+	
+	--local mapsize = Logic.WorldGetSize() / 100
+	--Logic.UpdateBlocking( 1, 1, mapsize - 1, mapsize - 1 )
+	--Memory.BlockingUpdateWeatherChange()
+	
+	local gfx = Logic.GetWeatherState()
 	if CUtilMemory then -- try to get it more precise
 		gfx = CUtilMemory.GetMemory( tonumber( "0x85A3A0", 16 ) )[ 0 ][ 11 ][ 10 ]:GetInt()
 	end
@@ -3240,7 +3244,7 @@ function RMG.Finalize( _generationdata )
 	else
 		Logic.AddWeatherElement( 3, 5, 0, gfx, 5.0, 10.0 )
 	end
-	-- supress feedback sound does not work because the system queus the sounds if the volume is down - wtf]]
+	-- supress feedback sound does not work because the system queus the sounds if the volume is down - wtf
 
 	-- peacetime with rivers
 	RMG.DeleteBridges( _generationdata )
@@ -3531,48 +3535,47 @@ EMS.GL.ToggleRulePage = function( _value )
 	EMS.GL.ToggleRulePage( _value )
 end
 
--- temporary until I officially release memory.lua
-Memory = {}
-function Memory.EnableBlockingUpdateWeatherChange()
+function FixVillageCenters()
 	
-	-- override GUI.DEBUG_ActivateUpgradeSingleBuildingState at 0x5381CB
+	RMG.GameCallback_OnBuildingConstructionComplete = GameCallback_OnBuildingConstructionComplete
+	function GameCallback_OnBuildingConstructionComplete( _BuildingId, _PlayerId )
+		
+		RMG.GameCallback_OnBuildingConstructionComplete( _BuildingId, _PlayerId )
+		
+		if Logic.GetEntityType( _BuildingId ) == Entities.PB_VillageCenter1 then
+			
+			S5Hook.GetEntityMem( _BuildingId )[ 66 ]:SetFloat( -400 )
+			S5Hook.GetEntityMem( _BuildingId )[ 67 ]:SetFloat( -600 )
+			S5Hook.GetEntityMem( _BuildingId )[ 68 ]:SetFloat( -500 )
+			S5Hook.GetEntityMem( _BuildingId )[ 69 ]:SetFloat( -600 )
+		end
+	end
 	
-	--5381CB | A1 AC5D8900 | mov eax,dword ptr ds:[895DAC]
-	Memory.SetByte( tonumber( "5381CB", 16 ), 0, tonumber( "A1", 16 ) )
-	Memory.SetByte( tonumber( "5381CB", 16 ), 1, tonumber( "AC", 16 ) )
-	Memory.SetByte( tonumber( "5381CB", 16 ), 2, tonumber( "5D", 16 ) )
-	Memory.SetByte( tonumber( "5381CB", 16 ), 3, tonumber( "89", 16 ) )
-	Memory.SetByte( tonumber( "5381CB", 16 ), 4, tonumber( "00", 16 ) )
-	--5381D0 | 8B48 24     | mov ecx,dword ptr ds:[eax+24]
-	Memory.SetByte( tonumber( "5381D0", 16 ), 0, tonumber( "8B", 16 ) )
-	Memory.SetByte( tonumber( "5381D0", 16 ), 1, tonumber( "48", 16 ) )
-	Memory.SetByte( tonumber( "5381D0", 16 ), 2, tonumber( "24", 16 ) )
-	--5381D3 | 6A 00       | push 0
-	Memory.SetByte( tonumber( "5381D3", 16 ), 0, tonumber( "6A", 16 ) )
-	Memory.SetByte( tonumber( "5381D3", 16 ), 1, tonumber( "00", 16 ) )
-	--5381D5 | E8 39140400 | call settlershok.579613
-	Memory.SetByte( tonumber( "5381D5", 16 ), 0, tonumber( "E8", 16 ) )
-	Memory.SetByte( tonumber( "5381D5", 16 ), 1, tonumber( "39", 16 ) )
-	Memory.SetByte( tonumber( "5381D5", 16 ), 2, tonumber( "14", 16 ) )
-	Memory.SetByte( tonumber( "5381D5", 16 ), 3, tonumber( "04", 16 ) )
-	Memory.SetByte( tonumber( "5381D5", 16 ), 4, tonumber( "00", 16 ) )
-	--5381DA | 33C0        | xor eax,eax
-	Memory.SetByte( tonumber( "5381DA", 16 ), 0, tonumber( "33", 16 ) )
-	Memory.SetByte( tonumber( "5381DA", 16 ), 1, tonumber( "C0", 16 ) )
-	--5381DC | C3          | ret
-	Memory.SetByte( tonumber( "5381DC", 16 ), 0, tonumber( "C3", 16 ) )
-	-- fill rest of func with ret for readability in debugger
-	Memory.SetByte( tonumber( "5381DD", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381DE", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381DF", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381E0", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381E1", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381E2", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381E3", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381E4", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381E5", 16 ), 0, tonumber( "C3", 16 ) )
-	Memory.SetByte( tonumber( "5381E6", 16 ), 0, tonumber( "C3", 16 ) )
+	RMG.GameCallback_OnBuildingUpgradeComplete = GameCallback_OnBuildingUpgradeComplete
+	function GameCallback_OnBuildingUpgradeComplete( _OldId, _NewId )
+		
+		RMG.GameCallback_OnBuildingUpgradeComplete( _OldId, _NewId )
+		
+		if Logic.GetEntityType( _NewId ) == Entities.PB_VillageCenter2 or Logic.GetEntityType( _NewId ) == Entities.PB_VillageCenter3 then
+			
+			S5Hook.GetEntityMem( _NewId )[ 66 ]:SetFloat( -400 )
+			S5Hook.GetEntityMem( _NewId )[ 67 ]:SetFloat( -600 )
+			S5Hook.GetEntityMem( _NewId )[ 68 ]:SetFloat( -500 )
+			S5Hook.GetEntityMem( _NewId )[ 69 ]:SetFloat( -600 )
+		end
+	end
 	
-	-- make func
-	Memory.BlockingUpdateWeatherChange = GUI.DEBUG_ActivateUpgradeSingleBuildingState
+	--[[RMG.Logic_CreateEntity = Logic.CreateEntity
+	function Logic.CreateEntity( _EntityType, _X, _Y, _Rotation, _Player )
+		
+		local id = RMG.Logic_CreateEntity( _EntityType, _X, _Y, _Rotation, _Player )
+		
+		if _EntityType == Entities.PB_VillageCenter1 or _EntityType == Entities.PB_VillageCenter2 or _EntityType == Entities.PB_VillageCenter3 then
+			
+			S5Hook.GetEntityMem( id )[ 66 ]:SetFloat( -400 )
+			S5Hook.GetEntityMem( id )[ 67 ]:SetFloat( -600 )
+			S5Hook.GetEntityMem( id )[ 68 ]:SetFloat( -500 )
+			S5Hook.GetEntityMem( id )[ 69 ]:SetFloat( -600 )
+		end
+	end]]
 end
