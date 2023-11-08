@@ -14,7 +14,7 @@
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-EMS_CustomMapConfig.Version = 2.0
+EMS_CustomMapConfig.Version = 2.1
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
@@ -613,7 +613,9 @@ function RMG.InitGenerationData()
 	
 	-- TODO: depend on number of players and teams
 	RMG.GenerationData.PlayerDistanceToMiddle = 0.9 -- in percent
-	
+end
+
+function RMG.FillStructs()
 	-- build player structure tables
 	RMG.StructureSets.NeutralStruct = RMG.GetNeutralStruct()
 	RMG.FillNeutralStruct()
@@ -1352,6 +1354,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function RMG.GenerateMap()
 	RMG.InitGenerationData()
+	RMG.FillStructs()
 	RMG.FinalizeGenerationData()
 	return RMG.StartGenerateMap()
 end
