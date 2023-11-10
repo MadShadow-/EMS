@@ -14,7 +14,7 @@
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-EMS_CustomMapConfig.Version = 2.1
+EMS_CustomMapConfig.Version = 2.2
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
@@ -991,9 +991,10 @@ function RMG.GetComposition()
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RMG.GetNeutralStruct()
-	return {
+	return nil
+	--[[{
 		Childs = {
-			--[[{
+			-{
 				Placement = {
 					RelativY = 20,
 				},
@@ -1004,9 +1005,9 @@ function RMG.GetNeutralStruct()
 					RelativY = -20,
 				},
 				Data = RMG.StructureSets.StonePit,
-			},]]
+			},
 		},
-	}
+	}]]
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function RMG.FillNeutralStruct()
@@ -1584,7 +1585,7 @@ function RMG.FillPlayerLocationTable( _generationdata )
 			AbsolutX = 0,
 			AbsolutY = 0,
 		},
-		Childs = {},
+		Childs = { _generationdata.NeutralStruct },
 	}
 	
 	return true
@@ -2603,7 +2604,7 @@ end
 -- Generate Structures
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RMG.GenerateStructures( _generationdata )
-		
+	
 	local success = false
 	local failure = false
 	
