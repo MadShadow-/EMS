@@ -670,3 +670,29 @@ function ChangeWaterHeight.Job( _StartHeight, _DestinationHeight, _ChangePerSeco
 		end
 	end
 end
+
+-- temporary fix for SP
+if not CNetwork then
+	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 0, tonumber( "A1", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 1, tonumber( "AC", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 2, tonumber( "5D", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 3, tonumber( "89", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 4, tonumber( "00", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D0", 16 ) )[ 0 ]:SetByte( 0, tonumber( "8B", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D0", 16 ) )[ 0 ]:SetByte( 1, tonumber( "48", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D0", 16 ) )[ 0 ]:SetByte( 2, tonumber( "24", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D3", 16 ) )[ 0 ]:SetByte( 0, tonumber( "6A", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D3", 16 ) )[ 0 ]:SetByte( 1, tonumber( "00", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 0, tonumber( "E8", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 1, tonumber( "39", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 2, tonumber( "14", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 3, tonumber( "04", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 4, tonumber( "00", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381DA", 16 ) )[ 0 ]:SetByte( 0, tonumber( "33", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381DA", 16 ) )[ 0 ]:SetByte( 1, tonumber( "C0", 16 ) )
+	S5Hook.GetRawMem( tonumber( "5381DC", 16 ) )[ 0 ]:SetByte( 0, tonumber( "C3", 16 ) )
+	
+	function Logic.UpdateBlocking()
+		GUI.DEBUG_ActivateUpgradeSingleBuildingState()
+	end
+end
