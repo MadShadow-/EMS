@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 0,
+	Version = 1.2,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -567,7 +567,16 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- 0 - 50
 function LowerWater1()
-	ChangeWaterHeight.Start( 2500, 2300, 50 * 60, Wait1 )
+	ChangeWaterHeight.Start( 2500, 2356, 36 * 60, LowerWater2 )
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ -- raise update speed in the time where its likely that larger areas become walkable at the same time
+function LowerWater2()
+	ChangeWaterHeight.Start( 2356, 2348, 2 * 60, LowerWater3, nil, 20 )
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function LowerWater3()
+	ChangeWaterHeight.Start( 2348, 2300, 12 * 60, Wait1 )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 50 - 70
@@ -577,14 +586,19 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function Wait1_Job()
 	if Counter.Tick2( "Wait1", 20 * 60 ) then
-		LowerWater2()
+		LowerWater4()
 		return true
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 70 - 120
-function LowerWater2()
-	ChangeWaterHeight.Start( 2300, 2100, 50 * 60, Wait2 )
+function LowerWater4()
+	ChangeWaterHeight.Start( 2300, 2140, 40 * 60, LowerWater5 )
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ -- raise update speed again when rivers are about to dry out
+function LowerWater5()
+	ChangeWaterHeight.Start( 2140, 2132, 2 * 60, Wait2, nil, 70 )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 120 - 180
@@ -593,7 +607,7 @@ function Wait2()
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function Wait2_Job()
-	if Counter.Tick2( "Wait2", 60 * 60 ) then
+	if Counter.Tick2( "Wait2", 68 * 60 ) then
 		--RaiseWater1()
 		return true
 	end
@@ -609,7 +623,7 @@ end
 ChangeWaterHeight = {}
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: get _StartHeight from terrain info
-function ChangeWaterHeight.Start( _StartHeight, _DestinationHeight, _DurationSeconds, _Callback, _FloodMines )
+function ChangeWaterHeight.Start( _StartHeight, _DestinationHeight, _DurationSeconds, _Callback, _FloodMines, _UpdateInterval )
 	
 	-- no duration? instant change!
 	if not _DurationSeconds or _DurationSeconds <= 0 then
@@ -621,24 +635,29 @@ function ChangeWaterHeight.Start( _StartHeight, _DestinationHeight, _DurationSec
 		return
 	end
 	
+	-- fill table with all blocked nodes
+	if not ChangeWaterHeight.WaterBlockedNodes then
+		ChangeWaterHeight.InitWaterBlocking()
+	end
+	
 	-- save current state
 	ChangeWaterHeight.ElapsedSeconds = 0
 	ChangeWaterHeight.LastHeight = _StartHeight
 	
-	StartSimpleJob( ChangeWaterHeight.Job, _StartHeight, _DestinationHeight, ( _DestinationHeight - _StartHeight ) / _DurationSeconds, _Callback, _FloodMines )
+	StartSimpleJob( ChangeWaterHeight.Job, _StartHeight, _DestinationHeight, ( _DestinationHeight - _StartHeight ) / _DurationSeconds, _Callback, _FloodMines, _UpdateInterval )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function ChangeWaterHeight.Job( _StartHeight, _DestinationHeight, _ChangePerSecond, _Callback, _FloodMines )
+function ChangeWaterHeight.Job( _StartHeight, _DestinationHeight, _ChangePerSecond, _Callback, _FloodMines, _UpdateInterval )
 	
 	ChangeWaterHeight.ElapsedSeconds = ChangeWaterHeight.ElapsedSeconds + 1
 	local height = Round( _StartHeight + ( _ChangePerSecond * ChangeWaterHeight.ElapsedSeconds ) )
 	
-	if height ~= ChangeWaterHeight.LastHeight then
+	if height ~= ChangeWaterHeight.LastHeight then --math.abs( height - ChangeWaterHeight.LastHeight ) >= 10 or height == _DestinationHeight then
 		
 		ChangeWaterHeight.LastHeight = height
 		
 		local mapsize = Logic.WorldGetSize() / 100
-		Logic.WaterSetAbsoluteHeight( 0, 0, mapsize, mapsize, height )
+		Logic.WaterSetAbsoluteHeight( mapsize, mapsize, 0, 0, height )
 		
 		-- exclude pits from change
 		if not _FloodMines then
@@ -657,7 +676,7 @@ function ChangeWaterHeight.Job( _StartHeight, _DestinationHeight, _ChangePerSeco
 			end
 		end
 		
-		Logic.UpdateBlocking( 1, 1, mapsize - 1, mapsize - 1 )
+		ChangeWaterHeight.UpdateWaterBlocking( _UpdateInterval )
 		GUI.RebuildMinimapTerrain()
 		
 		if ( _DestinationHeight < _StartHeight and height <= _DestinationHeight ) or ( _DestinationHeight >= _StartHeight and height >= _DestinationHeight ) then
@@ -670,29 +689,56 @@ function ChangeWaterHeight.Job( _StartHeight, _DestinationHeight, _ChangePerSeco
 		end
 	end
 end
-
--- temporary fix for SP
-if not CNetwork then
-	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 0, tonumber( "A1", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 1, tonumber( "AC", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 2, tonumber( "5D", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 3, tonumber( "89", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381CB", 16 ) )[ 0 ]:SetByte( 4, tonumber( "00", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D0", 16 ) )[ 0 ]:SetByte( 0, tonumber( "8B", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D0", 16 ) )[ 0 ]:SetByte( 1, tonumber( "48", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D0", 16 ) )[ 0 ]:SetByte( 2, tonumber( "24", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D3", 16 ) )[ 0 ]:SetByte( 0, tonumber( "6A", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D3", 16 ) )[ 0 ]:SetByte( 1, tonumber( "00", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 0, tonumber( "E8", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 1, tonumber( "39", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 2, tonumber( "14", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 3, tonumber( "04", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381D5", 16 ) )[ 0 ]:SetByte( 4, tonumber( "00", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381DA", 16 ) )[ 0 ]:SetByte( 0, tonumber( "33", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381DA", 16 ) )[ 0 ]:SetByte( 1, tonumber( "C0", 16 ) )
-	S5Hook.GetRawMem( tonumber( "5381DC", 16 ) )[ 0 ]:SetByte( 0, tonumber( "C3", 16 ) )
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function ChangeWaterHeight.InitWaterBlocking()
 	
-	function Logic.UpdateBlocking()
-		GUI.DEBUG_ActivateUpgradeSingleBuildingState()
+	local mapsize = Logic.WorldGetSize() / 100 - 2
+	local maphalf = Logic.WorldGetSize() / 200
+	local maphalfsq = maphalf ^ 2
+	
+	ChangeWaterHeight.WaterBlockedNodes = {}
+	
+	for x = 1, mapsize do
+		for y = 1, mapsize do
+			if (x - maphalf) ^ 2 + (y - maphalf) ^ 2 < maphalfsq and CUtil.GetWaterHeight( x, y ) >= CUtil.GetTerrainNodeHeight( x, y ) then
+				table.insert( ChangeWaterHeight.WaterBlockedNodes, { X = x, Y = y } )
+			end
+		end
 	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function ChangeWaterHeight.UpdateWaterBlocking( _UpdateInterval )
+	EndJob( ChangeWaterHeight.UpdateWaterBlockingJobId )
+	ChangeWaterHeight.UpdateWaterBlockingJobId = StartSimpleHiResJob( ChangeWaterHeight.UpdateWaterBlockingJob, _UpdateInterval )
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function ChangeWaterHeight.UpdateWaterBlockingJob( _UpdateInterval )
+	if ChangeWaterHeight.UpdateWaterBlockingInternal( _UpdateInterval ) then
+		return true
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function ChangeWaterHeight.UpdateWaterBlockingInternal( _UpdateInterval )
+	
+	_UpdateInterval = _UpdateInterval or 10
+	local n = 0
+	
+	for i = table.getn( ChangeWaterHeight.WaterBlockedNodes ), 1, -1 do
+		
+		local x, y = ChangeWaterHeight.WaterBlockedNodes[ i ].X, ChangeWaterHeight.WaterBlockedNodes[ i ].Y
+		
+		if CUtil.GetWaterHeight( x, y ) < CUtil.GetTerrainNodeHeight( x, y ) then
+			
+			Logic.UpdateBlocking( x, y, x + 1, y + 1 )
+			table.remove( ChangeWaterHeight.WaterBlockedNodes, i )
+			
+			n = n + 1
+			
+			if n >= _UpdateInterval then
+				return false
+			end
+		end
+	end
+	
+	return true
 end
