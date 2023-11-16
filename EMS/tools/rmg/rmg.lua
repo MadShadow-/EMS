@@ -14,7 +14,7 @@
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.2
+EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.3
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
@@ -3294,6 +3294,8 @@ function RMG.Finalize( _generationdata )
 	end
 	
 	if CNetwork then
+		EMS.GL.MainMenuButtonPressed( "CloseMenu" )
+		GUI.AddStaticNote( "RMG: Der Countdown startet, sobald die Karte bei allen Spielern fertig generiert wurde." )
 		CNetwork.SendCommand( "RMG.PlayerFeedbackReady", playerindex )
 	else
 		RMG.EMS_GL_StartRequestYes()
@@ -3333,6 +3335,7 @@ function RMG.PlayerFeedbackReady( _name, _playerindex )
 	
 	-- host: start game
 	if GUI.GetPlayerID() == EMS.GV.HostId or not CNetwork then
+		GUI.ClearNotes()
 		RMG.EMS_GL_StartRequestYes()
 	end
 end
@@ -3507,7 +3510,8 @@ EMS.GL.StartRequestYes = function()
 		Sync.Call( "EMS.GL.SetRulesByConfig", EMS.RD.GetRuleConfig() );
 	end
 	
-	if CNetwork then
+	if CNetwork and not RMG.GenerationStarted then
+		RMG.GenerationStarted = true
 		CNetwork.SendCommand( "RMG.GenerateMap" )
 	else
 		RMG.GenerateMap()
