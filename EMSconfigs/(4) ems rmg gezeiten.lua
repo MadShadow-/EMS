@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 1.2,
+	Version = 1.3,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -28,6 +28,8 @@ EMS_CustomMapConfig =
 		
 		Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg.lua")
 		OverrideRMG()
+		
+		--Input.KeyBindDown(Keys.X, "Logic.WaterSetAbsoluteHeight(0,0,607,607,2300)" )
 	end,
 	
 	-- ********************************************************************************************
@@ -51,6 +53,13 @@ EMS_CustomMapConfig =
 	end,
 	
 	Peacetime = 40,
+	
+	LightCavalry = 2,
+	HeavyCavalry = 2,
+	Cannon1 = 1,
+	Cannon2 = 1,
+	Cannon3 = 1,
+	Cannon4 = 1,
 	
 	-- ********************************************************************************************
 	--  			GameModes
@@ -150,8 +159,8 @@ function OverrideRMG()
 				-- first island
 				{
 					Placement = {
-						AbsolutX = Round( maphalf * 0.75 * math.cos( math.rad( 112.50 ) ) + maphalf ),
-						AbsolutY = Round( maphalf * 0.75 * math.sin( math.rad( 112.50 ) ) + maphalf ),
+						AbsolutX = GetXFromAngleAndRelDist( 112.50, 0.75 ),
+						AbsolutY = GetYFromAngleAndRelDist( 112.50, 0.75 ),
 					},
 					-- Headquarter
 					Data = {
@@ -173,8 +182,8 @@ function OverrideRMG()
 				-- seccond island
 				{
 					Placement = {
-						AbsolutX = Round( maphalf * 0.75 * math.cos( math.rad(  67.50 ) ) + maphalf ),
-						AbsolutY = Round( maphalf * 0.75 * math.sin( math.rad(  67.50 ) ) + maphalf ),
+						AbsolutX = GetXFromAngleAndRelDist( 67.50, 0.75 ),
+						AbsolutY = GetYFromAngleAndRelDist( 67.50, 0.75 ),
 					},
 					-- 2x iron mine, 2x sulfur mine, village
 					Childs = {},
@@ -182,8 +191,8 @@ function OverrideRMG()
 				-- third island
 				{
 					Placement = {
-						AbsolutX = Round( maphalf * 0.35 * math.cos( math.rad(  90.00 ) ) + maphalf ),
-						AbsolutY = Round( maphalf * 0.35 * math.sin( math.rad(  90.00 ) ) + maphalf ),
+						AbsolutX = GetXFromAngleAndRelDist( 75.00, 0.45 ),
+						AbsolutY = GetYFromAngleAndRelDist( 75.00, 0.45 ),
 					},
 					-- village
 					Childs = {},
@@ -206,15 +215,22 @@ function OverrideRMG()
 		
 		--vc
 		for i = 1, 3 do
-		
-			local child = {
-				Placement = {
+			
+			local placement
+			
+			-- the 3rd vc will have a fix location on the small island
+			if i < 3 then
+				placement = {
 					AreaMin = dist - resoff,
 					AreaMax = dist + resoff,
 					Noise = RMG.GenerationData.TerrainBaseHeight,
 					NoiseMin = noiseMin,
 					NoiseMax = noiseMax,
-				},
+				}
+			end
+			
+			local child = {
+				Placement = placement,
 				Data = RMG.StructureSets.NeutralVillageCenter,
 			}
 			if i == 1 then
@@ -357,37 +373,13 @@ function OverrideRMG()
 		local mapsize = Logic.WorldGetSize() / 100
 		local maphalf = mapsize / 2
 		
-		-- flatten middle
+		-- flatten middle and main connectors
 		local innerrange = Round( maphalf * 0.15 ) - 15
 		local outerrange = innerrange + 45
 		
-		local minnoise, maxnoise = 1, -1
-		local noiseaverage = 0
-		
-		for x = 0, innerrange do
-			for y = 0, innerrange do
-				
-				local noise = _generationdata.TerrainNodes[ x + maphalf ][ y + maphalf ].HeightNoise
-				
-				minnoise = math.min( minnoise, noise )
-				maxnoise = math.max( maxnoise, noise )
-				
-				noiseaverage = noiseaverage + noise
-			end
-		end
-		
-		noiseaverage = noiseaverage / innerrange ^ 2
-		
-		local noiserange = maxnoise - minnoise
-		
-		RMG.SimpleNoiseOverride(
-			_generationdata, maphalf, maphalf, innerrange, outerrange, -0.399297853124962, 0.10 / noiserange, nil, nil,
-			function( _noise, _targetrange, _targetnoise, _offset )
-				
-				return math.min( ( _noise - _offset ) * _targetrange + _targetnoise, -0.396626934498992 )
-			end,
-			noiseaverage
-		)
+		RMG.FlattenArea( _generationdata, maphalf, maphalf, innerrange, outerrange )
+		RMG.FlattenArea( _generationdata, GetXFromAngleAndRelDist( 135.00, 0.55 ), GetYFromAngleAndRelDist( 135.00, 0.55 ), innerrange, outerrange )
+		RMG.FlattenArea( _generationdata, GetXFromAngleAndRelDist( 315.00, 0.55 ), GetYFromAngleAndRelDist( 315.00, 0.55 ), innerrange, outerrange )
 		
 		-- flatten corners
 		local innerrange = Round( maphalf * 0.20 ) - 15
@@ -399,6 +391,42 @@ function OverrideRMG()
 		RMG.SimpleNoiseOverride( _generationdata, Round( mapsize * high ), Round( mapsize * low  ), innerrange, outerrange, -0.352147606136882, 0.10 )
 		RMG.SimpleNoiseOverride( _generationdata, Round( mapsize * low  ), Round( mapsize * high ), innerrange, outerrange, -0.352147606136882, 0.10 )
 		RMG.SimpleNoiseOverride( _generationdata, Round( mapsize * high ), Round( mapsize * high ), innerrange, outerrange, -0.352147606136882, 0.10 )
+	end
+	------------------------------------------------------------------------------------------------------------------------------------------------------------
+	function RMG.FlattenArea( _generationdata, _X, _Y, _InnerRange, _OuterRange )
+		
+		local mapsize = Logic.WorldGetSize() / 100
+		local maphalf = mapsize / 2
+		
+		-- flatten middle
+		local _InnerRange = Round( maphalf * 0.15 ) - 15
+		local _OuterRange = _InnerRange + 45
+		
+		local minnoise, maxnoise = 1, -1
+		local noiseaverage = 0
+		local n = 0
+		
+		for x = -_InnerRange, _InnerRange do
+			for y = -_InnerRange, _InnerRange do
+				
+				local noise = _generationdata.TerrainNodes[ x + _X ][ y + _Y ].HeightNoise
+				
+				minnoise = math.min( minnoise, noise )
+				maxnoise = math.max( maxnoise, noise )
+				
+				noiseaverage = noiseaverage + noise
+				n = n + 1
+			end
+		end
+		
+		noiseaverage = noiseaverage / n
+		
+		local noiserange = maxnoise - minnoise
+		local func =	function( _noise, _targetrange, _targetnoise, _offset )
+							return math.min( ( _noise - _offset ) * _targetrange + _targetnoise, -0.396626934498992 )
+						end
+		
+		RMG.SimpleNoiseOverride( _generationdata, _X, _Y, _InnerRange, _OuterRange, -0.399297853124962, 0.10 / noiserange, nil, nil, func, noiseaverage )
 	end
 	------------------------------------------------------------------------------------------------------------------------------------------------------------
 	function RMG.FillRiverLocationTable( _generationData )
@@ -416,14 +444,17 @@ function OverrideRMG()
 			{ X = maphalf * 0.60 * math.cos( math.rad(  57.50 ) ) + maphalf, Y = maphalf * 0.60 * math.sin( math.rad(  57.50 ) ) + maphalf }, -- -10
 			{ X = maphalf * 0.60 * math.cos( math.rad(  90.00 ) ) + maphalf, Y = maphalf * 0.60 * math.sin( math.rad(  90.00 ) ) + maphalf },
 			
-			{ X = maphalf * 0.50 * math.cos( math.rad( 135.00 ) ) + maphalf, Y = maphalf * 0.50 * math.sin( math.rad( 135.00 ) ) + maphalf },
+			{ X = maphalf * 0.59 * math.cos( math.rad( 123.75 ) ) + maphalf, Y = maphalf * 0.59 * math.sin( math.rad( 123.75 ) ) + maphalf },
+			{ X = maphalf * 0.59 * math.cos( math.rad( 146.25 ) ) + maphalf, Y = maphalf * 0.59 * math.sin( math.rad( 146.25 ) ) + maphalf },
+
 			{ X = maphalf * 0.60 * math.cos( math.rad( 180.00 ) ) + maphalf, Y = maphalf * 0.60 * math.sin( math.rad( 180.00 ) ) + maphalf },
-			
 			{ X = maphalf * 0.60 * math.cos( math.rad( 212.50 ) ) + maphalf, Y = maphalf * 0.60 * math.sin( math.rad( 212.50 ) ) + maphalf }, -- +10
+			-- technically a double, but is required
 			{ X = maphalf * 0.67 * math.cos( math.rad( 225.00 ) ) + maphalf, Y = maphalf * 0.67 * math.sin( math.rad( 225.00 ) ) + maphalf },
 			
 			{ X = maphalf * 0.15 * math.cos( math.rad(  68.75 ) ) + maphalf, Y = maphalf * 0.15 * math.sin( math.rad(  68.75 ) ) + maphalf }, -- -10
 			{ X = maphalf * 0.15 * math.cos( math.rad( 201.25 ) ) + maphalf, Y = maphalf * 0.15 * math.sin( math.rad( 201.25 ) ) + maphalf }, -- +10
+			
 		}
 		for _,v in ipairs( _generationData.Rivers.StartPoints ) do
 			v.X, v.Y = SnapToGrid( 4, v.X, v.Y )
@@ -433,17 +464,22 @@ function OverrideRMG()
 		{
 			{  4,  1 },
 			{  6,  2 },
-			{  8,  3 },
+			{  9,  3 },
 			
 			{  4,  5 },
 			{  5,  6 },
-			{  6,  7 },
-			{ 10,  9 },
-			{  9,  8 },
-			{  8,  7 },
 			
-			{  5, 11 },
-			{  9, 12 },
+			{  6,  7 },
+			{ 11, 10 },
+			{ 10,  9 },
+			
+			{  9,  8 },
+			
+			{  5, 12 },
+			{  6, 12 },
+			
+			{  9, 13 },
+			{ 10, 13 },
 		}
 		_generationData.Rivers.MirrorRadea = { math.rad( 180 ) }
 	end
@@ -454,21 +490,26 @@ function OverrideRMG()
 		local maphalf = mapsize / 2
 		
 		_generationData.Roads.StartPoints = {
+			-- player 1
 			{ X = maphalf * 0.75 * math.cos( math.rad( 112.50 ) ) + maphalf, Y = maphalf * 0.75 * math.sin( math.rad( 112.50 ) ) + maphalf },
 			{ X = maphalf * 0.90 * math.cos( math.rad(  67.50 ) ) + maphalf, Y = maphalf * 0.90 * math.sin( math.rad(  67.50 ) ) + maphalf },
-			{ X = maphalf * 0.35 * math.cos( math.rad(  90.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad(  90.00 ) ) + maphalf },
-			
+			{ X = maphalf * 0.35 * math.cos( math.rad(  75.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad(  75.00 ) ) + maphalf }, -- -15
+			-- player 2
 			{ X = maphalf * 0.75 * math.cos( math.rad( 157.50 ) ) + maphalf, Y = maphalf * 0.75 * math.sin( math.rad( 157.50 ) ) + maphalf },
 			{ X = maphalf * 0.90 * math.cos( math.rad( 202.50 ) ) + maphalf, Y = maphalf * 0.90 * math.sin( math.rad( 202.50 ) ) + maphalf },
-			{ X = maphalf * 0.35 * math.cos( math.rad( 180.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad( 180.00 ) ) + maphalf },
-
+			{ X = maphalf * 0.35 * math.cos( math.rad( 195.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad( 195.00 ) ) + maphalf }, -- +15
+			-- team 1
+			{ X = maphalf * 0.37 * math.cos( math.rad( 135.00 ) ) + maphalf, Y = maphalf * 0.37 * math.sin( math.rad( 135.00 ) ) + maphalf },
+			-- player 3
 			{ X = maphalf * 0.75 * math.cos( math.rad( 292.50 ) ) + maphalf, Y = maphalf * 0.75 * math.sin( math.rad( 292.50 ) ) + maphalf },
 			{ X = maphalf * 0.90 * math.cos( math.rad( 247.50 ) ) + maphalf, Y = maphalf * 0.90 * math.sin( math.rad( 247.50 ) ) + maphalf },
-			{ X = maphalf * 0.35 * math.cos( math.rad( 270.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad( 270.00 ) ) + maphalf },
-			
+			{ X = maphalf * 0.35 * math.cos( math.rad( 255.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad( 255.00 ) ) + maphalf }, -- -15
+			-- player 4
 			{ X = maphalf * 0.75 * math.cos( math.rad( 337.50 ) ) + maphalf, Y = maphalf * 0.75 * math.sin( math.rad( 337.50 ) ) + maphalf },
 			{ X = maphalf * 0.90 * math.cos( math.rad(  22.50 ) ) + maphalf, Y = maphalf * 0.90 * math.sin( math.rad(  22.50 ) ) + maphalf },
-			{ X = maphalf * 0.35 * math.cos( math.rad(   0.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad(   0.00 ) ) + maphalf },
+			{ X = maphalf * 0.35 * math.cos( math.rad(  15.00 ) ) + maphalf, Y = maphalf * 0.35 * math.sin( math.rad(  15.00 ) ) + maphalf }, -- +15
+			-- team 2
+			{ X = maphalf * 0.37 * math.cos( math.rad( 315.00 ) ) + maphalf, Y = maphalf * 0.37 * math.sin( math.rad( 315.00 ) ) + maphalf },
 		}
 		for _,v in ipairs( _generationData.Roads.StartPoints ) do
 			v.X, v.Y = SnapToGrid( 4, v.X, v.Y )
@@ -477,15 +518,17 @@ function OverrideRMG()
 		_generationData.Roads.Paths = {
 			{ 1, 2 },
 			{ 2, 3 },
-			{ 6, 3 },
 			{ 4, 5 },
 			{ 5, 6 },
+			{ 3, 7 },
+			{ 6, 7 },
 			
-			{  7,  8 },
 			{  8,  9 },
-			{ 12,  9 },
-			{ 10, 11 },
+			{  9, 10 },
 			{ 11, 12 },
+			{ 12, 13 },
+			{ 10, 14 },
+			{ 13, 14 },
 		}
 	end
 	------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -514,8 +557,8 @@ function OverrideRMG()
 			end
 		)
 		
-		-- delete the 4 closest bridges - lazy but it works
-		for i = 1, 4 do
+		-- delete the 8 closest bridges - lazy but it works
+		for i = 1, 8 do
 			DestroyEntity( bridges[ i ] )
 		end
 	end
@@ -741,4 +784,13 @@ function ChangeWaterHeight.UpdateWaterBlockingInternal( _UpdateInterval )
 	end
 	
 	return true
+end
+
+function GetXFromAngleAndRelDist( _Angle, _Dist )
+	local maphalf = Logic.WorldGetSize() / 200
+	return Round( maphalf * _Dist * math.cos( math.rad( _Angle ) ) + maphalf )
+end
+function GetYFromAngleAndRelDist( _Angle, _Dist )
+	local maphalf = Logic.WorldGetSize() / 200
+	return Round( maphalf * _Dist * math.sin( math.rad( _Angle ) ) + maphalf )
 end
