@@ -429,7 +429,7 @@ function RMG.SetRulesToDefault()
 	EMS.GL.SetValueSynced("RMG_AmountSulfurPile",     3)
 	EMS.GL.SetValueSynced("RMG_ContentSulfurPile", 4000)
 	EMS.GL.SetValueSynced("RMG_AmountWoodPile",       2)
-	EMS.GL.SetValueSynced("RMG_ContentWoodPile",   8000)
+	EMS.GL.SetValueSynced("RMG_ContentWoodPile",  16000)
 	EMS.GL.SetValueSynced("RMG_AmountVC", 3)
 	
 	--local res = EMS.RD.AdditionalConfig.Ressources.Normal[player]
