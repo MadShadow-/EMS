@@ -18,7 +18,7 @@ function EMS.RD.Rules.RMG_Seed:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_Seed:GetDescription()
-	return "Legt den Seed zur Generierung der Karte fest. @cr @cr @color:51,204,255,255 HINWEIS: @color:255,255,255,255 Der Seed wirkt sich nur auf das Gelände aus. Entities können variieren, da der Server einen eigenen Seed für Zufallszahlen setzt."
+	return "Legt den Seed zur Generierung der Karte fest. Dieser bestimmt die wesentlichen Merkmale des Geländes, wie Erhebungen, Vertiefungen und Vegetation. @cr @cr @color:51,204,255,255 HINWEIS: @color:255,255,255,255 Wenn ihr den gleichen Seed verwentet und mit genau der gleichen Kartengröße, Spielerzahl, Teamaufteilung und Einstellungen spielt, erhaltet ihr erneut die exakt gleiche Karte."
 end
 
 -- ************************************************************************************************ --
@@ -32,7 +32,13 @@ function EMS.RD.Rules.RMG_GenerateRivers:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_GenerateRivers:GetDescription()
-	return "Legt fest, wie rivalisierende Teams räumlich von einander getrennt werden sollen. @cr @cr Zäune - Tore können zusätzlich konfiguriert werden. Diese Öffnen sich zum Ende des Waffenstillstands. @cr Flüsse - Straßen sollten in diesem Fall auch aktiviert sein, da die Flüsse sonst nur im Winter zu überqueren sind. Bis zum Ende des Waffenstillstands ist der Bau von Brücken verboten. @cr keine - Die Karte ist für jeden Spieler gleichermaßen zugänglich."
+	if self.value == 2 then
+		return "Legt fest, wie rivalisierende Teams räumlich von einander getrennt werden sollen. @cr @cr Zäune - Tore können zusätzlich konfiguriert werden. Diese Öffnen sich zum Ende des Waffenstillstands."
+	elseif self.value == 3 then
+		return "Legt fest, wie rivalisierende Teams räumlich von einander getrennt werden sollen. @cr @cr Flüsse - Straßen sollten in diesem Fall auch aktiviert sein, da die Flüsse sonst nur im Winter zu überqueren sind. Bis zum Ende des Waffenstillstands ist der Bau von Brücken verboten. @cr keine - Die Karte ist für jeden Spieler gleichermaßen zugänglich."
+	end
+	--if self.value == 1 then
+	return "Legt fest, wie rivalisierende Teams räumlich von einander getrennt werden sollen. @cr @cr keine - Die Karte ist für jeden Spieler gleichermaßen zugänglich."
 end
 
 function EMS.RD.Rules.RMG_GenerateRivers:SetValue(_value)
@@ -49,7 +55,7 @@ function EMS.RD.Rules.RMG_GenerateRivers:SetValue(_value)
 	end
 	self.value = _value
 	
-	XGUIEng.ShowWidget("RMG1Frame3a", RMG.TeamBorderTypes[self.value].gate)
+	--XGUIEng.ShowWidget("RMG1Frame3a", RMG.TeamBorderTypes[self.value].gate)
 	XGUIEng.ShowWidget("RMG1Frame3b", RMG.TeamBorderTypes[self.value].gate)
 end
 
@@ -125,7 +131,7 @@ function EMS.RD.Rules.RMG_GenerateRoads:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_GenerateRoads:GetDescription()
-	return "Legt fest, ob Straßen zu nahegelegenen Spielern generiert werden sollen. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Wenn ihr bei Teambegrenzung die Option Flüsse wählt, werden Brücken an den Stellen generiert, an denen sich Starßen und Flüsse kreuzen."
+	return "Legt fest, ob Straßen zu nahegelegenen Spielern generiert werden sollen. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Wenn ihr bei Teambegrenzung die Option Flüsse wählt, werden Brücken an den Stellen generiert, an denen sich Straßen und Flüsse kreuzen."
 end
 
 -- ************************************************************************************************ --
@@ -188,7 +194,7 @@ function EMS.RD.Rules.RMG_MirrorMap:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_MirrorMap:GetDescription()
-	return "Die Kartenspiegelung erfolgt punktsymetrisch und funktioniert für jede Anzahl von Spielern und Teams. Jedes Zweite Segment wird in der Mitte noch einmal achsengespiegelt, so dass die Kanten aneinander passen."
+	return "Die Kartenspiegelung erfolgt punktsymetrisch und funktioniert für jede Anzahl von Spielern und Teams. Jedes Zweite Segment wird in der Mitte noch einmal achsengespiegelt, so dass die Kanten aneinander passen. @cr Wird die Karte nicht gespiegelt, dauert die Generierung länger, da die gesamte Karte individuell berechnet werden muss."
 end
 
 -- ************************************************************************************************ --
@@ -212,7 +218,7 @@ function EMS.RD.Rules.RMG_RandomPlayerPosition:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_RandomPlayerPosition:GetDescription()
-	return "Legt fest ob die Startpositionen der Spieler einen Kreis bilden, oder alle zufällig auf der Karte verteilt werden. @cr @cr @color:255,204,51,255 VORSICHT: @color:255,255,255,255 Bei zufälliger Verteilung sind Karte spiegeln und Team Abgrenzung nicht verfügbar. @cr @cr @color:255,102,51,255 WARNUNG: @color:255,255,255,255 Bei zufälliger Verteilung kann es Vorkommen, dass nicht genug Platz für alle Stukturen wie Rohstoffschächte vorhanden ist. Der Generator wird euch dies mitteilen. @cr Außerdem kann es in seltenen Fällen Vorkommen, dass eure Burgen ineinander stehen. @cr Bei Problemen könnt ihr es mit einem anderen Seed versuchen."
+	return "Legt fest ob die Startpositionen der Spieler einen Kreis bilden, oder alle zufällig auf der Karte verteilt werden. @cr @cr @color:255,204,51,255 VORSICHT: @color:255,255,255,255 Bei zufälliger Verteilung sind Karte spiegeln und Team Abgrenzung nicht verfügbar. @cr @cr @color:255,102,51,255 WARNUNG: @color:255,255,255,255 Bei zufälliger Verteilung kann es in seltenen Fällen Vorkommen, dass nicht genug Platz für alle Stukturen wie Startgebäude oder Rohstoffschächte vorhanden ist. Der Generator wird euch dies mitteilen. @cr Außerdem kann es in seltenen Fällen Vorkommen, dass eure Burgen ineinander stehen. @cr Bei Problemen könnt ihr es mit einem anderen Seed versuchen. Für diesen Modus biete ich keinen Support!"
 end
 --[[
 -- ************************************************************************************************ --
@@ -309,173 +315,6 @@ function EMS.RD.Rules.RMG_ForestDensity:GetRepresentative()
 	return self.value .. "%"
 end
 
--- ************************************************************************************************ --
--- *	ThresholdPike
--- *
-
-EMS.RD.Rules.RMG_ThresholdPike = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdPike:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdPike:GetTitle()
-	return "Gipfel"
-end
-
-function EMS.RD.Rules.RMG_ThresholdPike:GetDescription()
-	return EMS.GL.GetThresholdDescription("Berggipfel")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdMountain
--- *
-
-EMS.RD.Rules.RMG_ThresholdMountain = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdMountain:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdMountain:GetTitle()
-	return "Berg"
-end
-
-function EMS.RD.Rules.RMG_ThresholdMountain:GetDescription()
-	return EMS.GL.GetThresholdDescription("Berge")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdHill
--- *
-
-EMS.RD.Rules.RMG_ThresholdHill = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdHill:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdHill:GetTitle()
-	return "Hügel"
-end
-
-function EMS.RD.Rules.RMG_ThresholdHill:GetDescription()
-	return EMS.GL.GetThresholdDescription("Hügel")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdSea
--- *
-
-EMS.RD.Rules.RMG_ThresholdSea = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdSea:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdSea:GetTitle()
-	return "Meer"
-end
-
-function EMS.RD.Rules.RMG_ThresholdSea:GetDescription()
-	return EMS.GL.GetThresholdDescription("Meere")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdLake
--- *
-
-EMS.RD.Rules.RMG_ThresholdLake = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdLake:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdLake:GetTitle()
-	return "See"
-end
-
-function EMS.RD.Rules.RMG_ThresholdLake:GetDescription()
-	return EMS.GL.GetThresholdDescription("Seen")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdCoast
--- *
-
-EMS.RD.Rules.RMG_ThresholdCoast = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdCoast:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdCoast:GetTitle()
-	return "Küste"
-end
-
-function EMS.RD.Rules.RMG_ThresholdCoast:GetDescription()
-	return EMS.GL.GetThresholdDescription("Küsten")
-end
-
--- ************************************************************************************************ --
--- *	ThresholdRoad
--- *
-
-EMS.RD.Rules.RMG_ThresholdRoad = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdRoad:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdRoad:GetTitle()
-	return "Straße"
-end
-
-function EMS.RD.Rules.RMG_ThresholdRoad:GetDescription()
-	return "Legt fest, auf welchem Wert Straßen generiert werden sollen. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Wenn ihr wollt, dass die Straßen durch Wälder führen, müsst ihr einen Wert zwischen Wald und Hügel oder zwischen Wald und Küste wählen. @cr Die Option Straßen muss aktiviert sein."
-end
-
--- ************************************************************************************************ --
--- *	ThresholdPlateau
--- *
-
-EMS.RD.Rules.RMG_ThresholdPlateau = EMS.T.CopyTable(EMS.RD.Templates.StdRule);
-	
-function EMS.RD.Rules.RMG_ThresholdPlateau:SetValue(_value)
-	if _value > 1000 or _value < -1000 then
-		return
-	end
-	self.value = _value
-end
-
-function EMS.RD.Rules.RMG_ThresholdPlateau:GetTitle()
-	return "Hochebene"
-end
-
-function EMS.RD.Rules.RMG_ThresholdPlateau:GetDescription()
-	return "Dieser Wert verhält sich ähnlich wie die Option Flachland, nur dass die Geländehöhe oberhalb dieses Werts geglättet wird. @cr @cr @color:51,204,255,255 TIPP: @color:255,255,255,255 Setzt diesen Wert auf 1000 um Hochebenen zu deaktivieren."
-end
 ]]
 -- ************************************************************************************************ --
 -- *	Amount Clay Pit
@@ -790,7 +629,7 @@ function EMS.RD.Rules.RMG_StartResourceGold:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_StartResourceGold:GetDescription()
-	return "Legt die Menge an Talern fest, die zu begin des Spiels zur Verfügung stehen."
+	return "Legt die Menge an Talern fest, die jedem Spieler zu begin des Spiels zur Verfügung stehen."
 end
 
 function EMS.RD.Rules.RMG_StartResourceGold:Evaluate()
@@ -817,7 +656,7 @@ function EMS.RD.Rules.RMG_StartResourceClay:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_StartResourceClay:GetDescription()
-	return "Legt die Menge an Lehm fest, die zu begin des Spiels zur Verfügung stehen."
+	return "Legt die Menge an Lehm fest, die jedem Spieler zu begin des Spiels zur Verfügung stehen."
 end
 
 -- ************************************************************************************************ --
@@ -831,7 +670,7 @@ function EMS.RD.Rules.RMG_StartResourceWood:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_StartResourceWood:GetDescription()
-	return "Legt die Menge an Holz fest, die zu begin des Spiels zur Verfügung stehen."
+	return "Legt die Menge an Holz fest, die jedem Spieler zu begin des Spiels zur Verfügung stehen."
 end
 
 -- ************************************************************************************************ --
@@ -845,7 +684,7 @@ function EMS.RD.Rules.RMG_StartResourceStone:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_StartResourceStone:GetDescription()
-	return "Legt die Menge an Steinen fest, die zu begin des Spiels zur Verfügung stehen."
+	return "Legt die Menge an Steinen fest, die jedem Spieler zu begin des Spiels zur Verfügung stehen."
 end
 
 -- ************************************************************************************************ --
@@ -859,7 +698,7 @@ function EMS.RD.Rules.RMG_StartResourceIron:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_StartResourceIron:GetDescription()
-	return "Legt die Menge an Eisen fest, die zu begin des Spiels zur Verfügung stehen."
+	return "Legt die Menge an Eisen fest, die jedem Spieler zu begin des Spiels zur Verfügung stehen."
 end
 
 -- ************************************************************************************************ --
@@ -873,7 +712,7 @@ function EMS.RD.Rules.RMG_StartResourceSulfur:GetTitle()
 end
 
 function EMS.RD.Rules.RMG_StartResourceSulfur:GetDescription()
-	return "Legt die Menge an Schwefel fest, die zu begin des Spiels zur Verfügung stehen."
+	return "Legt die Menge an Schwefel fest, die jedem Spieler zu begin des Spiels zur Verfügung stehen."
 end
 
 -- ************************************************************************************************ --
