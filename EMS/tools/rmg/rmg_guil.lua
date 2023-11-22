@@ -404,8 +404,20 @@ end
 function RMG.SetRulesToDefault()
 	
 	EMS.GL.SetValueSynced("RMG_Seed", RMG.GetRandomSeed())
-
-	EMS.GL.SetValueSynced("RMG_GenerateRivers",	2)
+	
+	local _, _, nteams = RMG.GetPlayersAndTeams()
+	-- no team border in big ffa
+	if nteams > 8 then
+		EMS.GL.SetValueSynced("RMG_GenerateRivers",	1)
+		
+		-- deactivate input and change tooltip
+		function EMS.RD.Rules.RMG_GenerateRivers:SetValue() return end
+		function EMS.RD.Rules.RMG_GenerateRivers:GetDescription()
+			return "Legt fest, wie rivalisierende Teams räumlich von einander getrennt werden sollen. @cr @cr keine - Die Karte ist für jeden Spieler gleichermaßen zugänglich. @cr @cr @color:51,204,255,255 HINWEIS: @color:255,255,255,255 Bei mehr als 10 Teams sind Team Abgrenzungen nicht verfügbar."
+		end
+	else
+		EMS.GL.SetValueSynced("RMG_GenerateRivers",	2)
+	end
 	EMS.GL.SetValueSynced("RMG_GateLayout",		1)
 	EMS.GL.SetValueSynced("RMG_GateSize",		3)
 	EMS.GL.SetValueSynced("RMG_GenerateRoads",	Bool2Num(true))

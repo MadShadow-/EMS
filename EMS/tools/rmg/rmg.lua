@@ -14,7 +14,7 @@
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.4
+EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.5
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
@@ -294,10 +294,23 @@ function RMG.InitGenerationData()
 	for p = 1, nplayers do
 		table.insert( RMG.GenerationData.Players, { Id = players[ p ].Id, Team = players[ p ].Team, IsHuman = players[ p ].IsHuman, IsReady = false, } )
 	end
- 
-	-- generate no rivers if not enough teams
-	if nteams <= 1 and not RMG.IsCustomMap then
-		RMG.GenerationData.TeamBorderType = 1 -- none
+	
+	-- on default maps
+	if not RMG.IsCustomMap then
+		-- generate no team border in big ffa
+		if nplayers <= nteams and nplayers > 10 then
+			RMG.GenerationData.TeamBorderType = 1 -- none
+		end
+		
+		-- generate no rivers if not enough teams
+		if nteams <= 1 then
+			RMG.GenerationData.TeamBorderType = 1 -- none
+		end
+		
+		-- generate no roads if not enough players
+		if nplayers <= 1 then
+			RMG.GenerationData.GenerateRoads = false
+		end
 	end
 	
 	-- get composition to allow custom overrides for 12+ players
@@ -312,11 +325,6 @@ function RMG.InitGenerationData()
 	-- no mirror offset if bridges will be generated, they look bettes at 90° angle
 	if RMG.GenerationData.TeamBorderType == 3 and RMG.GenerationData.GenerateRoads and not RMG.IsCustomMap then
 		RMG.GenerationData.MirrorOffset = 0
-	end
-	
-	-- generate no roads if not enough players
-	if nplayers <= 1 and not RMG.IsCustomMap then
-		RMG.GenerationData.GenerateRoads = false
 	end
 	
 	-- build misc structure tables
@@ -646,7 +654,7 @@ function RMG.GetComposition()
 				[  9 ] = { Slize =  9, AxisMirrorFlag = true, },
 				[ 10 ] = { Slize = 10, },
 				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
-				TeamSlizes = { 0, 6 },
+				TeamBorderSlizes = { 0, 6 },
 			},
 		},]]
 		[ 12 ] = {
@@ -664,7 +672,7 @@ function RMG.GetComposition()
 				[ 10 ] = { Slize = 10, },
 				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
 				[ 12 ] = { Slize =  9, AxisMirrorFlag = true, Distance = distance, },
-				TeamSlizes = { 0, 6 },
+				TeamBorderSlizes = { 0, 6 },
 			},
 			[  3 ] = {
 				NumberOfPlayers = 9, NumberOfTeams = 3, EqualTeams = true,
@@ -680,7 +688,7 @@ function RMG.GetComposition()
 				[ 10 ] = { Slize = 10, AxisMirrorFlag = true, },
 				[ 11 ] = { Slize = 11, },
 				[ 12 ] = { Slize = 10, Distance = distance, },
-				TeamSlizes = { 0, 4, 8 },
+				TeamBorderSlizes = { 0, 4, 8 },
 			},
 			[  4 ] = {
 				NumberOfPlayers = 8, NumberOfTeams = 4, EqualTeams = true,
@@ -696,7 +704,7 @@ function RMG.GetComposition()
 				[ 10 ] = { Slize =   10, },
 				[ 11 ] = { Slize =   11, AxisMirrorFlag = true, },
 				[ 12 ] = { Slize = 10.5, Distance = distance, },
-				TeamSlizes = { 0, 3, 6, 9 },
+				TeamBorderSlizes = { 0, 3, 6, 9 },
 			},
 			[  6 ] = {
 				NumberOfPlayers = 6, NumberOfTeams = 6, EqualTeams = true,
@@ -712,7 +720,7 @@ function RMG.GetComposition()
 				[ 10 ] = { Slize =  9, Distance = distance, },
 				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
 				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
-				TeamSlizes = { 0, 2, 4, 6, 8, 10 },
+				TeamBorderSlizes = { 0, 2, 4, 6, 8, 10 },
 			},
 			[ 12 ] = {
 				NumberOfPlayers = 12, NumberOfTeams = 0, EqualTeams = true,
@@ -728,7 +736,7 @@ function RMG.GetComposition()
 				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
 				[ 11 ] = { Slize = 11, Team = 0, },
 				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
-				TeamSlizes = {},
+				TeamBorderSlizes = {},
 			},
 		},
 		[ 13 ] = {
@@ -747,7 +755,7 @@ function RMG.GetComposition()
 				[ 11 ] = { Slize = 11, Team = 0, },
 				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
 				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.0, Mirror = {}, },
-				TeamSlizes = {},
+				TeamBorderSlizes = {},
 			},
 		},
 		[ 14 ] = {
@@ -767,7 +775,7 @@ function RMG.GetComposition()
 				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
 				[ 13 ] = { Slize = 13, },
 				[ 14 ] = { Slize = 13, Distance = distance, },
-				TeamSlizes = { 0, 2, 4, 6, 8, 10, 12 },
+				TeamBorderSlizes = { 0, 2, 4, 6, 8, 10, 12 },
 			},
 			[ 14 ] = {
 				NumberOfPlayers = 14, NumberOfTeams = 0, EqualTeams = true,
@@ -785,7 +793,7 @@ function RMG.GetComposition()
 				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
 				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14 }, },
 				[ 14 ] = { Slize =  6, Team = 0, Distance = 0.3, },
-				TeamSlizes = {},
+				TeamBorderSlizes = {},
 			},
 		},
 		[ 15 ] = {
@@ -806,7 +814,7 @@ function RMG.GetComposition()
 				[ 13 ] = { Slize = 11, },
 				[ 14 ] = { Slize =  9, Distance = distance, },
 				[ 15 ] = { Slize = 11, Distance = distance, },
-				TeamSlizes = { 0, 4, 8 },
+				TeamBorderSlizes = { 0, 4, 8 },
 			},
 			[  5 ] = {
 				NumberOfPlayers = 10, NumberOfTeams = 5, EqualTeams = true,
@@ -825,7 +833,7 @@ function RMG.GetComposition()
 				[ 13 ] = { Slize =   13, },
 				[ 14 ] = { Slize =   14, AxisMirrorFlag = true, },
 				[ 15 ] = { Slize = 13.5, Distance = distance, },
-				TeamSlizes = { 0, 3, 6, 9, 12 },
+				TeamBorderSlizes = { 0, 3, 6, 9, 12 },
 			},
 			[ 15 ] = {
 				NumberOfPlayers = 15, NumberOfTeams = 0, EqualTeams = true,
@@ -844,7 +852,7 @@ function RMG.GetComposition()
 				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14, 15 }, },
 				[ 14 ] = { Slize =  5, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
 				[ 15 ] = { Slize =  7, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
-				TeamSlizes = {},
+				TeamBorderSlizes = {},
 			},
 		},
 		[ 16 ] = {
@@ -866,7 +874,7 @@ function RMG.GetComposition()
 				[ 14 ] = { Slize = 12, },
 				[ 15 ] = { Slize = 13, AxisMirrorFlag = true, },
 				[ 16 ] = { Slize = 12, AxisMirrorFlag = true, Distance = distance, },
-				TeamSlizes = { 0, 7 },
+				TeamBorderSlizes = { 0, 7 },
 			},
 			[  4 ] = {
 				NumberOfPlayers = 12, NumberOfTeams = 4, EqualTeams = true,
@@ -886,7 +894,7 @@ function RMG.GetComposition()
 				[ 14 ] = { Slize = 14, },
 				[ 15 ] = { Slize = 15, AxisMirrorFlag = true, },
 				[ 16 ] = { Slize = 14, AxisMirrorFlag = true, Distance = distance, },
-				TeamSlizes = { 0, 4, 8, 12 },
+				TeamBorderSlizes = { 0, 4, 8, 12 },
 			},
 			[  8 ] = {
 				NumberOfPlayers = 8, NumberOfTeams = 8, EqualTeams = true,
@@ -906,7 +914,7 @@ function RMG.GetComposition()
 				[ 14 ] = { Slize = 13, Distance = distance, },
 				[ 15 ] = { Slize = 15, AxisMirrorFlag = true, },
 				[ 16 ] = { Slize = 15, AxisMirrorFlag = true, Distance = distance, },
-				TeamSlizes = { 0, 2, 4, 6, 8, 10, 12, 14 },
+				TeamBorderSlizes = { 0, 2, 4, 6, 8, 10, 12, 14 },
 			},
 			[ 16 ] = {
 				NumberOfPlayers = 16, NumberOfTeams = 0, EqualTeams = true,
@@ -926,13 +934,15 @@ function RMG.GetComposition()
 				[ 14 ] = { Slize =  3, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
 				[ 15 ] = { Slize =  6, Team = 0, Distance = 0.3, },
 				[ 16 ] = { Slize =  9, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
-				TeamSlizes = {},
+				TeamBorderSlizes = {},
 			},
 		},
 	}
 	
-	-- no team borders in ffa
-	nteams = nteams < nplayers and nteams or 0
+	-- no team borders in big ffa
+	if nteams < nplayers and nteams > 8 then
+		nteams = 0
+	end
 	
 	-- return special composition if it fits the setup
 	if compositions[ nplayers ] then
@@ -954,10 +964,7 @@ function RMG.GetComposition()
 	
 	local currentteam = 0
 	local slize = 0
-	--local slizes = {}
-	local composition = { NumberOfPlayers = nplayers, NumberOfTeams = nteams, TeamSlizes = {}, }
-	
-	--local mirroroffset = RMG.GenerationData.MirrorOffset - RMG.GenerationData.MirrorRadian / 2
+	local composition = { NumberOfPlayers = nplayers, NumberOfTeams = nteams, TeamBorderSlizes = {}, }
 	
 	-- create default generic composition
 	for player = 1, nplayers do
@@ -966,8 +973,7 @@ function RMG.GetComposition()
 		if nteams > 0 and RMG.GenerationData.Players[ player ].Team > currentteam then
 			
 			currentteam = RMG.GenerationData.Players[ player ].Team
-			table.insert( composition.TeamSlizes, slize )
-			--slizes[ slize ] = { T = currentteam }
+			table.insert( composition.TeamBorderSlizes, slize )
 			
 			slize = slize + 1
 		end
@@ -983,7 +989,6 @@ function RMG.GetComposition()
 			end
 		end
 		
-		--slizes[ slize ] = { P = player }
 		slize = slize + 1
 	end
 	
@@ -1236,14 +1241,14 @@ function RMG.GetPlayersAndTeams()
 		players[2] = { Id = 2, Team = 1, IsHuman = 1 }
 		players[3] = { Id = 3, Team = 2, IsHuman = 1 }
 		players[4] = { Id = 4, Team = 2, IsHuman = 1 }
-		--players[5] = { Id = 5, Team = 2, IsHuman = 1 }
-		--players[6] = { Id = 6, Team = 2, IsHuman = 1 }
-		--players[7] = { Id = 7, Team = 2, IsHuman = 1 }
-		--players[8] = { Id = 8, Team = 2, IsHuman = 1 }
-		--players[9] = { Id = 2, Team = 3, IsHuman = 1 }
-		--players[10]= { Id = 2, Team = 3, IsHuman = 1 }
-		--players[11]= { Id = 3, Team = 3, IsHuman = 1 }
-		--players[12]= { Id = 4, Team = 3, IsHuman = 1 }
+		--players[5] = { Id = 5, Team = 5, IsHuman = 1 }
+		--players[6] = { Id = 6, Team = 6, IsHuman = 1 }
+		--players[7] = { Id = 7, Team = 7, IsHuman = 1 }
+		--players[8] = { Id = 8, Team = 8, IsHuman = 1 }
+		--players[9] = { Id = 1, Team = 9, IsHuman = 1 }
+		--players[10]= { Id = 2, Team = 10, IsHuman = 1 }
+		--players[11]= { Id = 3, Team = 11, IsHuman = 1 }
+		--players[12]= { Id = 4, Team = 12, IsHuman = 1 }
 		--players[13]= { Id = 5, Team = 4, IsHuman = 1 }
 		--players[14]= { Id = 6, Team = 4, IsHuman = 1 }
 		--players[15]= { Id = 7, Team = 4, IsHuman = 1 }
@@ -1259,6 +1264,10 @@ function RMG.GetPlayersAndTeams()
 		--teams[6] = 6
 		--teams[7] = 7
 		--teams[8] = 8
+		--teams[9] = 9
+		--teams[10] = 10
+		--teams[11] = 11
+		--teams[12] = 12
 		
 		nteams = table.getn( teams )
 	end
@@ -1705,7 +1714,7 @@ function RMG.CreateFences( _generationdata )
 	local composition = _generationdata.Composition
 	
 	-- create fence lines from circle radius to map border
-	for _, slize in ipairs( composition.TeamSlizes ) do
+	for _, slize in ipairs( composition.TeamBorderSlizes ) do
 		
 		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
 		
@@ -1887,7 +1896,7 @@ function RMG.FillRiverLocationTable( _generationdata )
 	local composition = _generationdata.Composition
 	
 	-- find the points at the egde of the map between different teams
-	for i, slize in ipairs( composition.TeamSlizes ) do
+	for i, slize in ipairs( composition.TeamBorderSlizes ) do
 		
 		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
 
@@ -3294,7 +3303,7 @@ function RMG.Finalize( _generationdata )
 	end
 	
 	if CNetwork then
-		EMS.GL.MainMenuButtonPressed( "CloseMenu" )
+		EMS.GL.HideMainMenu()
 		GUI.AddStaticNote( "RMG: Der Countdown startet, sobald die Karte bei allen Spielern fertig generiert wurde." )
 		CNetwork.SendCommand( "RMG.PlayerFeedbackReady", playerindex )
 	else
@@ -3333,9 +3342,10 @@ function RMG.PlayerFeedbackReady( _name, _playerindex )
 		end
 	end
 	
+	GUI.ClearNotes()
+	
 	-- host: start game
 	if GUI.GetPlayerID() == EMS.GV.HostId or not CNetwork then
-		GUI.ClearNotes()
 		RMG.EMS_GL_StartRequestYes()
 	end
 end
@@ -3504,17 +3514,21 @@ end
 RMG.EMS_GL_StartRequestYes = EMS.GL.StartRequestYes
 EMS.GL.StartRequestYes = function()
 	
-	if EMS.UseCNetwork then
-		Sync.Call( "EMS.GL.SetRulesByConfig", Sync.TableToString( EMS.RD.GetRuleConfig() ) );
-	else
-		Sync.Call( "EMS.GL.SetRulesByConfig", EMS.RD.GetRuleConfig() );
-	end
-	
-	if CNetwork and not RMG.GenerationStarted then
+	if not RMG.GenerationStarted then
+		
 		RMG.GenerationStarted = true
-		CNetwork.SendCommand( "RMG.GenerateMap" )
-	else
-		RMG.GenerateMap()
+		
+		if EMS.UseCNetwork then
+			Sync.Call( "EMS.GL.SetRulesByConfig", Sync.TableToString( EMS.RD.GetRuleConfig() ) );
+		else
+			Sync.Call( "EMS.GL.SetRulesByConfig", EMS.RD.GetRuleConfig() );
+		end
+		
+		if CNetwork and EMS.CanChangeRules then
+			CNetwork.SendCommand( "RMG.GenerateMap" )
+		else
+			RMG.GenerateMap()
+		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
