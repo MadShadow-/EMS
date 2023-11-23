@@ -516,6 +516,10 @@ RMG.EntitySets = {
 		Entities.XD_RockDarkEvelance1,
 		Entities.XD_RockDarkEvelance2,
 	},
+	EvelanceRocky = {
+		Entities.XD_RockDarkEvelance1,
+		Entities.XD_RockDarkEvelance2,
+	},
 	EvelanceRockDark = {
 		Entities.XD_RockDarkEvelance1,
 		Entities.XD_RockDarkEvelance1,
@@ -826,6 +830,10 @@ RMG.EntitySets = {
 		Entities.XD_RockMedium1,
 		Entities.XD_RockMedium2,
 	},
+	MediRockyBright = {
+		Entities.XD_RockKhakiBright1,
+		Entities.XD_RockKhakiBright2,
+	},
 	MediRockBright = {
 		Entities.XD_RockKhakiBright1,
 		Entities.XD_RockKhakiBright1,
@@ -900,6 +908,10 @@ RMG.EntitySets = {
 		Entities.XD_RockKhakiBright6,
 		Entities.XD_RockKhakiBright6,
 		Entities.XD_RockKhakiBright7,
+	},
+	MediRockDark = {
+		Entities.XD_RockKhakiMedium1,
+		Entities.XD_RockKhakiMedium2,
 	},
 	MediRockDark = {
 		Entities.XD_RockKhakiMedium1,
@@ -1314,6 +1326,10 @@ RMG.EntitySets = {
 		Entities.XD_PlantDecalTideland2,
 		Entities.XD_PlantDecalTideland3,
 		Entities.XD_RockTideland1,
+		Entities.XD_RockTideland1,
+		Entities.XD_RockTideland2,
+	},
+	TidelandRocky = {
 		Entities.XD_RockTideland1,
 		Entities.XD_RockTideland2,
 	},

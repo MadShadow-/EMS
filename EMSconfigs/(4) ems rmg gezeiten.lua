@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 1.3,
+	Version = 1.4,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -227,6 +227,14 @@ function OverrideRMG()
 					NoiseMin = noiseMin,
 					NoiseMax = noiseMax,
 				}
+			else
+				placement = {
+					AreaMin = 0,
+					AreaMax = 12,
+					Noise = RMG.GenerationData.TerrainBaseHeight,
+					NoiseMin = noiseMin,
+					NoiseMax = noiseMax,
+				}
 			end
 			
 			local child = {
@@ -391,6 +399,33 @@ function OverrideRMG()
 		RMG.SimpleNoiseOverride( _generationdata, Round( mapsize * high ), Round( mapsize * low  ), innerrange, outerrange, -0.352147606136882, 0.10 )
 		RMG.SimpleNoiseOverride( _generationdata, Round( mapsize * low  ), Round( mapsize * high ), innerrange, outerrange, -0.352147606136882, 0.10 )
 		RMG.SimpleNoiseOverride( _generationdata, Round( mapsize * high ), Round( mapsize * high ), innerrange, outerrange, -0.352147606136882, 0.10 )
+		
+		-- flatten outer connectors
+		--local innerrange = Round( maphalf * 0.1 ) - 15
+		--local outerrange = innerrange + 30
+		
+		--RMG.FlattenArea( _generationdata, GetXFromAngleAndRelDist(  70.00, 0.57 ), GetYFromAngleAndRelDist(  70.00, 0.57 ), innerrange, outerrange )
+		--RMG.FlattenArea( _generationdata, GetXFromAngleAndRelDist( 200.00, 0.57 ), GetYFromAngleAndRelDist( 200.00, 0.57 ), innerrange, outerrange )
+		--RMG.FlattenArea( _generationdata, GetXFromAngleAndRelDist( 250.00, 0.57 ), GetYFromAngleAndRelDist( 250.00, 0.57 ), innerrange, outerrange )
+		--RMG.FlattenArea( _generationdata, GetXFromAngleAndRelDist(  20.00, 0.57 ), GetYFromAngleAndRelDist(  20.00, 0.57 ), innerrange, outerrange )
+	end
+	------------------------------------------------------------------------------------------------------------------------------------------------------------
+	RMG.SetTerrainTextures_Orig = RMG.SetTerrainTextures
+	function RMG.SetTerrainTextures( _generationdata )
+		
+		local maphalf = Logic.WorldGetSize() / 200
+		
+		-- flatten outer connectors
+		local innerrange = Round( maphalf * 0.1 ) - 15
+		local outerrange = innerrange + 30
+		
+		-- this needs to be done after rivers and roads have been calculated
+		RMG.SimpleHeightOverride( _generationdata, GetXFromAngleAndRelDist(  70.00, 0.57 ), GetYFromAngleAndRelDist(  70.00, 0.57 ), innerrange, outerrange, 2356 )
+		RMG.SimpleHeightOverride( _generationdata, GetXFromAngleAndRelDist( 200.00, 0.57 ), GetYFromAngleAndRelDist( 200.00, 0.57 ), innerrange, outerrange, 2356 )
+		RMG.SimpleHeightOverride( _generationdata, GetXFromAngleAndRelDist( 250.00, 0.57 ), GetYFromAngleAndRelDist( 250.00, 0.57 ), innerrange, outerrange, 2356 )
+		RMG.SimpleHeightOverride( _generationdata, GetXFromAngleAndRelDist(  20.00, 0.57 ), GetYFromAngleAndRelDist(  20.00, 0.57 ), innerrange, outerrange, 2356 )
+		
+		RMG.SetTerrainTextures_Orig( _generationdata )
 	end
 	------------------------------------------------------------------------------------------------------------------------------------------------------------
 	function RMG.FlattenArea( _generationdata, _X, _Y, _InnerRange, _OuterRange )
@@ -615,7 +650,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
  -- raise update speed in the time where its likely that larger areas become walkable at the same time
 function LowerWater2()
-	ChangeWaterHeight.Start( 2356, 2348, 2 * 60, LowerWater3, nil, 20 )
+	ChangeWaterHeight.Start( 2356, 2348, 2 * 60, LowerWater3, nil, 10 )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function LowerWater3()
@@ -641,7 +676,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
  -- raise update speed again when rivers are about to dry out
 function LowerWater5()
-	ChangeWaterHeight.Start( 2140, 2132, 2 * 60, Wait2, nil, 70 )
+	ChangeWaterHeight.Start( 2140, 2132, 2 * 60, Wait2, nil, 35 )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 120 - 180
@@ -763,7 +798,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function ChangeWaterHeight.UpdateWaterBlockingInternal( _UpdateInterval )
 	
-	_UpdateInterval = _UpdateInterval or 10
+	_UpdateInterval = _UpdateInterval or 5
 	local n = 0
 	
 	for i = table.getn( ChangeWaterHeight.WaterBlockedNodes ), 1, -1 do

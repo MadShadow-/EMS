@@ -14,7 +14,7 @@
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.5
+EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.6
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
@@ -539,7 +539,7 @@ function RMG.InitGenerationData()
 				[15] = {[15] = -50, [14] = -50, [13] = -50, [12] = -50, [11] = -50, [10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, [-11] = -50, [-12] = -50, [-13] = -50, [-14] = -50, [-15] = -50, },
 			},
 			TerrainTextures = {
-				Area = {X = 16, Y = 6,},
+				Area = {X = 18, Y = 6,},
 				TextureList = "Coast",
 			},
 		},
@@ -586,7 +586,7 @@ function RMG.InitGenerationData()
 				[15] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
 			},
 			TerrainTextures = {
-				Area = {X = 6, Y = 16,},
+				Area = {X = 6, Y = 18,},
 				TextureList = "Coast",
 			},
 		},
@@ -596,10 +596,10 @@ function RMG.InitGenerationData()
 				{Type = Entities.XD_VillageCenter, Player = 0,}, {Type = Entities.XD_ScriptEntity, Explore = explorevc * 6, Name = "green"},
 			},
 			TerrainHeights = {
-				Area = {X = 18, Y = 18,},
+				Area = 18,
 			},
 			TerrainTextures = {
-				Area = {X = 8, Y = 8,},
+				Area = {X = 10, Y = 10,},
 				TextureList = "Road",
 			},
 		},
@@ -1033,10 +1033,10 @@ function RMG.GetPlayerStruct()
 						--{Type = Entities.PU_Serf, RelativX = -900, RelativY =  300, Rotation = 180,},
 					},
 					TerrainHeights = {
-					Area = {X = 18, Y = 18,},
+					Area = 18,
 					},
 					TerrainTextures = {
-						Area = {X = 8, Y = 8,},
+						Area = {X = 10, Y = 10,},
 						TextureList = "Road",
 					},
 				},
@@ -1873,6 +1873,31 @@ function RMG.SimpleNoiseOverride( _generationdata, _x, _y, _innerrange, _outerra
 					
 					_generationdata.TerrainNodes[ x ][ y ].VegetationNoise = vegetationnoiseoverride
 				end
+			end
+		end
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.SimpleHeightOverride( _generationdata, _x, _y, _innerrange, _outerrange, _targetheight )
+	
+	local mapsize = Logic.WorldGetSize() / 100
+	local x1, y1, x2, y2 = math.max( _x - _outerrange, 0 ), math.max( _y - _outerrange, 0 ), math.min( _x + _outerrange, mapsize ), math.min( _y + _outerrange, mapsize )
+	
+	for x = x1, x2 do
+		for y = y1, y2 do
+			
+			local distance = SimpleGetDistance( x, y, _x, _y )
+			
+			if distance < _outerrange then
+			
+				local height = _generationdata.TerrainNodes[ x ][ y ].Height
+				local heightoverride = _targetheight
+				
+				if distance > _innerrange then
+					heightoverride = Lerp( height, heightoverride, ( distance - _innerrange ) / ( _outerrange - _innerrange ) )
+				end
+				
+				_generationdata.TerrainNodes[ x ][ y ].Height = heightoverride
 			end
 		end
 	end
