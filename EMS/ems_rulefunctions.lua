@@ -753,3 +753,71 @@ end
 function EMS.RF.ActivateGameMode(_gameModeIndex)
 	EMS.RD.AdditionalConfig.Callback_GameModeSelected(_gameModeIndex);
 end
+
+function EMS.RF.ActivateAttractionLimitFix()
+	if EMS.UseEXT then
+		EMS.RD.ALF = {}
+		
+		EMS.RD.ALF.GetPlayerAttractionUsage = EMS.RD.ALF.GetPlayerAttractionUsage or Logic.GetPlayerAttractionUsage
+		Logic.GetPlayerAttractionUsage = function( _Player )
+			return EMS.RD.ALF.GetPlayerAttractionUsage( _Player ) + EMS.RD.ALF.GetFutureOccupiedAttractionSlots( _Player )
+		end
+
+		EMS.RD.ALF.GUIAction_BuyCannon = EMS.RD.ALF.GUIAction_BuyCannon or GUIAction_BuyCannon
+		GUIAction_BuyCannon = function( _CannonType, _UpgradeCategory )
+			local player = GUI.GetPlayerID()
+			if Logic.GetPlayerAttractionLimit( player ) - Logic.GetPlayerAttractionUsage( player ) < Logic.GetAttractionLimitValueByEntityType( _CannonType ) then
+				GUI.SendPopulationLimitReachedFeedbackEvent( player )
+				return
+			end
+			EMS.RD.ALF.GUIAction_BuyCannon( _CannonType, _UpgradeCategory )
+		end
+
+		function EMS.RD.ALF.GetFutureOccupiedAttractionSlots( _Player )
+			local slots = 0
+			for id in CEntityIterator.Iterator( CEntityIterator.OfCategoryFilter( EntityCategories.MilitaryBuilding ), CEntityIterator.OfPlayerFilter( _Player ) ) do
+				if Logic.GetEntityType( id ) == Entities.PB_Foundry1 or Logic.GetEntityType( id ) == Entities.PB_Foundry2 then
+					local cannontype = CUtilMemory.GetMemory( tonumber( CUtil.GetBehaviour( id, 7834252 ), 16 ) )[ 4 ]:GetInt()
+					if cannontype ~= 0 then
+						slots = slots + Logic.GetAttractionLimitValueByEntityType( cannontype )
+					end
+				end
+			end
+			return slots
+		end
+
+		function GameCallback_GetPlayerAttractionUsageForSpawningWorker( _Player, _Amount )
+			return _Amount + EMS.RD.ALF.GetFutureOccupiedAttractionSlots( _Player )
+		end
+
+		function GameCallback_BuyEntityAttractionLimitCheck( _Player, _CanSpawn )
+			local buyevent = EMS.RD.ALF.GetBuyEventData()
+			if buyevent then
+				local entitytype
+				if buyevent.event == CEntity.Events.BUY_SERF then
+					entitytype = Entities.PU_Serf
+				elseif buyevent.event == CEntity.Events.BUY_LEADER then
+					entitytype = Logic.GetSettlerTypeByUpgradeCategory( buyevent.upgradeCategory, _Player )
+				elseif buyevent.event == CEntity.Events.BUY_SOLDIER then
+					entitytype = Logic.LeaderGetSoldiersType( buyevent.leaderID )
+				end
+				if entitytype then
+					_CanSpawn = Logic.GetPlayerAttractionLimit( _Player ) - Logic.GetPlayerAttractionUsage( _Player ) >= Logic.GetAttractionLimitValueByEntityType( entitytype )
+				end
+			end
+			if not _CanSpawn then
+				GUI.SendPopulationLimitReachedFeedbackEvent( player )
+			end
+			return _CanSpawn
+		end
+
+		function EMS.RD.ALF.GetBuyEventData()
+			for i = CEntity.GetNumberOfEvents(), 1, -1 do
+				local buyevent = CEntity.GetEventData( i )
+				if buyevent.event == CEntity.Events.BUY_SERF or buyevent.event == CEntity.Events.BUY_LEADER or buyevent.event == CEntity.Events.BUY_SOLDIER then
+					return buyevent
+				end
+			end
+		end
+	end
+end

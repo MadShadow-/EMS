@@ -288,6 +288,7 @@ function EMS.GL.Setup()
 		["TowerLimit"] = EMS.GL.GUIUpdate_Text,
 		["PredefinedRuleset"] = EMS.GL.GUIUpdate_TextToggleButton,
 		["GameMode"] = EMS.GL.GUIUpdate_TextToggleButton,
+		["AttractionLimitFix"] = EMS.GL.GUIUpdate_TextToggleButton,
 	};
 	for i = 1, 8 do
 		EMS.GL.GUIUpdate["NumberOfHeroesForPlayer"..i] = EMS.GL.GUIUpdate_TextHero;
@@ -339,6 +340,7 @@ function EMS.GL.Setup()
 		["NumberOfHeroesForPlayer9"] = "EMSPUH9Value";
 		["PredefinedRuleset"] = "EMSPUGF11Value",
 		["GameMode"] = "EMSPUGF12Value",
+		["AttractionLimitFix"] = "EMSPUGF13Value",
 	};
 	for i = 1, 12 do
 		EMS.GL.MapRuleToGUIWidget[heroes[i]] = "EMSPH"..i.."N";
@@ -447,14 +449,6 @@ function EMS.GL.Setup()
 end
 
 function EMS.GL.LoadGUI()
-	--[[if CMod then
-		local archives = {CMod.GetAllArchives()};
-		for i = 1, table.getn(archives) do
-			if string.find(archives[i], "Balancing_Stuff", 1, true) or string.find(archives[i], "BalancingStuff", 1, true) then
-				return;
-			end
-		end
-	end]]
 	S5Hook.LoadGUI("maps\\user\\EMS\\ems.xml");
 end
 

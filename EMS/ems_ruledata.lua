@@ -70,6 +70,7 @@ function EMS.RD.Setup(_cfg)
 		AntiBug = _cfg.AntiBug or 1,
 		HQRush = _cfg.AntiHQRush or 1,
 		BlessLimit = _cfg.BlessLimit or 1,
+		AttractionLimitFix = _cfg.AttractionLimitFix or 1,
 		
 		Dario = _cfg.Dario or 1,
 		Pilgrim = _cfg.Pilgrim or 1,
@@ -1357,5 +1358,25 @@ function EMS.RD.Rules.TowerLevel:Evaluate()
 		for playerId, data in pairs(EMS.PlayerList) do
 			ForbidTechnology(Technologies[utechs[i+1]], playerId);
 		end
+	end
+end
+
+-- ************************************************************************************************ --
+-- *	Attraction Limit Fix
+-- *
+
+EMS.RD.Rules.AttractionLimitFix = EMS.T.CopyTable(EMS.RD.Templates.StdBool);
+EMS.RD.Rules.AttractionLimitFix.Representatives = {[0]= EMS.GV.ForbiddenColor .. " @center " .. EMS.L.Deactivated, [1] = EMS.GV.AllowedColor .. " @center " .. EMS.L.Activated};
+function EMS.RD.Rules.AttractionLimitFix:GetTitle()
+	return EMS.L.AttractionLimitFix;
+end
+
+function EMS.RD.Rules.AttractionLimitFix:GetDescription()
+	return EMS.L.AttractionLimitFixDescription;
+end
+
+function EMS.RD.Rules.AttractionLimitFix:Evaluate()
+	if self.value == 1 then
+		EMS.RF.ActivateAttractionLimitFix();
 	end
 end

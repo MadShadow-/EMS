@@ -223,6 +223,9 @@ EMS.L = {
 			
 			RulePageUp = "Springt zur nächsten Regel-Seite.",
 			RulePageDown = "Springt zur vorherigen Regel-Seite.",
+			
+			AttractionLimitFix = "DZ-Limit-Fix",
+			AttractionLimitFixDescription = "Verhindert das Überschreiten des Bevölkerunslimits. In Produktion befindliche Kanonen werden zum Bevölkerunslimit hinzugezählt.",
 		};
 
 function EMS.L.Setup()

@@ -7,7 +7,7 @@
 -- *                                                                                              * 
 -- ************************************************************************************************ 
 EMS = {};
-EMS.Version = 0.75;
+EMS.Version = 0.76;
 
 -- compability with MCS
 MCS = EMS;
@@ -35,8 +35,11 @@ function EMS.Setup()
 	end
 	EMS.SetupDone = true;
 	
-	if CNetwork then
-		EMS.UseCNetwork = true;
+	if CEntity then
+		if CNetwork then
+			EMS.UseCNetwork = true;
+		end
+		EMS.UseEXT = true;
 	end
 	
 	--Include global tool script functions
