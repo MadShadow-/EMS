@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 1.4,
+	Version = 1.5,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -714,9 +714,9 @@ function ChangeWaterHeight.Start( _StartHeight, _DestinationHeight, _DurationSec
 	end
 	
 	-- fill table with all blocked nodes
-	if not ChangeWaterHeight.WaterBlockedNodes then
-		ChangeWaterHeight.InitWaterBlocking()
-	end
+	--if not ChangeWaterHeight.WaterBlockedNodes then
+		--ChangeWaterHeight.InitWaterBlocking()
+	--end
 	
 	-- save current state
 	ChangeWaterHeight.ElapsedSeconds = 0
@@ -754,7 +754,8 @@ function ChangeWaterHeight.Job( _StartHeight, _DestinationHeight, _ChangePerSeco
 			end
 		end
 		
-		ChangeWaterHeight.UpdateWaterBlocking( _UpdateInterval )
+		CUtil.UpdateBlockingWholeMapNoHeight()
+		--ChangeWaterHeight.UpdateWaterBlocking( _UpdateInterval )
 		GUI.RebuildMinimapTerrain()
 		
 		if ( _DestinationHeight < _StartHeight and height <= _DestinationHeight ) or ( _DestinationHeight >= _StartHeight and height >= _DestinationHeight ) then
