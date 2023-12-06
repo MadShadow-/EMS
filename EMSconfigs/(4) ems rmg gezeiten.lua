@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 1.6,
+	Version = 1.7,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -39,6 +39,22 @@ EMS_CustomMapConfig =
 			
 			if name == "rmg_explore" then
 				Logic.SetEntityExplorationRange( id, 10 )
+			end
+		end
+		
+		local resourceamounts = {
+			{ Resource = Entities.XD_Clay1,   Amount = 4000 },
+			{ Resource = Entities.XD_Stone1,  Amount = 4000 },
+			{ Resource = Entities.XD_Iron1,   Amount = 4000 },
+			{ Resource = Entities.XD_Sulfur1, Amount = 4000 },
+			{ Resource = Entities.XD_ClayPit1,   Amount = 50000 },
+			{ Resource = Entities.XD_StonePit1,  Amount = 50000 },
+			{ Resource = Entities.XD_IronPit1,   Amount = 30000 },
+			{ Resource = Entities.XD_SulfurPit1, Amount = 30000 },
+		}
+		for _,v in pairs( resourceamounts ) do
+			for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( v.Resource ) ) do
+				Logic.SetResourceDoodadGoodAmount( id, v.Amount )
 			end
 		end
 	end,
