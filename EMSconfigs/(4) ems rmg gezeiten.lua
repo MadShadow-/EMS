@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 1.7,
+	Version = 1.8,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -28,7 +28,7 @@ EMS_CustomMapConfig =
 		Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 		Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\number\\round.lua" )
 		
-		MapTools.CreateWoodPiles(15000);
+		MapTools.CreateWoodPiles(20000);
 		
 		function EMS.RD.Rules.Peacetime:SetValue() return end
 		function EMS.RD.Rules.AttractionLimitFix:SetValue() return end
