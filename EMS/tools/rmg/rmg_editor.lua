@@ -14,20 +14,19 @@
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-RMG.Path = "D:\\Privat\\Spiele\\Siedler5"
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\TerrainTypes.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\WaterTypes.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\number\\round.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\entity\\CreateWoodPile.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\s5CommunityLib\\mapeditor\\MirrorMapTools.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\rmg\\texturesets.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\rmg\\vertexcolorsets.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\rmg\\entitysets.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\rmg\\landscapesets.lua" )
-Util.Load( RMG.Path .. "\\extra2\\shr\\maps\\user\\EMS\\tools\\rmg\\rmg_editorconfig.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/s5CommunityLib/comfort/math/SimplexNoise.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/s5CommunityLib/comfort/math/astar.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/s5CommunityLib/tables/TerrainTypes.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/s5CommunityLib/tables/WaterTypes.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/s5CommunityLib/comfort/number/round.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/s5CommunityLib/comfort/entity/CreateWoodPile.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/s5CommunityLib/mapeditor/MirrorMapTools.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/rmg/texturesets.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/rmg/vertexcolorsets.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/rmg/entitysets.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/rmg/landscapesets.lua" )
+Util.Load( "extra2/shr/maps/user/EMS/tools/rmg/rmg_editorconfig.lua" )
 --Util.Load( "maps\\user\\EMS\\tools\\rmg\\structuresets.lua" )
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- overrides for compatibility
