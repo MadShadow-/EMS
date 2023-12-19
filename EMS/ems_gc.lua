@@ -11,7 +11,6 @@
 EMS.GC = {};
 function EMS.GC.Setup()
 	EMS.GC.GUIChange_BuyHeroWindow();
-	EMS.GC.GUIChange_GameClock();
 end
 
 function EMS.GC.GUIChange_BuyHeroWindow()
@@ -54,47 +53,4 @@ function EMS.GC.GUIChange_BuyHeroWindow()
 		XGUIEng.DisableButton( XGUIEng.GetCurrentWidgetID(), DisableFlag )
 	end
 	
-end
-
-function EMS.GC.GUIChange_GameClock()
-	function GUIUpdate_Clock()
-		
-		local Seconds = Logic.GetTime() - ( EMS.GV.GameStartTime or Logic.GetTime() )
-		
-		local TotalMinutes = math.floor( Seconds / 60 )
-		local Hours = math.floor( TotalMinutes / 60 )
-		local Minutes = math.mod( TotalMinutes, 60 )
-		local TotalSeconds = math.mod( math.floor(Seconds), 60 )
-			
-		local String = " "
-		
-		if Hours > 0 then		
-			if Hours < 10 then
-				String = String .. "0" .. Hours .. ":"
-			else
-				String = String .. Hours .. ":"
-			end
-		elseif Hours == 0 then
-			String = String .. "00".. ":"
-		end
-		
-		if Minutes == 0 then
-			String = String .. "00" .. ":"
-		else
-			if Minutes <10 then
-				String = String .. "0" .. Minutes .. ":"
-			else
-				String = String .. Minutes .. ":"
-			end
-		end
-		
-		
-		if TotalSeconds < 10 then		
-			String = String .. "0" .. TotalSeconds	
-		else		
-			String = String .. TotalSeconds	
-		end
-
-		XGUIEng.SetText(gvGUI_WidgetID.GameClock, String)	
-	end
 end
