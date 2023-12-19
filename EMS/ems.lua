@@ -7,7 +7,7 @@
 -- *                                                                                              * 
 -- ************************************************************************************************ 
 EMS = {};
-EMS.Version = 0.76;
+EMS.Version = 0.77;
 
 -- compability with MCS
 MCS = EMS;
@@ -171,6 +171,7 @@ end
 function EMS.StartGame()
 	-- called after start countdown
 	EMS.GV.GameStarted = true;
+	EMS.GV.GameStartTime = Logic.GetTime();
 	Sound.PlayGUISound(Sounds.fanfare, 50);
 	-- revert start preventions
 	EMS.T.SetPlayerEntitiesSelectable();
