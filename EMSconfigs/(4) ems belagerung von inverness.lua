@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 3.5,
+	Version = 3.7,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -90,24 +90,6 @@ EMS_CustomMapConfig =
 		
 		SetupHighlandWeatherGfxSet();
 
-		
-		--Sommertage
-		AddPeriodicSummer(20*60);
-
-		--Wintertage
-		AddPeriodicWinter(15*60);
-
-		--Regentage
-		AddPeriodicRain(5*60);
-
-		--Sommertage
-		AddPeriodicSummer(5*60);
-
-		--Wintertage
-		AddPeriodicWinter(10*60);
-
-		--Regentage
-		AddPeriodicRain(2*60);
 		
 		--Debug
 		-- for i = 1,4 do
