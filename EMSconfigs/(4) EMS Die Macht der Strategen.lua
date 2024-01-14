@@ -23,7 +23,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 3.7,
+	Version = 3.6,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -77,7 +77,51 @@ EMS_CustomMapConfig =
 		Script.Load("data\\maps\\externalmap\\salim.lua")
 		Script.Load("data\\maps\\externalmap\\helias.lua")
 		Script.Load("data\\maps\\externalmap\\heldenmodus.lua")
+
+	-----------------------  TwA HeroWindow  ------------------------
+		Script.Load( "maps\\externalmap\\cerberus\\loader.lua" )
+		Lib.Require("module/buyhero/BuyHero")
 		--
+		BuyHero.Install()
+		HeldenwahlSpieler()
+		
+		-- BuyHero.AllowHero(_Type, _Allowed) 						-- Hier hero sperren
+		-- BuyHero.SetNumberOfBuyableHeroes(_PlayerID, _Amount)		-- Anzahl der Helden
+		-- XGUIEng.ShowWidget("BuyHeroWindow", 1) 					-- Im Sp manuell callen	
+		
+		-- GUIAction_ToggleMenu( gvGUI_WidgetID.BuyHeroWindow,-1)
+		-- GUITooltip_Generic("MenuHeadquarter/buy_hero")
+		
+		GUIUpdate_BuyHeroButton = function()
+			local PlayerID = GUI.GetPlayerID()
+			local NumberOfHerosToBuy = Logic.GetNumberOfBuyableHerosForPlayer( PlayerID )
+			--
+			if NumberOfHerosToBuy > 0 or GUI.GetPlayerID() == 17 then
+				XGUIEng.ShowWidget("Buy_Hero",1)        
+			else
+				XGUIEng.ShowWidget("Buy_Hero",0)        
+			end
+		end
+		--
+		GUIAction_ToggleMenuOrig = GUIAction_ToggleMenu
+		function GUIAction_ToggleMenu( _Menu, _Status )
+			GUIAction_ToggleMenuOrig( _Menu, _Status )
+			
+			if _Menu == gvGUI_WidgetID.BuyHeroWindow then
+			
+				if _Status == -1 then
+					_Status = 1 - XGUIEng.IsWidgetShown( _Menu )
+				end;
+				if CNetwork then
+					XGUIEng.ShowWidget("BuyHeroWindow", 1)
+				else
+					XGUIEng.ShowWidget( _Menu, _Status )
+				end
+			end;
+		end;
+	
+	-----------------------------------------------------------------
+
 		HistoryFlag = GoldHistoryCheck() -- Für SetVisibility() wichtig!
 		Questbuch()
 		SetupHighlandWeatherGfxSet();
@@ -388,9 +432,8 @@ function DomTimerStartCountdown()
 end
 --
 function OnGameStart()
+	HeldenmodusStarten()
 	ComfortsStarten()
-	--
-	TechSperren()
 	--
 	StartSimpleHiResJob("WsWettersperre")
 	--
@@ -399,17 +442,6 @@ function OnGameStart()
 	StartSimpleJob("HQDeadVictory")
 	Chests()
 	StartSimpleJob("RTW1Repeat")
-end
---
-function TechSperren()
-	for SpielerID = 1, 4 do
-		-- Logic.SetTechnologyState(SpielerID, Technologies.UP1_Market, 0) -- Marktplatz
-		Logic.SetTechnologyState(SpielerID,Technologies.B_Weathermachine, 0) -- Wetterturm
-		Logic.SetTechnologyState(SpielerID,Technologies.B_PowerPlant,0) -- Wetterkraftwerk
-		Logic.SetTechnologyState(SpielerID,Technologies.B_Stables, 0) -- Stall
-		Logic.SetTechnologyState(SpielerID,Technologies.B_Foundry, 0) -- Kanonengießerei
-		Logic.SetTechnologyState(SpielerID,Technologies.UP1_Tower, 0) -- Ballistaturm
-	end
 end
 --
 function WsWettersperre()
@@ -424,11 +456,6 @@ function WsWettersperre()
 end
 --
 function GameFuncStart()
-	HeldenwahlSpieler()
-	for i = 1, 4 do
-		Trigger.RequestTrigger(Events.LOGIC_EVENT_EVERY_SECOND, "", "HeldenWahlSpieler", 1, {}, {i})
-	end
-	--
 	DamagePlayerEntitiesInAreas_Init() -- Für Mary de Mortfichet
 	MilitaryControl()
 	EroberungspunkteStart()
