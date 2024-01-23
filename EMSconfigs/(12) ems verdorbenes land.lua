@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.0,
+	Version = 1.1,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -72,17 +72,16 @@ EMS_CustomMapConfig =
 
 	
 		local resourceTable = {
-			{Entities.XD_StonePit1, 100000},
-			{Entities.XD_IronPit1, 100000},
-			{Entities.XD_ClayPit1, 100000},
-			{Entities.XD_SulfurPit1, 100000},
-			{Entities.XD_Stone1, 3000},
-			{Entities.XD_Iron1, 3000},
-			{Entities.XD_Clay1, 3000},
-			{Entities.XD_Sulfur1, 3000}
+			{Entities.XD_StonePit1, 1000000},
+			{Entities.XD_IronPit1, 1000000},
+			{Entities.XD_ClayPit1, 1000000},
+			{Entities.XD_SulfurPit1, 1000000},
+			{Entities.XD_Stone1, 4000},
+			{Entities.XD_Iron1, 4000},
+			{Entities.XD_Clay1, 4000},
+			{Entities.XD_Sulfur1, 4000}
 		}
 		MapTools.SetMapResource(resourceTable);
-		
 	end,
  
 	-- ********************************************************************************************
@@ -93,12 +92,10 @@ EMS_CustomMapConfig =
 		for i=1,12 do
         	CreateWoodPile( "wood"..i, 1000000 )
 		end
-
 		Walltable = {}
 		local pos = GetPosition("wallstart1")
 		for offX=0,10500,750 do
 			table.insert(Walltable,Logic.CreateEntity(Entities.XD_Palisade2,pos.X+offX,pos.Y,90,0))
-			LuaDebugger.Log(GetPosition("wallstart1").X+offX)
 		end
 		local pos = GetPosition("wallstart2")
 		for offX=0,10500,750 do
@@ -114,7 +111,6 @@ EMS_CustomMapConfig =
 		end
 		
 		
-
 		ThemeMusicTimer = ((EMS_CustomMapConfig.Peacetime * 60)-127)
 			StartSimpleJob("ThemeMusic")
 		
@@ -128,9 +124,10 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
 		for i=1,table.getn(Walltable),1 do
-			DestroyEntity(Walltable[i])
+			if IsExisting(Walltable[i]) then
+				DestroyEntity(Walltable[i])
+			end
 		end
-
 	end,
 
  
@@ -138,7 +135,7 @@ EMS_CustomMapConfig =
 	-- * Peacetime
 	-- * Number of minutes the players will be unable to attack each other
 	-- ********************************************************************************************
-	Peacetime = 3,
+	Peacetime = 40,
  
 	-- ********************************************************************************************
 	-- * GameMode
@@ -183,12 +180,12 @@ EMS_CustomMapConfig =
 		-- * Normal default: 1k, 1.8k, 1.5k, 0.8k, 50, 50
 		Normal = {
 			[1] = {
-				750,
-				2000,
-				1700,
-				1000,
-				150,
-				150,
+				500,
+				2200,
+				1600,
+				700,
+				50,
+				50,
 			},
 		},
 		-- * FastGame default: 2 x Normal Ressources
@@ -247,15 +244,15 @@ EMS_CustomMapConfig =
 	Sword   = 4,
 	Bow     = 4,
 	PoleArm = 4,
-	HeavyCavalry = 2,
-	LightCavalry = 2,
+	HeavyCavalry = 0,
+	LightCavalry = 0,
 	Rifle = 2,
 	Thief = 1,
 	Scout = 1,
-	Cannon1 = 1,
-	Cannon2 = 1,
-	Cannon3 = 1,
-	Cannon4 = 1,
+	Cannon1 = 0,
+	Cannon2 = 0,
+	Cannon3 = 0,
+	Cannon4 = 0,
  
 	-- * Buildings
 	Bridge = 0,
@@ -276,12 +273,12 @@ EMS_CustomMapConfig =
 	-- * 1 = Watchtowers
 	-- * 2 = Balistatowers
 	-- * 3 = Cannontowers
-	TowerLevel = 3, -- 0-3
+	TowerLevel = 0, -- 0-3
  
 	-- * TowerLimit
 	-- * 0  = no tower limit
 	-- * >0 = towers are limited to the number given
-	TowerLimit = 6,
+	TowerLimit = 0,
  
 	-- * WeatherChangeLockTimer
 	-- * Minutes for how long the weather can't be changed directly again after a weatherchange happened
@@ -308,15 +305,15 @@ EMS_CustomMapConfig =
 	-- * Heroes
 	-- * NumberOfHeroesForAll sets the number of heroes every player can pick
 	-- * 1 behind each hero defines if the hero is allowed; 0 for forbidden
-	NumberOfHeroesForAll = 1,
-	Dario    = 1,
+	NumberOfHeroesForAll = 0,
+
 	Pilgrim  = 1,
 	Ari      = 1,
-	Erec     = 0,
+	Erec     = 1,
 	Salim    = 1,
 	Helias   = 1,
-	Drake    = 0,
-	Yuki     = 0,
+	Drake    = 1,
+	Yuki     = 1,
 	Kerberos = 1,
 	Varg     = 1,
 	Mary_de_Mortfichet = 1,
@@ -325,7 +322,6 @@ EMS_CustomMapConfig =
 
 function ThemeMusic()
 	ThemeMusicTimer = ThemeMusicTimer - 1
-	Message("Timer: " .. ThemeMusicTimer)
 	if ThemeMusicTimer <= 0 then
 	 	StartMusic("02_MainTheme2.mp3", 127)
 		return true
