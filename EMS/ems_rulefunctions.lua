@@ -791,22 +791,24 @@ function EMS.RF.ActivateAttractionLimitFix()
 		end
 
 		function GameCallback_BuyEntityAttractionLimitCheck( _Player, _CanSpawn )
-			local buyevent = EMS.RD.ALF.GetBuyEventData()
-			if buyevent then
-				local entitytype
-				if buyevent.event == CEntity.Events.BUY_SERF then
-					entitytype = Entities.PU_Serf
-				elseif buyevent.event == CEntity.Events.BUY_LEADER then
-					entitytype = Logic.GetSettlerTypeByUpgradeCategory( buyevent.upgradeCategory, _Player )
-				elseif buyevent.event == CEntity.Events.BUY_SOLDIER then
-					entitytype = Logic.LeaderGetSoldiersType( buyevent.leaderID )
+			if XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID( _Player ) == 1 then
+				local buyevent = EMS.RD.ALF.GetBuyEventData()
+				if buyevent then
+					local entitytype
+					if buyevent.event == CEntity.Events.BUY_SERF then
+						entitytype = Entities.PU_Serf
+					elseif buyevent.event == CEntity.Events.BUY_LEADER then
+						entitytype = Logic.GetSettlerTypeByUpgradeCategory( buyevent.upgradeCategory, _Player )
+					elseif buyevent.event == CEntity.Events.BUY_SOLDIER then
+						entitytype = Logic.LeaderGetSoldiersType( buyevent.leaderID )
+					end
+					if entitytype then
+						_CanSpawn = Logic.GetPlayerAttractionLimit( _Player ) - Logic.GetPlayerAttractionUsage( _Player ) >= Logic.GetAttractionLimitValueByEntityType( entitytype )
+					end
 				end
-				if entitytype then
-					_CanSpawn = Logic.GetPlayerAttractionLimit( _Player ) - Logic.GetPlayerAttractionUsage( _Player ) >= Logic.GetAttractionLimitValueByEntityType( entitytype )
+				if not _CanSpawn then
+					GUI.SendPopulationLimitReachedFeedbackEvent( _Player )
 				end
-			end
-			if not _CanSpawn then
-				GUI.SendPopulationLimitReachedFeedbackEvent( player )
 			end
 			return _CanSpawn
 		end
