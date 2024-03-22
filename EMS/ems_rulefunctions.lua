@@ -791,7 +791,7 @@ function EMS.RF.ActivateAttractionLimitFix()
 		end
 
 		function GameCallback_BuyEntityAttractionLimitCheck( _Player, _CanSpawn )
-			if XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID( _Player ) == 1 then
+			if (XNetwork.Manager_DoesExist() == 1 and XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID( _Player ) == 1) or (XNetwork.Manager_DoesExist() == 0 and GUI.GetPlayerID() == _Player) then
 				local buyevent = EMS.RD.ALF.GetBuyEventData()
 				if buyevent then
 					local entitytype
