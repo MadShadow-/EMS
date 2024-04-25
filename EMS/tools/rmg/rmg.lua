@@ -14,7 +14,7 @@
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.6
+EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.7
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
 Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
@@ -1720,7 +1720,10 @@ function RMG.CreateFences( _generationdata )
 		
 		table.insert( radea, delta )
 		
-		for i = r + 2, maphalf - 2, 2 do
+		local x, y = (maphalf + 2) * math.cos( delta ) + maphalf, (maphalf + 2) * math.sin( delta ) + maphalf
+		local offset = ((x >= 2 and y >= 2 and x <= mapsize and y <= mapsize) and 0) or 2
+
+		for i = r + 2, maphalf - offset, 2 do
 			local x = ( i - 1 ) * math.cos( delta ) + maphalf
 			local y = ( i - 1 ) * math.sin( delta ) + maphalf
 			
@@ -3266,23 +3269,7 @@ function RMG.Finalize( _generationdata )
 	end
 	
 	-- update blocking
-	
-	--local mapsize = Logic.WorldGetSize() / 100
-	--Logic.UpdateBlocking( 1, 1, mapsize - 1, mapsize - 1 )
-	--Memory.BlockingUpdateWeatherChange()
-	
-	local gfx = Logic.GetWeatherState()
-	if CUtilMemory then -- try to get it more precise
-		gfx = CUtilMemory.GetMemory( tonumber( "0x85A3A0", 16 ) )[ 0 ][ 11 ][ 10 ]:GetInt()
-	end
-	
-	local weather = Logic.GetWeatherState()
-	if weather == 3 then
-		Logic.AddWeatherElement( 1, 5, 0, gfx, 5.0, 10.0 )
-	else
-		Logic.AddWeatherElement( 3, 5, 0, gfx, 5.0, 10.0 )
-	end
-	-- supress feedback sound does not work because the system queus the sounds if the volume is down - wtf
+	CUtil.UpdateBlockingWholeMapWithHeight()
 
 	-- peacetime with rivers
 	RMG.DeleteBridges( _generationdata )
