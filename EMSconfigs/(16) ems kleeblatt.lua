@@ -40,7 +40,7 @@ EMS_CustomMapConfig =
 		MapTools.SetMapResource(resourceTable)
 
         for p = 1, 16 do
-			if Logic.PlayerGetGameState( p ) ~= 1 then
+			if XNetwork.GameInformation_IsHumanPlayerAttachedToPlayerID(p) == 0 then
                 DestroyEntity("hq" .. p)
                 DestroyEntity("vc" .. p .. "a")
                 DestroyEntity("vc" .. p .. "b")
