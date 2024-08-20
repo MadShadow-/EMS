@@ -300,18 +300,14 @@ end
 
 
 
-    StartSimpleJob("VillageCenterIsBuild_ID1")
-    StartSimpleJob("VillageCenterIsBuild_ID2")
-    StartSimpleJob("VillageCenterIsBuild_ID3")
-
 end
 
 
 
- function ResourcesPlayer1()
+function ResourcesPlayer1()
     if CheckMode == 1 and ReadyPlayer_1 == 1 then
         -- Initial Resources
-        local InitGoldRaw 		= 1800
+        local InitGoldRaw 		= 2500
         local InitClayRaw 		= 2500
         local InitWoodRaw 		= 2500
         local InitStoneRaw 		= 2000
@@ -325,11 +321,11 @@ end
     elseif CheckMode == 2 and ReadyPlayer_1 == 1 then
          -- Initial Resources
          local InitGoldRaw 		= 1200
-         local InitClayRaw 		= 1500
-         local InitWoodRaw 		= 1500
-         local InitStoneRaw 	= 1000
-         local InitIronRaw 		= 150
-         local InitSulfurRaw	= 50
+         local InitClayRaw 		= 2000
+         local InitWoodRaw 		= 2000
+         local InitStoneRaw 	= 1500
+         local InitIronRaw 		= 250
+         local InitSulfurRaw	= 150
  
          
          --Add Players Resources
@@ -338,12 +334,12 @@ end
         EndJob(ResourcesCompleted1)
     elseif CheckMode == 3 and ReadyPlayer_1 == 1 then
          -- Initial Resources
-         local InitGoldRaw 		= 900
-         local InitClayRaw 		= 800
-         local InitWoodRaw 		= 800
-         local InitStoneRaw 	= 800
-         local InitIronRaw 		= 0
-         local InitSulfurRaw	= 0
+         local InitGoldRaw 		= 1000
+         local InitClayRaw 		= 1500
+         local InitWoodRaw 		= 1500
+         local InitStoneRaw 	= 1200
+         local InitIronRaw 		= 250
+         local InitSulfurRaw	= 150
  
          
          --Add Players Resources
@@ -357,7 +353,7 @@ end
  function ResourcesPlayer2()
     if CheckMode == 1 and ReadyPlayer_2 == 1 then
         -- Initial Resources
-        local InitGoldRaw 		= 1800
+        local InitGoldRaw 		= 2500
         local InitClayRaw 		= 2500
         local InitWoodRaw 		= 2500
         local InitStoneRaw 		= 2000
@@ -371,11 +367,11 @@ end
     elseif CheckMode == 2 and ReadyPlayer_2 == 1 then
          -- Initial Resources
          local InitGoldRaw 		= 1200
-         local InitClayRaw 		= 1500
-         local InitWoodRaw 		= 1500
-         local InitStoneRaw 	= 1000
-         local InitIronRaw 		= 150
-         local InitSulfurRaw	= 50
+         local InitClayRaw 		= 2000
+         local InitWoodRaw 		= 2000
+         local InitStoneRaw 	= 1500
+         local InitIronRaw 		= 250
+         local InitSulfurRaw	= 150
  
          
          --Add Players Resources
@@ -384,12 +380,12 @@ end
         EndJob(ResourcesCompleted2)
     elseif CheckMode == 3 and ReadyPlayer_2 == 1 then
          -- Initial Resources
-         local InitGoldRaw 		= 900
-         local InitClayRaw 		= 800
-         local InitWoodRaw 		= 800
-         local InitStoneRaw 	= 800
-         local InitIronRaw 		= 0
-         local InitSulfurRaw	= 0
+         local InitGoldRaw 		= 1000
+         local InitClayRaw 		= 1500
+         local InitWoodRaw 		= 1500
+         local InitStoneRaw 	= 1200
+         local InitIronRaw 		= 250
+         local InitSulfurRaw	= 150
  
          
          --Add Players Resources
@@ -404,7 +400,7 @@ end
  function ResourcesPlayer3()
     if CheckMode == 1 and ReadyPlayer_3 == 1 then
         -- Initial Resources
-        local InitGoldRaw 		= 1800
+        local InitGoldRaw 		= 2500
         local InitClayRaw 		= 2500
         local InitWoodRaw 		= 2500
         local InitStoneRaw 		= 2000
@@ -418,11 +414,11 @@ end
     elseif CheckMode == 2 and ReadyPlayer_3 == 1 then
          -- Initial Resources
          local InitGoldRaw 		= 1200
-         local InitClayRaw 		= 1500
-         local InitWoodRaw 		= 1500
-         local InitStoneRaw 	= 1000
-         local InitIronRaw 		= 150
-         local InitSulfurRaw	= 50
+         local InitClayRaw 		= 2000
+         local InitWoodRaw 		= 2000
+         local InitStoneRaw 	= 1500
+         local InitIronRaw 		= 250
+         local InitSulfurRaw	= 150
  
          
          --Add Players Resources
@@ -431,12 +427,12 @@ end
         EndJob(ResourcesCompleted3)
     elseif CheckMode == 3 and ReadyPlayer_3 == 1 then
          -- Initial Resources
-         local InitGoldRaw 		= 900
-         local InitClayRaw 		= 800
-         local InitWoodRaw 		= 800
-         local InitStoneRaw 	= 800
-         local InitIronRaw 		= 0
-         local InitSulfurRaw	= 0
+         local InitGoldRaw 		= 1000
+         local InitClayRaw 		= 1500
+         local InitWoodRaw 		= 1500
+         local InitStoneRaw 	= 1200
+         local InitIronRaw 		= 250
+         local InitSulfurRaw	= 150
  
          
          --Add Players Resources
@@ -446,7 +442,6 @@ end
     end
 
  end
-
 
 
  function TickPeacetime()
