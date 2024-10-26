@@ -23,7 +23,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 4.0,
+	Version = 4.1,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -479,7 +479,7 @@ end
 --
 function chestCallbackPlayer_1(opener)
     local playerID = GetPlayer(opener)
-    AddGold(playerID, 1150)
+    AddGold(playerID, 1000)
 --
     if GUI.GetPlayerID() == playerID then
         if playerID == 1 then
@@ -493,7 +493,7 @@ end
 --
 function chestCallbackPlayer_2(opener)
     local playerID = GetPlayer(opener)
-    AddGold(playerID, 1150)
+    AddGold(playerID, 1000)
 --
     if GUI.GetPlayerID() == playerID then
         if playerID == 2 then
@@ -507,7 +507,7 @@ end
 --
 function chestCallbackPlayer_3(opener)
     local playerID = GetPlayer(opener)
-    AddGold(playerID, 1000)
+    AddGold(playerID, 1250)
 --
     if GUI.GetPlayerID() == playerID then
         if playerID == 3 then
@@ -521,7 +521,7 @@ end
 --
 function chestCallbackPlayer_4(opener)
     local playerID = GetPlayer(opener)
-    AddGold(playerID, 1000)
+    AddGold(playerID, 1250)
 --
     if GUI.GetPlayerID() == playerID then
         if playerID == 4 then
