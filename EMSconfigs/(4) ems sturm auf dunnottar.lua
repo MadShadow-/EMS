@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 1.0,
+	Version = 1.1,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -373,11 +373,11 @@ EMS_CustomMapConfig =
 	-- * TowerLimit
 	-- * 0  = no tower limit
 	-- * >0 = towers are limited to the number given
-	TowerLimit = 6,
+	TowerLimit = 2,
  
 	-- * WeatherChangeLockTimer
 	-- * Minutes for how long the weather can't be changed directly again after a weatherchange happened
-	WeatherChangeLockTimer =  60,
+	WeatherChangeLockTimer =  5,
  
 	-- * Enables chaning to a specific weather with the weather tower
 	MakeSummer = 1,
