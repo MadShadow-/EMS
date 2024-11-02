@@ -1,6 +1,6 @@
 EMS_CustomMapConfig =
 {
-	Version = 3,
+	Version = 4,
 
 	Callback_OnMapStart = function()
 		Main_MapStart()
