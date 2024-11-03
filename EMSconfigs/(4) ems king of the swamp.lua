@@ -1,6 +1,6 @@
 EMS_CustomMapConfig =
 {
-	Version = 1,
+	Version = 4,
 
 	Callback_OnMapStart = function()
 		Main_MapStart()
@@ -141,25 +141,6 @@ function AddPeriodicWinterToRain(_Duration)
     Logic.AddWeatherElement(3, _Duration, 1, 9, 5, 10)
 end
 
-function UpdateScores()
-    GUI.ClearNotes()
-    local team = TeamPlayer[GUI.GetPlayerID()]
-    local enemy = EnemyTeam[team]
-
-    local text = string.lower(XNetworkUbiCom.Tool_GetCurrentLanguageShortName() or "") == "de" and "Punkte" or "Score"
-    GUI.AddStaticNote(text .. ": @cr @color:155,230,112,255 " .. math.floor(TeamPoints[team]) .. " / " .. MaxPoints .. " @cr @color:220,64,16,255 " .. math.floor(TeamPoints[enemy]) .. " / " .. MaxPoints)
-
-    if TeamPoints[team] >= MaxPoints and TeamPoints[team] > TeamPoints[enemy] then
-        GUI.AddStaticNote(string.lower(XNetworkUbiCom.Tool_GetCurrentLanguageShortName() or "") == "de" and "@color:155,230,112,255 Ihr habt das Spiel gewonnen." or "@color:155,230,112,255 You have won the game.")
-        Sound.PlayGUISound(Sounds.OnKlick_Select_dario)
-        return true
-    elseif TeamPoints[enemy] >= MaxPoints and TeamPoints[team] < TeamPoints[enemy] then
-        GUI.AddStaticNote(string.lower(XNetworkUbiCom.Tool_GetCurrentLanguageShortName() or "") == "de" and "@color:220,64,16,255 Ihr habt das Spiel verloren." or "@color:220,64,16,255 You have lost the game.")
-        Sound.PlayGUISound(Sounds.OnKlick_Select_kerberos)
-        return true
-    end
-end
-
 function IsCheckPoint(_Id)
     _Id = _Id or Event.GetEntityID()
     local typename = Logic.GetEntityTypeName(Logic.GetEntityType(_Id))
@@ -212,8 +193,8 @@ function GetSpawnTime(_Team)
             pointspersecond = pointspersecond + KAI.RM.GetBuildingAverageProductionRate(CheckPointBuildings[i])
         end
     end
-    -- 60s - 120s
-    return 60 * (1 - pointspersecond / MaxPointsPerSecond) + 60
+    -- 120s - 150s
+    return 30 * (1 - pointspersecond / MaxPointsPerSecond) + 120
 end
 
 function SpawnWave(_Index)
@@ -357,27 +338,6 @@ function GetPlayerColorString(_playerId)
 	return " @color:"..r..","..g..","..b.." ";
 end
 
-function UpdateProgressBars()
-	for teamId = 1,2 do
-		XGUIEng.SetProgressBarValues("VCMP_Team"..teamId.."Progress", math.floor(TeamPoints[teamId]), MaxPoints);
-		XGUIEng.SetText("VCMP_Team"..teamId.."Name", "(" .. math.floor(TeamPoints[teamId]) .. "/" .. MaxPoints .. ") " ..
-			GetPlayerColorString(PlayerTeam[teamId][1]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][1]) .. " @color:255,255,255,255 & "
-			.. GetPlayerColorString(PlayerTeam[teamId][2]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][2]));
-	end
-
-    local team = TeamPlayer[GUI.GetPlayerID()]
-    local enemy = EnemyTeam[team]
-    if TeamPoints[team] >= MaxPoints and TeamPoints[team] > TeamPoints[enemy] then
-        GUI.AddStaticNote(string.lower(XNetworkUbiCom.Tool_GetCurrentLanguageShortName() or "") == "de" and "@color:155,230,112,255 Ihr habt das Spiel gewonnen." or "@color:155,230,112,255 You have won the game.")
-        Sound.PlayGUISound(Sounds.OnKlick_Select_dario)
-        return true
-    elseif TeamPoints[enemy] >= MaxPoints and TeamPoints[team] < TeamPoints[enemy] then
-        GUI.AddStaticNote(string.lower(XNetworkUbiCom.Tool_GetCurrentLanguageShortName() or "") == "de" and "@color:220,64,16,255 Ihr habt das Spiel verloren." or "@color:220,64,16,255 You have lost the game.")
-        Sound.PlayGUISound(Sounds.OnKlick_Select_kerberos)
-        return true
-    end
-end
-
 function SetupProgressBars()
 	-- gradient 30, 150 to 255,242 to 255,0
 	local r,g,b;
@@ -438,6 +398,50 @@ function SetupProgressBars()
     UpdateProgressBars()
 end
 
+function UpdateProgressBars()
+    local team = TeamPlayer[GUI.GetPlayerID()]
+    local enemy = EnemyTeam[team]
+
+	for teamId = 1,2 do
+		XGUIEng.SetProgressBarValues("VCMP_Team"..teamId.."Progress", math.floor(TeamPoints[teamId]), MaxPoints);
+		XGUIEng.SetText("VCMP_Team"..teamId.."Name", "(" .. math.floor(TeamPoints[teamId]) .. "/" .. MaxPoints .. ") " ..
+			GetPlayerColorString(PlayerTeam[teamId][1]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][1]) .. " @color:255,255,255,255 & "
+			.. GetPlayerColorString(PlayerTeam[teamId][2]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][2]));
+
+        if Logic.PlayerGetGameState(PlayerTeam[teamId][1]) == 3 and Logic.PlayerGetGameState(PlayerTeam[teamId][1]) == 3 then
+            ConcludeGame(enemy)
+            return true
+        end
+    end
+
+    if TeamPoints[team] >= MaxPoints and TeamPoints[team] > TeamPoints[enemy] then
+        ConcludeGame(team)
+        return true
+    elseif TeamPoints[enemy] >= MaxPoints and TeamPoints[team] < TeamPoints[enemy] then
+        ConcludeGame(enemy)
+        return true
+    end
+end
+
+function ConcludeGame(_Team)
+    Logic.PlayerSetGameStateToWon(PlayerTeam[_Team][1])
+    Logic.PlayerSetGameStateToWon(PlayerTeam[_Team][2])
+    Logic.PlayerSetGameStateToLost(PlayerTeam[EnemyTeam[_Team]][1])
+    Logic.PlayerSetGameStateToLost(PlayerTeam[EnemyTeam[_Team]][2])
+
+    if GUI.GetPlayerID() <= 4 then
+        XGUIEng.ShowWidget("GameEndScreen", 1)
+
+        if _Team == TeamPlayer[GUI.GetPlayerID()] then
+            GUI.AddStaticNote(string.lower(XNetworkUbiCom.Tool_GetCurrentLanguageShortName() or "") == "de" and "@color:155,230,112,255 Ihr habt das Spiel gewonnen." or "@color:155,230,112,255 You have won the game.")
+            Sound.PlayGUISound(Sounds.OnKlick_Select_dario)
+        else
+            GUI.AddStaticNote(string.lower(XNetworkUbiCom.Tool_GetCurrentLanguageShortName() or "") == "de" and "@color:220,64,16,255 Ihr habt das Spiel verloren." or "@color:220,64,16,255 You have lost the game.")
+            Sound.PlayGUISound(Sounds.OnKlick_Select_kerberos)
+        end
+    end
+end
+
 function Main_MapStart()
     --local path = "maps\\user\\(4) EMS King of the Swamp\\maps\\externalmap\\script\\"
     local path = "maps\\externalmap\\script\\"
@@ -471,17 +475,17 @@ function Main_MapStart()
     -- sumer 2
     -- winter 2
     -- rain 2
-    AddPeriodicSummer(4 * 60 - 5)
+    AddPeriodicSummer(6 * 60 - 5)
     AddPeriodicSummerToRain(25)
-    AddPeriodicRain(60 - 5)
+    AddPeriodicRain(90 - 5)
     AddPeriodicRainToWinter(25)
-    AddPeriodicWinter(60 - 5)
+    AddPeriodicWinter(90 - 5)
     AddPeriodicWinterToSummer(25)
-    AddPeriodicSummer(2 * 60 - 5)
+    AddPeriodicSummer(3 * 60 - 5)
     AddPeriodicSummerToWinter(25)
-    AddPeriodicWinter(2 * 60 - 5)
+    AddPeriodicWinter(3 * 60 - 5)
     AddPeriodicWinterToRain(25)
-    AddPeriodicRain(2 * 60 - 5)
+    AddPeriodicRain(3 * 60 - 5)
     AddPeriodicRainToSummer(25)
 
     LocalMusic.UseSet = DARKMOORMUSIC
@@ -537,6 +541,16 @@ function Main_MapStart()
         local ischeckpoint, index = IsCheckPoint(_NewId)
         if ischeckpoint then
             CheckPointBuildings[index] = _NewId
+        end
+    end
+
+    GUIUpdate_DisplayButtonOnlyInMode_Orig = GUIUpdate_DisplayButtonOnlyInMode
+    function GUIUpdate_DisplayButtonOnlyInMode(_ModeFlag)
+        local currentwidgetid = XGUIEng.GetCurrentWidgetID()
+        if currentwidgetid == XGUIEng.GetWidgetID("GameEndScreen_WindowReturnToGame") then
+            XGUIEng.DisableButton(currentwidgetid, 0)
+        else
+            GUIUpdate_DisplayButtonOnlyInMode_Orig(_ModeFlag)
         end
     end
 
@@ -596,7 +610,7 @@ function Main_GameStart()
         Bandits[i] = DefensiveArmy.new(5, pos.X, pos.Y, 3000, PlayerChunk_GetPlayerEnemyChunk(5), 600, true)
         local respawntime = 30 * 10
         for j = 1, 3 do
-            DefensiveArmy.AddTroopSpawn(Bandits[i], respawntime, Entities.CU_BanditLeaderSword2, 8, pos.X, pos.Y, 0)
+            DefensiveArmy.AddTroopSpawn(Bandits[i], respawntime, Entities.CU_BanditLeaderSword1, 8, pos.X, pos.Y, 0)
         end
         for j = 1, 4 do
             DefensiveArmy.AddTroopSpawn(Bandits[i], respawntime, Entities.PU_LeaderBow2, 4, pos.X, pos.Y, 0)

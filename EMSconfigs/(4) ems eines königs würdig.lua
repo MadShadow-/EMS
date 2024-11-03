@@ -9,7 +9,7 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 1,
+	Version = 2,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
