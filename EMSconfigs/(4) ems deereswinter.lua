@@ -9,7 +9,7 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 1,
+	Version = 2,
 
 	Callback_OnMapStart = function()
 		AddPeriodicSummer(60);
@@ -64,6 +64,10 @@ EMS_CustomMapConfig =
 
 	AIPlayers = {},
 
-	HeavyCavalry = 2,
-	LightCavalry = 2,
+	TowerLevel = 3,
+	TowerLimit = 2,
+
+	NumberOfHeroesForAll = 1,
+
+	WeatherChangeLockTimer =  1,
 };
