@@ -1,6 +1,6 @@
 EMS_CustomMapConfig =
 {
-	Version = 4,
+	Version = 5,
 
 	Callback_OnMapStart = function()
 		Main_MapStart()
@@ -200,18 +200,27 @@ end
 function SpawnWave(_Index)
     local team = CheckPointTeam[_Index]
     -- 2 * (1 - 4) troops
-    local amount = TeamPoints[team] / MaxPoints * 3 + 1
+    local amount = math.floor(TeamPoints[team] / MaxPoints * 6 + 0.5)
+
+    if _Index > 1 then
+        amount = amount - 2
+    end
+    if amount <= 0 then
+        return
+    end
 
     local x, y = GetRandomPositionInSpawnArea(_Index)
-    local types = {Entities.CU_Evil_LeaderBearman1, Entities.CU_Evil_LeaderSkirmisher1}
     if x then
+        local types = {Entities.CU_Evil_LeaderBearman1, Entities.CU_Evil_LeaderSkirmisher1}
         for i = 1, amount do
-            for j = 1, 2 do
+            -- spawn bearmen if even
+            local j = math.floor(i / 2) * 2 == i and 2 or 1
+            --for j = 1, 2 do
                 AddWaypoints(
                     AI.Entity_CreateFormation(6, types[j], nil, 16, x, y, 0, 1, 0, 0),
                     {{X = CheckPoints[_Index].X, Y = CheckPoints[_Index].Y}, loop = false}
                 )
-            end
+            --end
         end
     end
 end
