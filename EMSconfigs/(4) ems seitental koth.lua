@@ -85,6 +85,11 @@ EMS_CustomMapConfig =
 
 	Callback_OnFastGame = function()
 	end,
+	
+	HeavyCavalry = 2,
+	LightCavalry = 2,
+	Cannon1 = 1,
+	Cannon2 = 1,
 };
 
 function ColorGrade(_c1, _c2, _lambda)
