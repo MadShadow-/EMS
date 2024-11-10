@@ -52,6 +52,7 @@ EMS_CustomMapConfig =
 		local gvBasePath = "maps\\externalmap\\";
 		Script.Load(gvBasePath.. "mainmapscript.lua");
 		SetupHighlandWeatherGfxSet();
+		AddPeriodicSummer(120)
 		LocalMusic.UseSet = HIGHLANDMUSIC;
 
 
