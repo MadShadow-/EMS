@@ -1,6 +1,6 @@
 EMS_CustomMapConfig =
 {
-	Version = 1,
+	Version = 2,
 
 	Callback_OnMapStart = function()
 		AddPeriodicSummer(60);
@@ -11,20 +11,20 @@ EMS_CustomMapConfig =
 		PlayerTeam = {{1, 2}, {3, 4}}
 		EnemyTeam = {2, 1}
 		TeamPoints = {0, 0}
-		MaxPoints = 2000
+		MaxPoints = 900
 
 		local resourceTable = {
-			{Entities.XD_GoldPit1, 50000},
 			{Entities.XD_ClayPit1, 50000},
 			{Entities.XD_StonePit1, 50000},
 			{Entities.XD_IronPit1, 50000},
 			{Entities.XD_SulfurPit1, 50000},
-			{Entities.XD_Clay1, 4000},
-			{Entities.XD_Stone1, 4000},
-			{Entities.XD_Iron1, 4000},
-			{Entities.XD_Sulfur1, 4000},
+			{Entities.XD_Clay1, 3000},
+			{Entities.XD_Stone1, 3000},
+			{Entities.XD_Iron1, 3000},
+			{Entities.XD_Sulfur1, 3000},
 		}
 		MapTools.SetMapResource(resourceTable)
+		MapTools.CreateWoodPiles(10000)
 		MapTools.WallsToPlayerZero(
 			Entities.XD_DarkWallStraightGate,
 			Entities.XD_DarkWallStraightGate_Closed,
@@ -37,6 +37,57 @@ EMS_CustomMapConfig =
 			Entities.XD_WallStraight,
 			Entities.XD_WallDistorted
 		)
+
+		GameCallback_PlaceBuildingAdditionalCheck_Orig = GameCallback_PlaceBuildingAdditionalCheck or function() end
+		function GameCallback_PlaceBuildingAdditionalCheck(_EntityType, _X, _Y, _R, _IsBuildOn)
+			if Logic.GetUpgradeCategoryByBuildingType(_EntityType) == UpgradeCategories.Tower then
+				if _X - _Y < 8000 and _Y - _X < 8000 then
+					return false
+				end
+			end
+			return GameCallback_PlaceBuildingAdditionalCheck_Orig(_EntityType, _X, _Y, _R, _IsBuildOn)
+		end
+
+		GUIAction_PlaceBuilding_Orig = GUIAction_PlaceBuilding
+		function GUIAction_PlaceBuilding(_UpgradeCategory)
+			CurrentUpgradeCategory = _UpgradeCategory
+			GUIAction_PlaceBuilding_Orig(_UpgradeCategory)
+		end
+
+		GUIUpdate_Population_Orig = GUIUpdate_Population
+		function GUIUpdate_Population()
+			GUIUpdate_Population_Orig()
+
+			if GUI.GetCurrentStateName() == "PlaceBuilding" and CurrentUpgradeCategory == UpgradeCategories.Tower then
+				local x, y = GUI.Debug_GetMapPositionUnderMouse()
+				if (GUI.GetPlayerID() <= 2 and x - y > 8000) or (GUI.GetPlayerID() >= 3 and y - x > 8000) then
+					GUI.CancelState()
+				end
+			end
+		end
+
+		--[[function DestroyCreatedTower()
+			local id = Event.GetEntityID()
+			if Logic.GetUpgradeCategoryByBuildingType(Logic.GetEntityType(id)) == UpgradeCategories.Tower then
+				local x, y = Logic.GetEntityPosition(id)
+				if (GUI.GetPlayerID() <= 2 and x - y > 8000) or (GUI.GetPlayerID() >= 3 and y - x > 8000) then
+					NextTick(Logic.DestroyEntity, id)
+				end
+			end
+		end
+
+		function NextTick(_Callback, ...)
+			Trigger.RequestTrigger(Events.LOGIC_EVENT_EVERY_TURN, nil, "NextTick_Internal", 1, nil, {_Callback, unpack(arg)})
+		end
+		function NextTick_Internal(_Callback, ...)
+			_Callback(unpack(arg))
+			return true
+		end
+
+		Trigger.RequestTrigger(Events.LOGIC_EVENT_ENTITY_CREATED, nil, "DestroyCreatedTower", 1)]]
+
+		--ResearchTechnology(Technologies.B_Tower)
+		--Tools.ExploreArea(1,1,1000)
 	end,
 
 	Callback_OnGameStart = function()
@@ -49,7 +100,7 @@ EMS_CustomMapConfig =
 		end
 	end,
 
-	Peacetime = 30,
+	Peacetime = 40,
 
 	GameMode = 2,
 	GameModes = {"Standard", "KingOfTheHill"},
@@ -85,7 +136,9 @@ EMS_CustomMapConfig =
 
 	Callback_OnFastGame = function()
 	end,
-	
+
+	TowerLevel = 3,
+	TowerLimit = 3,
 	HeavyCavalry = 2,
 	LightCavalry = 2,
 	Cannon1 = 1,
