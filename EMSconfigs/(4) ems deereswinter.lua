@@ -9,12 +9,13 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 2,
+	Version = 3,
 
 	Callback_OnMapStart = function()
 		AddPeriodicSummer(60);
 		SetupHighlandWeatherGfxSet();
 		LocalMusic.UseSet = HIGHLANDMUSIC;
+		MapTools.CreateWoodPiles(10000)
 		MapTools.SetMapResource(
 			{
 				{Entities.XD_ClayPit1, 30000},
