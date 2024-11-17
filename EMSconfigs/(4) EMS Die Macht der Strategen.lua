@@ -23,7 +23,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 4.5,
+	Version = 4.6,
  
 	-- ********************************************************************************************
 	-- * Debug Mode
@@ -523,7 +523,7 @@ function chestCallbackPlayer_3(opener)
 --
     if GUI.GetPlayerID() == playerID then
         if playerID == 3 then
-           Message("@color:50,205,50 Ihr habt Eure Truhe mit 1000 Taler gefunden!");
+           Message("@color:50,205,50 Ihr habt Eure Truhe mit 1250 Taler gefunden!");
         else
            Message("@color:250,55,50 Ihr habt die Truhe von Spieler 1 gemobst, das bringt schlechtes Karma mit sich!");
         end
@@ -537,7 +537,7 @@ function chestCallbackPlayer_4(opener)
 --
     if GUI.GetPlayerID() == playerID then
         if playerID == 4 then
-           Message("@color:50,205,50 Ihr habt Eure Truhe mit 1000 Taler gefunden!");
+           Message("@color:50,205,50 Ihr habt Eure Truhe mit 1250 Taler gefunden!");
         else
            Message("@color:250,55,50 Ihr habt die Truhe von Spieler 1 gemobst, das bringt schlechtes Karma mit sich!");
         end
