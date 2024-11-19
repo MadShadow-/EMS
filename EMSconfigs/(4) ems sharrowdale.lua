@@ -9,7 +9,7 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 1,
+	Version = 2,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -99,6 +99,53 @@ EMS_CustomMapConfig =
 			end
 		end
 		StartSimpleJob("UpgradeTowers");
+		StartSimpleJob("ControllKerberos")
+
+		GameCallback_PlaceBuildingAdditionalCheck_Orig = GameCallback_PlaceBuildingAdditionalCheck or function() end
+		function GameCallback_PlaceBuildingAdditionalCheck(_EntityType, _X, _Y, _R, _IsBuildOn)
+			-- is tower in middle
+			if Logic.GetUpgradeCategoryByBuildingType(_EntityType) == UpgradeCategories.Tower then
+				if (36800 - _X) ^ 2 + (36800 - _Y) ^ 2 <= 36000000 then -- 6000 ^ 2
+					return false
+				end
+			end
+			return GameCallback_PlaceBuildingAdditionalCheck_Orig(_EntityType, _X, _Y, _R, _IsBuildOn)
+		end
+
+		GUIUpdate_BuildingButtons_Orig = GUIUpdate_BuildingButtons
+		function GUIUpdate_BuildingButtons(_Widget, _Technology)
+			GUIUpdate_BuildingButtons_Orig(_Widget, _Technology)
+			if _Widget == "Build_Foundry" then
+				local player = GUI.GetPlayerID()
+				if Logic.GetNumberOfEntitiesOfTypeOfPlayer(player, Entities.PB_Foundry1) + Logic.GetNumberOfEntitiesOfTypeOfPlayer(player, Entities.PB_Foundry2) >= 4 then
+					XGUIEng.DisableButton("Build_Foundry", 1)
+				end
+			end
+		end
+
+		GUIAction_PlaceBuilding_Orig = GUIAction_PlaceBuilding
+		function GUIAction_PlaceBuilding(_UpgradeCategory)
+			if _UpgradeCategory == UpgradeCategories.Foundry then
+				local player = GUI.GetPlayerID()
+				if Logic.GetNumberOfEntitiesOfTypeOfPlayer(player, Entities.PB_Foundry1) + Logic.GetNumberOfEntitiesOfTypeOfPlayer(player, Entities.PB_Foundry2) >= 4 then
+					return
+				end
+			end
+			GUIAction_PlaceBuilding_Orig(_UpgradeCategory)
+		end
+
+		function DoManualButtonUpdateOnBuildingCreated()
+			local id = Event.GetEntityID()
+			if Logic.IsBuilding(id) == 1 and Logic.EntityGetPlayer(id) == GUI.GetPlayerID() then
+				--XGUIEng.DoManualButtonUpdate("SerfConstructionMenu")
+				local ids = {GUI.GetSelectedEntities()}
+				GUI.ClearSelection()
+				for i = 1, table.getn(ids) do
+					GUI.SelectEntity(ids[i])
+				end
+			end
+		end
+		Trigger.RequestTrigger(Events.LOGIC_EVENT_ENTITY_CREATED, nil, "DoManualButtonUpdateOnBuildingCreated", 1)
 	end,
 	
 	-- ********************************************************************************************
@@ -582,6 +629,7 @@ function SetupWinCondition()
 		PointsNeeded = 900, -- 15 minuten a 60 sekunden
 		Position = {X=36737, Y=36735},
 		Teams = {{1,2},{3,4},{7,8}};
+		Players = {1,1,2,2}
 	};
 	
 	local r,g,b;
@@ -591,6 +639,7 @@ function SetupWinCondition()
 		XGUIEng.SetMaterialColor("VCMP_Team"..teamId.."Progress", 0, r, g, b, 150)
 	end
 	
+	ConqueringTeam = 0
 end
 
 function JobConquerArea()
@@ -601,7 +650,7 @@ function JobConquerArea()
 	end
 	
 	local range = 4000;
-	local entities, entitiesOfTeam, conqueringTeam;
+	local entities, entitiesOfTeam;
 	local numberOfPlayers = 0;
 	local entityName, entity;
 	for teamId = 1, table.getn(ConquerArea.Teams) do
@@ -634,15 +683,16 @@ function JobConquerArea()
 		end]]
 		
 		if entitiesOfTeam > 0 then
-			conqueringTeam = teamId;
+			ConqueringTeam = teamId;
 			numberOfPlayers = numberOfPlayers + 1;
 			if numberOfPlayers > 1 then
+				ConqueringTeam = 0;
 				return;
 			end
 		end
 	end
-	if conqueringTeam then
-		ConquerArea.Points[conqueringTeam] = ConquerArea.Points[conqueringTeam] + 1;
+	if ConqueringTeam > 0 then
+		ConquerArea.Points[ConqueringTeam] = ConquerArea.Points[ConqueringTeam] + 1;
 		for teamId = 1,3 do
 			XGUIEng.SetText("VCMP_Team"..teamId.."Name", UserTool_GetPlayerName(ConquerArea.Teams[teamId][1]) .. " ("..ConquerArea.Points[teamId] .. "/" .. ConquerArea.PointsNeeded..")");
 		end
@@ -677,6 +727,13 @@ function UpgradeTowerLevel(_level)
 			end
 			eID = Logic.GetNextEntityOfPlayerOfType(eID);
 		until (firstEntity == eID);
+	end
+end
+
+function ControllKerberos()
+	local pos = GetPosition("kerberos")
+	if IsAlive("kerberos") and (36800 - pos.X) ^ 2 + (36800 - pos.Y) ^ 2 > 144000000 then -- 12000
+		Move("kerberos", {X = 36800, Y = 36800})
 	end
 end
 
@@ -971,7 +1028,7 @@ function GetStrength(_playerId)
 	local iron = math.floor( GetIron(_playerId) / ressourceScale );
 	local sulfur = math.floor( GetSulfur(_playerId) / ressourceScale );
 	local strength = numOfSoldiers + gold + iron + sulfur;
-	strength = math.floor(strength/100 + 0.5);
+	strength = math.floor(strength/100 + 0.5) - (ConquerArea.Players[_playerId] == ConqueringTeam and 0 or 2);
 	return strength;
 end
 
