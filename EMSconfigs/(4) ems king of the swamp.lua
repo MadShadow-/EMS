@@ -1,6 +1,6 @@
 EMS_CustomMapConfig =
 {
-	Version = 5,
+	Version = 6,
 
 	Callback_OnMapStart = function()
 		Main_MapStart()
@@ -478,25 +478,7 @@ function Main_MapStart()
         --Logic.AddQuest(GUI.GetPlayerID(), 2, SUBQUEST_OPEN, "buried resources", "Your scouts have discovered more resource deposits further outside your settlement. Unfortunately, they are covered by rubble. @cr For a few thalers and some powder you can have a bomb made that would have enough explosive power to uncover one of the shafts.", 1)
     end
 
-    -- summer 4
-    -- rain 1
-    -- winter 1
-    -- sumer 2
-    -- winter 2
-    -- rain 2
-    AddPeriodicSummer(6 * 60 - 5)
-    AddPeriodicSummerToRain(25)
-    AddPeriodicRain(90 - 5)
-    AddPeriodicRainToWinter(25)
-    AddPeriodicWinter(90 - 5)
-    AddPeriodicWinterToSummer(25)
-    AddPeriodicSummer(3 * 60 - 5)
-    AddPeriodicSummerToWinter(25)
-    AddPeriodicWinter(3 * 60 - 5)
-    AddPeriodicWinterToRain(25)
-    AddPeriodicRain(3 * 60 - 5)
-    AddPeriodicRainToSummer(25)
-
+    AddPeriodicSummer(10 - 5)
     LocalMusic.UseSet = DARKMOORMUSIC
 
     for p = 1, 4 do
@@ -613,6 +595,25 @@ function Main_MapStart()
 end
 
 function Main_GameStart()
+    -- summer 4
+    -- rain 1
+    -- winter 1
+    -- sumer 2
+    -- winter 2
+    -- rain 2
+    AddPeriodicSummer(6 * 60 - 15)
+    AddPeriodicSummerToRain(25)
+    AddPeriodicRain(90 - 5)
+    AddPeriodicRainToWinter(25)
+    AddPeriodicWinter(90 - 5)
+    AddPeriodicWinterToSummer(25)
+    AddPeriodicSummer(3 * 60 - 5)
+    AddPeriodicSummerToWinter(25)
+    AddPeriodicWinter(3 * 60 - 5)
+    AddPeriodicWinterToRain(25)
+    AddPeriodicRain(3 * 60 - 5)
+    AddPeriodicRainToSummer(25)
+
     Bandits = {}
     for i = 1, 8 do
         local pos = GetPosition("banditspawn" .. i)
