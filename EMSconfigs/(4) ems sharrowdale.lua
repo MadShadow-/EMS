@@ -9,7 +9,7 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 2,
+	Version = 3,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -235,6 +235,7 @@ EMS_CustomMapConfig =
 	Cannon3 = 1,
 	Cannon4 = 1,
 	TradeLimit = 3500,
+	Markets = 0,
 	
 	HeavyCavalry = 2,
 	LightCavalry = 2,
