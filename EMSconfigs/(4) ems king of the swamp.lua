@@ -1,6 +1,6 @@
 EMS_CustomMapConfig =
 {
-	Version = 6,
+	Version = 7,
 
 	Callback_OnMapStart = function()
 		Main_MapStart()
@@ -199,12 +199,14 @@ end
 
 function SpawnWave(_Index)
     local team = CheckPointTeam[_Index]
-    -- 2 * (1 - 4) troops
-    local amount = math.floor(TeamPoints[team] / MaxPoints * 6 + 0.5)
+    local amount = TeamPoints[team] / MaxPoints * 6
 
-    if _Index > 1 then
-        amount = amount - 2
+    if _Index < 5 then
+        amount = amount * 0.75
     end
+
+    amount = math.ceil(amount)
+
     if amount <= 0 then
         return
     end
@@ -240,6 +242,12 @@ function CheckPointControllerJob()
             else
                 NextSpawn[i] = NextSpawn[i] - 1
             end
+        end
+    end
+	for teamId = 1,2 do
+        if Logic.PlayerGetGameState(PlayerTeam[teamId][1]) == 3 and Logic.PlayerGetGameState(PlayerTeam[teamId][2]) == 3 then
+            ConcludeGame(EnemyTeam[teamId])
+            return true
         end
     end
 end
@@ -408,20 +416,17 @@ function SetupProgressBars()
 end
 
 function UpdateProgressBars()
-    local team = TeamPlayer[GUI.GetPlayerID()]
-    local enemy = EnemyTeam[team]
-
 	for teamId = 1,2 do
 		XGUIEng.SetProgressBarValues("VCMP_Team"..teamId.."Progress", math.floor(TeamPoints[teamId]), MaxPoints);
-		XGUIEng.SetText("VCMP_Team"..teamId.."Name", "(" .. math.floor(TeamPoints[teamId]) .. "/" .. MaxPoints .. ") " ..
-			GetPlayerColorString(PlayerTeam[teamId][1]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][1]) .. " @color:255,255,255,255 & "
-			.. GetPlayerColorString(PlayerTeam[teamId][2]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][2]));
-
-        if Logic.PlayerGetGameState(PlayerTeam[teamId][1]) == 3 and Logic.PlayerGetGameState(PlayerTeam[teamId][1]) == 3 then
-            ConcludeGame(enemy)
-            return true
-        end
+		XGUIEng.SetText(
+            "VCMP_Team"..teamId.."Name", "(" .. math.floor(TeamPoints[teamId]) .. "/" .. MaxPoints .. ") " ..
+			GetPlayerColorString(PlayerTeam[teamId][1]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][1]) .. " @color:255,255,255,255 & " ..
+			GetPlayerColorString(PlayerTeam[teamId][2]) .. " " .. UserTool_GetPlayerName(PlayerTeam[teamId][2])
+        );
     end
+
+    local team = TeamPlayer[GUI.GetPlayerID()]
+    local enemy = EnemyTeam[team]
 
     if TeamPoints[team] >= MaxPoints and TeamPoints[team] > TeamPoints[enemy] then
         ConcludeGame(team)
@@ -667,13 +672,19 @@ function Main_GameLoaded()
     Display.SetPlayerColorMapping(6, 11)
 
     -- Debug
-    --Display.SetRenderFogOfWar(0)
     --Tools.CreateGroup(1, Entities.PU_LeaderSword1, 4, 23000, 67200)
     --Tools.CreateGroup(1, Entities.PU_LeaderSword1, 4, 23000, 67400)
     --Tools.CreateGroup(1, Entities.PU_LeaderSword1, 4, 23000, 67600)
     --Logic.CreateEntity(Entities.PU_Hero4, 22800, 67500, 0, 1)
     --Logic.CreateEntity(Entities.PU_Hero10, 22800, 67400, 0, 1)
-    --for k, v in pairs(Technologies) do ResearchTechnology(v) end
+    --[[Display.SetRenderFogOfWar(0)
+    for k, v in pairs(Technologies) do ResearchTechnology(v) end
+    AddGold(500000)
+    AddSulfur(500000)
+    AddIron(500000)
+    AddWood(500000)
+    AddStone(500000)
+    AddClay(500000)]]
     --KAI.RM.GetBuildingAverageProductionRate(GUI.GetSelectedEntity())
 end
 
