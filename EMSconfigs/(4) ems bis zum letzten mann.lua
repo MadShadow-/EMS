@@ -82,8 +82,10 @@ EMS_CustomMapConfig =
 			Message("@color:255,0,0 mcbPacker is missing! maybe the community lib is not installed!");
 			return;
 		end
-		mcbPacker.mainPath="maps\\user\\EMS\\tools\\";
-		mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight");
+		mcbPacker.Paths = {
+			{"data/maps/user/ems/tools/",".lua"},
+			}
+		--mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight");
 		WT.LoadOldUA()
 		--Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua");
 		
