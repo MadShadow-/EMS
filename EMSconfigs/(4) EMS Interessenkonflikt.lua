@@ -26,12 +26,8 @@ EMS_CustomMapConfig =
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua")
 		--mcbPacker.Paths = {{"data/maps/user/ems/tools/",".lua"}}
 		mcbPacker.Paths = {
-			{"data/maps/externalmap/", ".lua"},
-			{"data/maps/externalmap/", ".luac"},
-			{Folders.Map, ".lua"},
-			{Folders.Map, ".luac"},
-			{"data/maps/user/ems/tools/",".lua"}
-}
+			{"data/maps/user/ems/tools/",".lua"},
+			}
 		--mcbPacker.mainPath="maps\\user\\EMS\\tools\\"
 		--mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight")
 		--Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua")
