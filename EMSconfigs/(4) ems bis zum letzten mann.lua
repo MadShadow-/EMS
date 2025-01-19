@@ -93,7 +93,8 @@ EMS_CustomMapConfig =
 		WT.ChangeUABehaviour();
 		
 		S5HookLoader.Init()
-		EntityIdChangedHelper.Init()
+		TriggerFix.AllScriptsLoaded()
+		--EntityIdChangedHelper.Init()
 		AddPeriodicSummer(60);
 		SetupHighlandWeatherGfxSet();
 		LuaDebugger.Log = function()end;
