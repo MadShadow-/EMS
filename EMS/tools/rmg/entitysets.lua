@@ -909,7 +909,7 @@ RMG.EntitySets = {
 		Entities.XD_RockKhakiBright6,
 		Entities.XD_RockKhakiBright7,
 	},
-	MediRockDark = {
+	MediRockyDark = {
 		Entities.XD_RockKhakiMedium1,
 		Entities.XD_RockKhakiMedium2,
 	},
