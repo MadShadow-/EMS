@@ -13,7 +13,7 @@ EMS_CustomMapConfig =
 	-- * Configuration File Version
 	-- * A version check will make sure every player has the same version of the configuration file
 	-- ********************************************************************************************
-	Version = 2.1,
+	Version = 2.2,
  
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
@@ -34,6 +34,9 @@ EMS_CustomMapConfig =
 	-- ********************************************************************************************
 	Callback_OnGameStart = function()
 		CreateWoodPile( "woodpileMiddle", 100000 )
+		for player = 1,6,1 do
+			CreateWoodPile( "woodpile"..player, 100000 )
+		end
 	end,
  
 	-- ********************************************************************************************
