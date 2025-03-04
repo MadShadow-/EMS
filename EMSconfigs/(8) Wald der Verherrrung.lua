@@ -21,6 +21,15 @@ EMS_CustomMapConfig =
 		AddPeriodicSummer(2);
 		SetupHighlandWeatherGfxSet();
 		LocalMusic.UseSet = HIGHLANDMUSIC;
+		
+		CreateWoodPile( "P1", 500000)
+		CreateWoodPile( "P2", 500000)
+		CreateWoodPile( "P3", 500000)
+		CreateWoodPile( "P4", 500000)	
+		CreateWoodPile( "P5", 500000)
+		CreateWoodPile( "P6", 500000)	
+		CreateWoodPile( "P7", 500000)
+		CreateWoodPile( "P8", 500000)			
 	end,
 	
 	-- ********************************************************************************************
@@ -196,3 +205,39 @@ EMS_CustomMapConfig =
 	Mary_de_Mortfichet = 1,
 	Kala     = 1,
 };
+
+-- Holzstapel
+
+function CreateWoodPile( _posEntity, _resources )
+	assert( type( _posEntity ) == "string" );
+	assert( type( _resources ) == "number" );
+	gvWoodPiles = gvWoodPiles or {
+		JobID = StartSimpleJob("ControlWoodPiles"),
+	};
+	local pos = GetPosition( _posEntity );
+	local pile_id = Logic.CreateEntity( Entities.XD_Rock3, pos.X, pos.Y, 0, 0 );
+
+	SetEntityName( pile_id, _posEntity.."_WoodPile" );
+
+	local newE = ReplaceEntity( _posEntity, Entities.XD_ResourceTree );
+	Logic.SetModelAndAnimSet(newE, Models.XD_SignalFire1);
+	Logic.SetResourceDoodadGoodAmount( GetEntityId( _posEntity ), _resources*10 );
+	Logic.SetModelAndAnimSet(pile_id, Models.Effects_XF_ChopTree);
+	table.insert( gvWoodPiles, { ResourceEntity = _posEntity, PileEntity = _posEntity.."_WoodPile", ResourceLimit = _resources*9 } );
+end
+
+function ControlWoodPiles()
+	for i = table.getn( gvWoodPiles ),1,-1 do
+		if Logic.GetResourceDoodadGoodAmount( GetEntityId( gvWoodPiles[i].ResourceEntity ) ) <= gvWoodPiles[i].ResourceLimit then
+			DestroyWoodPile( gvWoodPiles[i], i );
+		end
+	end
+end
+
+function DestroyWoodPile( _piletable, _index )
+	local pos = GetPosition( _piletable.ResourceEntity );
+	DestroyEntity( _piletable.ResourceEntity );
+	DestroyEntity( _piletable.PileEntity );
+	Logic.CreateEffect( GGL_Effects.FXCrushBuilding, pos.X, pos.Y, 0 );
+	table.remove( gvWoodPiles, _index )
+end
