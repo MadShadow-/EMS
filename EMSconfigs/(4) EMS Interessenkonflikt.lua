@@ -24,7 +24,10 @@ EMS_CustomMapConfig =
 	Callback_OnMapStart = function()
 		--TriggerFix_mode = "Xpcall"
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua")
-		mcbPacker.Paths = {{"data/maps/user/ems/tools/",".lua"}}
+		--mcbPacker.Paths = {{"data/maps/user/ems/tools/",".lua"}}
+		mcbPacker.Paths = {
+			{"data/maps/user/ems/tools/",".lua"},
+			}
 		--mcbPacker.mainPath="maps\\user\\EMS\\tools\\"
 		--mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight")
 		--Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua")

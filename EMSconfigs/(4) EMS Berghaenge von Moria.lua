@@ -24,11 +24,14 @@ EMS_CustomMapConfig =
 	Callback_OnMapStart = function()
 		TriggerFix_mode = "Xpcall"
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua");
-		mcbPacker.mainPath="maps\\user\\EMS\\tools\\";
-		mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight");
+		mcbPacker.Paths = {
+			{"data/maps/user/ems/tools/",".lua"},
+			}
+		--mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight");
 		Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\lib\\UnlimitedArmySpawnGenerator.lua");
+		TriggerFix.AllScriptsLoaded()
 		S5HookLoader.Init()
-		EntityIdChangedHelper.Init()
+		--EntityIdChangedHelper.Init()
 		LuaDebugger.Log = function() end
 		AddPeriodicSummer(60);
 		Diploeinstellung();
@@ -749,7 +752,7 @@ function WT.InitTechnologyCounter()
 		{
 			Technology = Technologies.UP1_University,
 			ScoreGoal = 5000,
-			Name = "Universität"
+			Name = "UniversitÃ¤t"
 		},
 		
 		{
@@ -791,13 +794,13 @@ function WT.InitTechnologyCounter()
 		{
 			Technology = Technologies.MU_LeaderRifle,
 			ScoreGoal = 12000,
-			Name = "Scharfschützen"
+			Name = "ScharfschÃ¼tzen"
 		},
 		
 		{
 			Technology = Technologies.T_UpgradeRifle1,
 			ScoreGoal = 13000,
-			Name = "Scharfschützen Stufe 2"
+			Name = "ScharfschÃ¼tzen Stufe 2"
 		},
 		
 	};
@@ -849,7 +852,7 @@ end
 
 function WT.UpdateTechnologyGUI(_teamId)
 	local text = "@cr @cr @cr @cr @cr @cr @cr @cr @cr @cr @cr ";
-	text = text .. " @color:30,144,255 Nächte Technologien: @cr @color:255,125,0 ";
+	text = text .. " @color:30,144,255 NÃ¤chte Technologien: @cr @color:255,125,0 ";
 	local myTeam = false;
 	for playerIndex = 1, table.getn(WT.Teams[_teamId]) do
 		if GUI.GetPlayerID() == WT.Teams[_teamId][playerIndex] then
@@ -870,13 +873,13 @@ end
 function Umlaute( _text )
 	local texttype = type( _text );
 	if texttype == "string" then
-		_text = string.gsub( _text, "ä", "\195\164" );
-		_text = string.gsub( _text, "ö", "\195\182" );
-		_text = string.gsub( _text, "ü", "\195\188" );
-		_text = string.gsub( _text, "ß", "\195\159" );
-		_text = string.gsub( _text, "Ä", "\195\132" );
-		_text = string.gsub( _text, "Ö", "\195\150" );
-		_text = string.gsub( _text, "Ü", "\195\156" );
+		_text = string.gsub( _text, "Ã¤", "\195\164" );
+		_text = string.gsub( _text, "Ã¶", "\195\182" );
+		_text = string.gsub( _text, "Ã¼", "\195\188" );
+		_text = string.gsub( _text, "ÃŸ", "\195\159" );
+		_text = string.gsub( _text, "Ã„", "\195\132" );
+		_text = string.gsub( _text, "Ã–", "\195\150" );
+		_text = string.gsub( _text, "Ãœ", "\195\156" );
 		return _text;
 	elseif texttype == "table" then
 		for k,v in _text do
@@ -1258,7 +1261,7 @@ function PunkteCounter()
 		BanditMid22UA:AddCommandDefend(GetPosition("p1"), 6500, true)
 		BanditMid22UA:AddCommandSetSpawnerStatus(true,true)
 	end
-	--UA richtung außenpunkte
+	--UA richtung auÃŸenpunkte
 	if (WT.Score[1] >= math.floor(WT.ScoreLimit * 0.6)) and not Team2SideArmy then
 		Team2SideArmy = true
 		BanditTower3UA:AddCommandSetSpawnerStatus(true,false)
