@@ -800,9 +800,11 @@ end
 
 function WT21.UnlimitedArmies()
 	Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\packer\\devLoad.lua");
-	mcbPacker.Paths[1][1] = "maps\\user\\EMS\\tools\\"
+	mcbPacker.Paths = {
+			{"data/maps/user/ems/tools/",".lua"},
+			}
 
-	mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight")
+	--mcbPacker.require("s5CommunityLib/comfort/other/FrameworkWrapperLight")
 	mcbPacker.require("s5CommunityLib/lib/UnlimitedArmy")
 
 	TriggerFix.AllScriptsLoaded();
