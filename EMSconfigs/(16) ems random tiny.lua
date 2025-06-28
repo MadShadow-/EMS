@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 0,
+	Version = 1,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -27,6 +27,7 @@ EMS_CustomMapConfig =
 		LocalMusic.UseSet = MEDITERANEANMUSIC;
 		
 		Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg.lua")
+		Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_ems.lua")
 	end,
 	
 	-- ********************************************************************************************

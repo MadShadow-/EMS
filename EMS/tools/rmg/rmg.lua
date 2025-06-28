@@ -1,5 +1,6 @@
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- author:RobbiTheFox,mcb		current maintainer:RobbiTheFox
+-- current version: 3.0
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 --
 -- supported player-team compositions:
@@ -8,27 +9,52 @@
 -- - 4 teams in any composition with up to 8 players
 -- - 3 teams in any composition with up to 9 players
 -- - 2 teams in any composition with up to 10 players
--- - equal teams up to 16 players ( odd numbers above 8 are only supported as ffa )
+-- - equal teams up to 16 players (odd numbers above 8 are only supported as ffa)
+-- - other compositions can work, depending on the map size
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- TODO:
 -- check player config compatibility
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG = {}
-EMS_CustomMapConfig.Version = EMS_CustomMapConfig.Version + 2.8
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\TerrainTypes.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\WaterTypes.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\number\\round.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\entity\\CreateWoodPile.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\s5CommunityLib\\mapeditor\\MirrorMapTools.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\rmg\\texturesets.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\rmg\\vertexcolorsets.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\rmg\\entitysets.lua" )
-Script.Load( "maps\\user\\EMS\\tools\\rmg\\landscapesets.lua" )
---Script.Load( "maps\\user\\EMS\\tools\\rmg\\structuresets.lua" )
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\fixes\\TriggerFix.lua")
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\SimplexNoise.lua")
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\math\\astar.lua")
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\TerrainTypes.lua")
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\tables\\WaterTypes.lua")
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\number\\round.lua")
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\comfort\\entity\\CreateWoodPile.lua")
+Script.Load("maps\\user\\EMS\\tools\\s5CommunityLib\\mapeditor\\MirrorMapTools.lua")
+Script.Load("maps\\user\\EMS\\tools\\rmg\\texturesets.lua")
+Script.Load("maps\\user\\EMS\\tools\\rmg\\vertexcolorsets.lua")
+Script.Load("maps\\user\\EMS\\tools\\rmg\\entitysets.lua")
+Script.Load("maps\\user\\EMS\\tools\\rmg\\landscapesets.lua")
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+-- for override purposes
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+
+-- override me :)
+function RMG.Callback_OnGenerationFinished()
+	-- for the mapper
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- override me :)
+---@param _GenerationData table
+function RMG.CustomizeGenerationData(_GenerationData)
+	-- for the mapper
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- override me :)
+---@param _GenerationData table
+function RMG.CustomizeGenerationData2(_GenerationData)
+	-- for the mapper
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- override me :)
+---@param _PlayerStruct table
+function RMG.SetCameraStart(_PlayerStruct)
+	Camera.ScrollSetLookAt(_PlayerStruct.X * 100, _PlayerStruct.Y * 100)
+end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- overrides for compatibility
 function AStar.GetPathCost(_nodeA, _nodeB)
@@ -66,35 +92,6 @@ function RMG.SetupLandscapeSteppe()
 	SetupSteppeWeatherGfxSet()
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RMG.LandscapeSetKeys = {
-	{ id = "Normal",		eval = RMG.SetupLandscapeNormal, representative = "Europa" },
-	{ id = "North",			eval = RMG.SetupLandscapeNorth, representative = "Skandinavien" },
-	{ id = "Evelance",		eval = RMG.SetupLandscapeEvelance },
-	{ id = "Mediterran",	eval = RMG.SetupLandscapeMediterran },
-	{ id = "Moor",			eval = RMG.SetupLandscapeMoor },
-	{ id = "Tideland",		eval = RMG.SetupLandscapeTideland, representative = "Küstenland" },
-	{ id = "Steppe",		eval = RMG.SetupLandscapeSteppe, },
-}
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-RMG.TeamBorderTypes = {
-	{id = "none", representative = "keine", gate = 0},
-	{id = "fence", representative = "Zaun", gate = 1},
-	{id = "river", representative = "Flüsse", gate = 0},
-}
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-RMG.GateLayouts = {
-	{id = "team", representative = "je Team"},
-	--{id = "player", representative = "je Spieler"},
-}
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-RMG.GateSizes = {
-	{id = 2.25, representative = "sehr klein"},
-	{id = 2.5, representative = "klein"},
-	{id = 3, representative = "moderat"},
-	{id = 4, representative = "groß"},
-	{id = 6, representative = "sehr groß"},
-}
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 RMG.BlockingTypes = {
 	None = 0,
 	River = 1,
@@ -122,7 +119,7 @@ Structure = {
   NoiseMax,
   Asymetric,
   Blocking,
- },
+},
  Data = {
   Entities = {
    [1] = {
@@ -140,17 +137,17 @@ Structure = {
     Name,
     Health,
     Soldiers, -- amount
-   },
   },
+ },
   TerrainHeights = {
    [x] = {
     [y] = Number,
-   },
+  },
    Area, -- excl.
    = Number
    = {x, y}
    = {x1, y1, x2, y2}
-  },
+ },
   TerrainTextures = {
    [1] = {
     Area,
@@ -160,35 +157,35 @@ Structure = {
     = {x1, y1, x2, y2},
     TextureList = RMG.TextureSets.Name or TerrainTypes.Name, -- excl.
     BiomeKey = String,
-   },
   },
+ },
   Water = {
    [1] = {
     Area = {x1, y1, x2, y2},
     Height = Number,
     Type = WaterTypes.Name,
-   },
   },
+ },
   RemoveEntities, -- excl.
   = Number
   = {x, y}
   = {x1, y1, x2, y2}
- },
+},
  Childs = {
   -- more structures
- },
+},
 }
 ]]
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RMG.InitGenerationData()
-	
-	RMG.GenerationData = { DebugMode = false, }
-	
-	Score.Player[0] = {buildings=0, all=0}
-	
+
+	local generationData = {DebugMode = false}
+
+	Score.Player[0] = {buildings = 0, all = 0}
+
 	-- DBG only --
-	if RMG.GenerationData.DebugMode then
-		
+	if generationData.DebugMode then
+
 		Game.GameTimeSetFactor(10)
 		Tools.ExploreArea(-1, -1, 900);
 		Camera.ZoomSetFactorMax(10);
@@ -199,148 +196,144 @@ function RMG.InitGenerationData()
 		Display.SetRenderShadows(0);
 		Display.SetRenderLandscapeFogOfWar(0);
 		Display.SetRenderInvisibleObjects(1);
-		
+
 		--for k,v in pairs(Technologies) do ResearchTechnology(v) end
 	end
 	-- DBG only --
-	
-	
-	local seed = EMS.RD.Rules.RMG_Seed:GetValue()
 
-	RMG.GenerationData.Seed = seed,
+	generationData.TerrainBaseHeight		= 2800
+	generationData.WaterBaseHeight			= 2300
+
+	local invertedwaterheight = generationData.TerrainBaseHeight + (generationData.TerrainBaseHeight - generationData.WaterBaseHeight)
+
+	generationData.NoiseFactorZ				= 140 * 14
+	generationData.NoiseFactorXY			= 102 / 14705
+
+	generationData.ThresholdPike			= invertedwaterheight + 750
+	generationData.ThresholdMountain		= invertedwaterheight + 100
+	generationData.ThresholdHill			= invertedwaterheight - 200
+
+	generationData.ThresholdSea				= generationData.WaterBaseHeight - 500
+	generationData.ThresholdLake			= generationData.WaterBaseHeight - 100
+	generationData.ThresholdCoast			= generationData.WaterBaseHeight + 200
+
+	generationData.ThresholdRoad			= 0
+	generationData.ForestDensity			= 1 -- in %
+
+	generationData.ThresholdVeryStrongGroth	= 0.5
+	generationData.ThresholdStrongGroth		= 0.3
+	generationData.ThresholdWeakGroth		= -0.1
+	generationData.ThresholdVeryWeakGroth	= -0.3
+
+	-- set some defaults here
+    local seed = math.random(1000000, 99999999)
+	generationData.Seed = seed,
 	SimplexNoise.seedP(seed)
-	
-	--if XNetwork.Manager_DoesExist() == 0 then
-		math.randomseed(seed)
-		gvRandomseed = true -- prevent GetRandom from reseeding
-	--end
-	
-	RMG.GenerationData.TeamBorderType			= EMS.RD.Rules.RMG_GenerateRivers:GetValue()
-	RMG.GenerationData.GateLayout				= EMS.RD.Rules.RMG_GateLayout:GetValue()
-	RMG.GenerationData.GateSize					= RMG.GateSizes[EMS.RD.Rules.RMG_GateSize:GetValue()].id
-	RMG.GenerationData.GenerateRoads 			= Num2Bool(EMS.RD.Rules.RMG_GenerateRoads:GetValue())
-	
-	RMG.GenerationData.LandscapeSetKey			= RMG.LandscapeSetKeys[EMS.RD.Rules.RMG_LandscapeSet:GetValue()].id
-	RMG.GenerationData.MirrorMap				= Num2Bool(EMS.RD.Rules.RMG_MirrorMap:GetValue())
-	RMG.GenerationData.RandomPlayerPosition		= Num2Bool(EMS.RD.Rules.RMG_RandomPlayerPosition:GetValue())
-	
-	--RMG.GenerationData.TerrainBaseHeight		= EMS.RD.Rules.RMG_TerrainBaseHeight:GetValue()
-	--RMG.GenerationData.WaterBaseHeight		= EMS.RD.Rules.RMG_WaterBaseHeight:GetValue()
-	--RMG.GenerationData.NoiseFactorZ			= EMS.RD.Rules.RMG_NoiseFactorZ:GetValue() * 28
-	--RMG.GenerationData.NoiseFactorXY			= (EMS.RD.Rules.RMG_NoiseFactorXY:GetValue() * 0.5 + 50) / 12500 -- otherwise it is way to sensitiv
-	--RMG.GenerationData.ForestDensity			= EMS.RD.Rules.RMG_ForestDensity:GetValue() / 100
-	
-	-- recycled params from old generator, now fix
-	RMG.GenerationData.TerrainBaseHeight		= 2800
-	RMG.GenerationData.WaterBaseHeight			= 2300
+	math.randomseed(seed)
+	gvRandomseed = true -- prevent GetRandom from reseeding
 
-	local waterheight = RMG.GenerationData.WaterBaseHeight + 200
-	local invertedwaterheight = RMG.GenerationData.TerrainBaseHeight + ( RMG.GenerationData.TerrainBaseHeight - RMG.GenerationData.WaterBaseHeight )
-	
-	RMG.GenerationData.NoiseFactorZ				= 140 * 14
-	RMG.GenerationData.NoiseFactorXY			= 102 / 14705
-	--RMG.GenerationData.GenerateRoads 			= true
-	--RMG.GenerationData.MirrorMap				= false
-	--RMG.GenerationData.TeamBorderType			= 1
+	generationData.TeamBorderType			= 2
+	generationData.GateLayout				= 1
+	generationData.GateSize					= 3
+	generationData.GenerateRoads 			= true
 
-	RMG.GenerationData.ThresholdPike			= invertedwaterheight + 750
-	RMG.GenerationData.ThresholdMountain		= invertedwaterheight + 100
-	RMG.GenerationData.ThresholdHill			= invertedwaterheight - 200
-	
-	RMG.GenerationData.ThresholdSea				= RMG.GenerationData.WaterBaseHeight - 500
-	RMG.GenerationData.ThresholdLake			= RMG.GenerationData.WaterBaseHeight - 100
-	RMG.GenerationData.ThresholdCoast			= RMG.GenerationData.WaterBaseHeight + 200
-	
-	RMG.GenerationData.ThresholdRoad			= 0
-	RMG.GenerationData.ForestDensity			= 1 -- in %
-	
-	RMG.GenerationData.ThresholdVeryStrongGroth	= 0.5
-	RMG.GenerationData.ThresholdStrongGroth		= 0.3
-	RMG.GenerationData.ThresholdWeakGroth		= -0.1
-	RMG.GenerationData.ThresholdVeryWeakGroth	= -0.3
-	
-	-- no water
-	--RMG.GenerationData.WaterBaseHeight			= 0
-	
-	local contentClayPit	= EMS.RD.Rules.RMG_ContentClayPit:GetValue()
-	local contentClayPile	= EMS.RD.Rules.RMG_ContentClayPile:GetValue()
-	local contentStonePit	= EMS.RD.Rules.RMG_ContentStonePit:GetValue()
-	local contentStonePile	= EMS.RD.Rules.RMG_ContentStonePile:GetValue()
-	local contentIronPit	= EMS.RD.Rules.RMG_ContentIronPit:GetValue()
-	local contentIronPile	= EMS.RD.Rules.RMG_ContentIronPile:GetValue()
-	local contentSulfurPit	= EMS.RD.Rules.RMG_ContentSulfurPit:GetValue()
-	local contentSulfurPile	= EMS.RD.Rules.RMG_ContentSulfurPile:GetValue()
-	local contentWoodPile	= EMS.RD.Rules.RMG_ContentWoodPile:GetValue()
-	
-	local exploreres = EMS.RD.Rules.RMG_ShowResources:GetValue()
-	local explorevc = EMS.RD.Rules.RMG_ShowVillageCenters:GetValue()
-	
-	-- Node = { x, y, noise, height, blocking }
-	RMG.GenerationData.TerrainNodes = {}
- 	RMG.GenerationData.Entities = {}
+	generationData.LandscapeSetKey			= "Normal"
+	generationData.MirrorMap				= true
+	generationData.RandomPlayerPosition		= false
 
-	-- get number of players and number of teams
-	local nplayers, players, nteams = RMG.UnpackPlayerConfig()
-	
-	-- player config may be 0 if rmg rule page was not initialized, get data directly in this case
-	if EMS.RD.Rules.RMG_PlayerConfig:GetValue() == 0 then
-		nplayers, players, nteams = RMG.GetPlayersAndTeams()
+	generationData.ContentClayPit          	= 50000
+	generationData.ContentClayPile         	= 4000
+	generationData.ContentStonePit	        = 50000
+	generationData.ContentStonePile	    	= 4000
+	generationData.ContentIronPit	        = 30000
+	generationData.ContentIronPile	        = 4000
+	generationData.ContentSulfurPit	    	= 30000
+	generationData.ContentSulfurPile	    = 4000
+	generationData.ContentWoodPile	        = 30000
+
+    generationData.AmountClayPit		    = 1
+	generationData.AmountClayPile	        = 3
+	generationData.AmountStonePit	        = 1
+	generationData.AmountStonePile	        = 3
+	generationData.AmountIronPit		    = 1
+	generationData.AmountIronPile	        = 2
+	generationData.AmountSulfurPit	        = 1
+	generationData.AmountSulfurPile	    	= 2
+	generationData.AmountWoodPile	        = 2
+	generationData.AmountVillageCenter     	= 3
+
+	generationData.ExploreResources        	= 0
+	generationData.ExploreVCs              	= 0
+
+	local nplayers, players, nteams         = RMG.GetPlayersAndTeams()
+	generationData.NumberOfPlayers			= nplayers
+	generationData.NumberOfTeams			= nteams
+	generationData.Players					= {}
+
+	-- Node = {x, y, noise, height, blocking}
+	generationData.TerrainNodes				= {}
+ 	generationData.Entities					= {}
+
+	return generationData
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.InitGenerationData2(_GenerationData)
+
+	if table.getn(_GenerationData.Players) == 0 then
+		local nplayers, players, nteams = RMG.GetPlayersAndTeams()
+		for p = 1, nplayers do
+			table.insert(_GenerationData.Players, {Id = players[p].Id, Team = players[p].Team, IsHuman = players[p].IsHuman, IsReady = false,})
+		end
 	end
-	
-	RMG.GenerationData.Players = {}
-	RMG.GenerationData.NumberOfPlayers = nplayers
-	RMG.GenerationData.NumberOfTeams = nteams
-	
-	for p = 1, nplayers do
-		table.insert( RMG.GenerationData.Players, { Id = players[ p ].Id, Team = players[ p ].Team, IsHuman = players[ p ].IsHuman, IsReady = false, } )
-	end
-	
+
 	-- on default maps
 	if not RMG.IsCustomMap then
 		-- generate no team border in big ffa
-		if nplayers <= nteams and nplayers > 10 then
-			RMG.GenerationData.TeamBorderType = 1 -- none
+		if _GenerationData.NumberOfPlayers <= _GenerationData.NumberOfTeams and _GenerationData.NumberOfPlayers > 10 then
+			_GenerationData.TeamBorderType = 1 -- none
 		end
-		
+
 		-- generate no rivers if not enough teams
-		if nteams <= 1 then
-			RMG.GenerationData.TeamBorderType = 1 -- none
+		if _GenerationData.NumberOfTeams <= 1 then
+			_GenerationData.TeamBorderType = 1 -- none
+			_GenerationData.MirrorMap = false
 		end
-		
+
 		-- generate no roads if not enough players
-		if nplayers <= 1 then
-			RMG.GenerationData.GenerateRoads = false
+		if _GenerationData.NumberOfPlayers <= 1 then
+			_GenerationData.GenerateRoads = false
+			_GenerationData.MirrorMap = false
 		end
 	end
-	
+
 	-- get composition to allow custom overrides for 12+ players
-	RMG.GenerationData.Composition = RMG.GetComposition()
-	
-	RMG.GenerationData.NumberOfSlizes = RMG.GenerationData.Composition.NumberOfPlayers + RMG.GenerationData.Composition.NumberOfTeams --nplayers + ( ( nteams > 1 ) and nteams or 0 )
-	
-	-- no additional slize if no teamborder will be generated
-	RMG.GenerationData.MirrorRadian = math.rad( 360 / RMG.GenerationData.NumberOfSlizes ) -- 180° = pi
-	RMG.GenerationData.MirrorOffset = math.rad( 45 )
-	
-	-- no mirror offset if bridges will be generated, they look bettes at 90° angle
-	if RMG.GenerationData.TeamBorderType == 3 and RMG.GenerationData.GenerateRoads and not RMG.IsCustomMap then
-		RMG.GenerationData.MirrorOffset = 0
-	end
-	
-	-- build misc structure tables
-	local heightmin = waterheight --RMG.GenerationData.WaterBaseHeight
-	local heightmax = RMG.GenerationData.ThresholdMountain
-	
-	--if RMG.GenerationData.ThresholdPlateau < 1.0 then
-		--heightmax = RMG.GenerationData.ThresholdPlateau
+	_GenerationData.Composition = RMG.GetComposition(_GenerationData)
+
+	_GenerationData.NumberOfSlizes = _GenerationData.Composition.NumberOfPlayers + _GenerationData.Composition.NumberOfTeams
+	--if _GenerationData.Composition.NumberOfTeams > 1 then
+		--_GenerationData.NumberOfSlizes = _GenerationData.NumberOfSlizes + _GenerationData.Composition.NumberOfTeams
 	--end
-	
-	-- update strcturesets
-	--RMG.StructureSets.ClayPit.Entities[1].Resource = contentClayPit
-	
+
+	-- no additional slize if no teamborder will be generated
+	_GenerationData.MirrorRadian = math.rad(360 / _GenerationData.NumberOfSlizes) -- 180° = pi
+	_GenerationData.MirrorOffset = math.rad(45)
+
+	-- no mirror offset if bridges will be generated, they look bettes at 90° angle
+	if _GenerationData.TeamBorderType == 3 and _GenerationData.GenerateRoads and not RMG.IsCustomMap then
+		_GenerationData.MirrorOffset = 0
+	end
+
+	-- TODO: depend on number of players and teams
+	_GenerationData.PlayerDistanceToMiddle = math.min(0.25 + math.min(_GenerationData.NumberOfPlayers / 8, 1), 0.9) -- in percent
+
+	-- build misc structure tables
+	local waterheight = _GenerationData.WaterBaseHeight + 200
+	local heightmin = waterheight
+	local heightmax = _GenerationData.ThresholdMountain
+
 	RMG.StructureSets = {
 		ClayPit = {
-			Entities = {{Type = Entities.XD_ClayPit1, Resource = contentClayPit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 6, Name = "white"},},
+			Entities = {{Type = Entities.XD_ClayPit1, Resource = _GenerationData.ContentClayPit,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 6, Name = "white"},},
 			Blocking = 18,
 			TerrainHeights = {
 				Area = 18,
@@ -350,14 +343,14 @@ function RMG.InitGenerationData()
 				[-3]={[-6]= -45,[-5]= -105,[-4]= -180,[-3]= -257,[-2]= -294,[-1]= -377,[0]= -377,[1]= -377,[2]= -292,[3]= -214,[4]=  -90,[5]= -28,[6]=  -1},
 				[-2]={[-6]= -59,[-5]= -140,[-4]= -249,[-3]= -346,[-2]= -372,[-1]= -377,[0]= -377,[1]= -377,[2]= -360,[3]= -269,[4]= -105,[5]= -26,[6]=  -6},
 				[-1]={[-6]= -58,[-5]= -150,[-4]= -263,[-3]= -355,[-2]= -377,[-1]= -377,[0]= -377,[1]= -377,[2]= -361,[3]= -268,[4]= -125,[5]= -39,[6]=  -9},
-				[ 0]={[-6]= -58,[-5]= -150,[-4]= -266,[-3]= -358,[-2]= -377,[-1]= -377,[0]= -377,[1]= -377,[2]= -363,[3]= -266,[4]= -134,[5]= -46,[6]= -14},
-				[ 1]={[-6]= -58,[-5]= -145,[-4]= -263,[-3]= -360,[-2]= -377,[-1]= -377,[0]= -377,[1]= -377,[2]= -357,[3]= -265,[4]= -140,[5]= -52,[6]= -14},
-				[ 2]={[-6]= -50,[-5]= -130,[-4]= -254,[-3]= -358,[-2]= -377,[-1]= -377,[0]= -377,[1]= -377,[2]= -363,[3]= -267,[4]= -137,[5]= -52,[6]= -17},
-				[ 3]={[-6]= -43,[-5]= -115,[-4]= -226,[-3]= -314,[-2]= -353,[-1]= -355,[0]= -351,[1]= -345,[2]= -303,[3]= -232,[4]= -132,[5]= -56,[6]= -16},
-				[ 4]={[-6]= -38,[-5]=  -92,[-4]= -167,[-3]= -233,[-2]= -271,[-1]= -267,[0]= -262,[1]= -249,[2]= -218,[3]= -165,[4]=  -97,[5]= -40,[6]= -12},
-				[ 5]={[-6]= -21,[-5]=  -51,[-4]=  -95,[-3]= -124,[-2]= -125,[-1]= -131,[0]= -133,[1]= -127,[2]= -111,[3]=  -82,[4]=  -49,[5]= -20,[6]=  -6},
-				[ 6]={[-6]=  -9,[-5]=  -16,[-4]=  -32,[-3]=  -43,[-2]=  -39,[-1]=  -44,[0]=  -47,[1]=  -47,[2]=  -39,[3]=  -28,[4]=  -18,[5]= -10,[6]=  -2},
-				[ 7]={[-6]=  -2,[-5]=   -2,[-4]=   -3,[-3]=   -5,[-2]=   -5,[-1]=   -8,[0]=   -9,[1]=  -12,[2]=   -6,[3]=   -4,[4]=   -3,[5]=  -1},
+				[0]={[-6]= -58,[-5]= -150,[-4]= -266,[-3]= -358,[-2]= -377,[-1]= -377,[0]= -377,[1]= -377,[2]= -363,[3]= -266,[4]= -134,[5]= -46,[6]= -14},
+				[1]={[-6]= -58,[-5]= -145,[-4]= -263,[-3]= -360,[-2]= -377,[-1]= -377,[0]= -377,[1]= -377,[2]= -357,[3]= -265,[4]= -140,[5]= -52,[6]= -14},
+				[2]={[-6]= -50,[-5]= -130,[-4]= -254,[-3]= -358,[-2]= -377,[-1]= -377,[0]= -377,[1]= -377,[2]= -363,[3]= -267,[4]= -137,[5]= -52,[6]= -17},
+				[3]={[-6]= -43,[-5]= -115,[-4]= -226,[-3]= -314,[-2]= -353,[-1]= -355,[0]= -351,[1]= -345,[2]= -303,[3]= -232,[4]= -132,[5]= -56,[6]= -16},
+				[4]={[-6]= -38,[-5]=  -92,[-4]= -167,[-3]= -233,[-2]= -271,[-1]= -267,[0]= -262,[1]= -249,[2]= -218,[3]= -165,[4]=  -97,[5]= -40,[6]= -12},
+				[5]={[-6]= -21,[-5]=  -51,[-4]=  -95,[-3]= -124,[-2]= -125,[-1]= -131,[0]= -133,[1]= -127,[2]= -111,[3]=  -82,[4]=  -49,[5]= -20,[6]=  -6},
+				[6]={[-6]=  -9,[-5]=  -16,[-4]=  -32,[-3]=  -43,[-2]=  -39,[-1]=  -44,[0]=  -47,[1]=  -47,[2]=  -39,[3]=  -28,[4]=  -18,[5]= -10,[6]=  -2},
+				[7]={[-6]=  -2,[-5]=   -2,[-4]=   -3,[-3]=   -5,[-2]=   -5,[-1]=   -8,[0]=   -9,[1]=  -12,[2]=   -6,[3]=   -4,[4]=   -3,[5]=  -1},
 			},
 			TerrainTextures = {
 				TextureList = RMG.TextureSets.NormalEarthDark,
@@ -366,7 +359,7 @@ function RMG.InitGenerationData()
 			Water = {}, -- empty Water table uses preset for resource pits -> lowers water around pit - see CreateStructure(...)
 		},
 		StonePit = {
-			Entities = {{Type = Entities.XD_StonePit1, Resource = contentStonePit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 5, Name = "white"},},
+			Entities = {{Type = Entities.XD_StonePit1, Resource = _GenerationData.ContentStonePit,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 5, Name = "white"},},
 			Blocking = 18,
 			TerrainHeights = {
 				Area = 18,
@@ -421,7 +414,7 @@ function RMG.InitGenerationData()
 			Water = {},
 		},
 		IronPit = {
-			Entities = {{Type = Entities.XD_IronPit1, Resource = contentIronPit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 5, Name = "white"},},
+			Entities = {{Type = Entities.XD_IronPit1, Resource = _GenerationData.ContentIronPit,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 5, Name = "white"},},
 			Blocking = 16,
 			TerrainHeights = {
 				Area = 16,
@@ -442,7 +435,7 @@ function RMG.InitGenerationData()
 			Water = {},
 		},
 		SulfurPit = {
-			Entities = {{Type = Entities.XD_SulfurPit1, Resource = contentSulfurPit,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 5, Name = "white"},},
+			Entities = {{Type = Entities.XD_SulfurPit1, Resource = _GenerationData.ContentSulfurPit,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 5, Name = "white"},},
 			Blocking = 16,
 			TerrainHeights = {
 				Area = 16,
@@ -461,42 +454,42 @@ function RMG.InitGenerationData()
 			Water = {},
 		},
 		ClayPile = {
-			Entities = {{Type = Entities.XD_Clay1, Resource = contentClayPile,},},
+			Entities = {{Type = Entities.XD_Clay1, Resource = _GenerationData.ContentClayPile,},},
 			Blocking = 5,
 		},
 		StonePile = {
-			Entities = {{Type = Entities.XD_Stone1, Resource = contentStonePile,},},
+			Entities = {{Type = Entities.XD_Stone1, Resource = _GenerationData.ContentStonePile,},},
 			Blocking = 5,
 		},
 		IronPile = {
-			Entities = {{Type = Entities.XD_Iron1, Resource = contentIronPile,},},
+			Entities = {{Type = Entities.XD_Iron1, Resource = _GenerationData.ContentIronPile,},},
 			Blocking = 5,
 		},
 		SulfurPile = {
-			Entities = {{Type = Entities.XD_Sulfur1, Resource = contentSulfurPile,},},
+			Entities = {{Type = Entities.XD_Sulfur1, Resource = _GenerationData.ContentSulfurPile,},},
 			Blocking = 5,
 		},
 		WoodPileExplored = {
-			Entities = {{Type = Entities.XD_ScriptEntity, Name = "woodpile",}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 2, Name = "white"},},
+			Entities = {{Type = Entities.XD_ScriptEntity, Name = "woodpile",}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 2, Name = "white"},},
 			Blocking = 5,
 		},
 		ClayPileExplored = {
-			Entities = {{Type = Entities.XD_Clay1, Resource = contentClayPile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
+			Entities = {{Type = Entities.XD_Clay1, Resource = _GenerationData.ContentClayPile,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 3, Name = "white"},},
 			Blocking = 5,
 		},
 		StonePileExplored = {
-			Entities = {{Type = Entities.XD_Stone1, Resource = contentStonePile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
+			Entities = {{Type = Entities.XD_Stone1, Resource = _GenerationData.ContentStonePile,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 3, Name = "white"},},
 			Blocking = 5,
 		},
 		IronPileExplored = {
-			Entities = {{Type = Entities.XD_Iron1, Resource = contentIronPile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
+			Entities = {{Type = Entities.XD_Iron1, Resource = _GenerationData.ContentIronPile,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 3, Name = "white"},},
 			Blocking = 5,
 		},
 		SulfurPileExplored = {
-			Entities = {{Type = Entities.XD_Sulfur1, Resource = contentSulfurPile,}, {Type = Entities.XD_ScriptEntity, Explore = exploreres * 3, Name = "white"},},
+			Entities = {{Type = Entities.XD_Sulfur1, Resource = _GenerationData.ContentSulfurPile,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreResources * 3, Name = "white"},},
 			Blocking = 5,
 		},
-		Bridge1 = { -- x axis
+		Bridge1 = {-- x axis
 			Blocking = 20,
 			Entities = {
 				{Type = Entities.XD_Bridge1,},
@@ -505,45 +498,45 @@ function RMG.InitGenerationData()
 			TerrainHeights = {
 				Area = {X = 30, Y = 15},
 				LerpDist = 5,
-				BaseHeight = RMG.GenerationData.TerrainBaseHeight,
-				[-15] = {[15] = -50, [14] = -50, [13] = -50, [12] = -50, [11] = -50, [10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, [-11] = -50, [-12] = -50, [-13] = -50, [-14] = -50, [-15] = -50, },
-				[-14] = {[15] = -125, [14] = -125, [13] = -125, [12] = -125, [11] = -125, [10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, [-11] = -125, [-12] = -125, [-13] = -125, [-14] = -125, [-15] = -125, },
-				[-13] = {[15] = -225, [14] = -225, [13] = -225, [12] = -225, [11] = -225, [10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, [-11] = -225, [-12] = -225, [-13] = -225, [-14] = -225, [-15] = -225, },
-				[-12] = {[15] = -331, [14] = -331, [13] = -331, [12] = -331, [11] = -331, [10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, [-11] = -331, [-12] = -331, [-13] = -331, [-14] = -331, [-15] = -331, },
-				[-11] = {[15] = -438, [14] = -438, [13] = -438, [12] = -438, [11] = -438, [10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, [-11] = -438, [-12] = -438, [-13] = -438, [-14] = -438, [-15] = -438, },
-				[-10] = {[15] = -538, [14] = -538, [13] = -538, [12] = -538, [11] = -538, [10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, [-11] = -538, [-12] = -538, [-13] = -538, [-14] = -538, [-15] = -538, },
-				[-9] = {[15] = -613, [14] = -613, [13] = -613, [12] = -613, [11] = -613, [10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, [-11] = -613, [-12] = -613, [-13] = -613, [-14] = -613, [-15] = -613, },
-				[-8] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[-7] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[-6] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[-5] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[-4] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[-3] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[-2] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[-1] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[0] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[1] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[2] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[3] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[4] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[5] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[6] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[7] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[8] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663, },
-				[9] = {[15] = -613, [14] = -613, [13] = -613, [12] = -613, [11] = -613, [10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, [-11] = -613, [-12] = -613, [-13] = -613, [-14] = -613, [-15] = -613, },
-				[10] = {[15] = -538, [14] = -538, [13] = -538, [12] = -538, [11] = -538, [10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, [-11] = -538, [-12] = -538, [-13] = -538, [-14] = -538, [-15] = -538, },
-				[11] = {[15] = -438, [14] = -438, [13] = -438, [12] = -438, [11] = -438, [10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, [-11] = -438, [-12] = -438, [-13] = -438, [-14] = -438, [-15] = -438, },
-				[12] = {[15] = -331, [14] = -331, [13] = -331, [12] = -331, [11] = -331, [10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, [-11] = -331, [-12] = -331, [-13] = -331, [-14] = -331, [-15] = -331, },
-				[13] = {[15] = -225, [14] = -225, [13] = -225, [12] = -225, [11] = -225, [10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, [-11] = -225, [-12] = -225, [-13] = -225, [-14] = -225, [-15] = -225, },
-				[14] = {[15] = -125, [14] = -125, [13] = -125, [12] = -125, [11] = -125, [10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, [-11] = -125, [-12] = -125, [-13] = -125, [-14] = -125, [-15] = -125, },
-				[15] = {[15] = -50, [14] = -50, [13] = -50, [12] = -50, [11] = -50, [10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, [-11] = -50, [-12] = -50, [-13] = -50, [-14] = -50, [-15] = -50, },
+				BaseHeight = _GenerationData.TerrainBaseHeight,
+				[-15] = {[15] = -50, [14] = -50, [13] = -50, [12] = -50, [11] = -50, [10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, [-11] = -50, [-12] = -50, [-13] = -50, [-14] = -50, [-15] = -50,},
+				[-14] = {[15] = -125, [14] = -125, [13] = -125, [12] = -125, [11] = -125, [10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, [-11] = -125, [-12] = -125, [-13] = -125, [-14] = -125, [-15] = -125,},
+				[-13] = {[15] = -225, [14] = -225, [13] = -225, [12] = -225, [11] = -225, [10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, [-11] = -225, [-12] = -225, [-13] = -225, [-14] = -225, [-15] = -225,},
+				[-12] = {[15] = -331, [14] = -331, [13] = -331, [12] = -331, [11] = -331, [10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, [-11] = -331, [-12] = -331, [-13] = -331, [-14] = -331, [-15] = -331,},
+				[-11] = {[15] = -438, [14] = -438, [13] = -438, [12] = -438, [11] = -438, [10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, [-11] = -438, [-12] = -438, [-13] = -438, [-14] = -438, [-15] = -438,},
+				[-10] = {[15] = -538, [14] = -538, [13] = -538, [12] = -538, [11] = -538, [10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, [-11] = -538, [-12] = -538, [-13] = -538, [-14] = -538, [-15] = -538,},
+				[-9] = {[15] = -613, [14] = -613, [13] = -613, [12] = -613, [11] = -613, [10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, [-11] = -613, [-12] = -613, [-13] = -613, [-14] = -613, [-15] = -613,},
+				[-8] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[-7] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[-6] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[-5] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[-4] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[-3] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[-2] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[-1] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[0] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[1] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[2] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[3] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[4] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[5] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[6] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[7] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[8] = {[15] = -663, [14] = -663, [13] = -663, [12] = -663, [11] = -663, [10] = -663, [9] = -663, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -663, [-10] = -663, [-11] = -663, [-12] = -663, [-13] = -663, [-14] = -663, [-15] = -663,},
+				[9] = {[15] = -613, [14] = -613, [13] = -613, [12] = -613, [11] = -613, [10] = -613, [9] = -613, [8] = -613, [7] = -613, [6] = -613, [5] = -613, [4] = -613, [3] = -613, [2] = -613, [1] = -613, [0] = -613, [-1] = -613, [-2] = -613, [-3] = -613, [-4] = -613, [-5] = -613, [-6] = -613, [-7] = -613, [-8] = -613, [-9] = -613, [-10] = -613, [-11] = -613, [-12] = -613, [-13] = -613, [-14] = -613, [-15] = -613,},
+				[10] = {[15] = -538, [14] = -538, [13] = -538, [12] = -538, [11] = -538, [10] = -538, [9] = -538, [8] = -538, [7] = -538, [6] = -538, [5] = -538, [4] = -538, [3] = -538, [2] = -538, [1] = -538, [0] = -538, [-1] = -538, [-2] = -538, [-3] = -538, [-4] = -538, [-5] = -538, [-6] = -538, [-7] = -538, [-8] = -538, [-9] = -538, [-10] = -538, [-11] = -538, [-12] = -538, [-13] = -538, [-14] = -538, [-15] = -538,},
+				[11] = {[15] = -438, [14] = -438, [13] = -438, [12] = -438, [11] = -438, [10] = -438, [9] = -438, [8] = -438, [7] = -438, [6] = -438, [5] = -438, [4] = -438, [3] = -438, [2] = -438, [1] = -438, [0] = -438, [-1] = -438, [-2] = -438, [-3] = -438, [-4] = -438, [-5] = -438, [-6] = -438, [-7] = -438, [-8] = -438, [-9] = -438, [-10] = -438, [-11] = -438, [-12] = -438, [-13] = -438, [-14] = -438, [-15] = -438,},
+				[12] = {[15] = -331, [14] = -331, [13] = -331, [12] = -331, [11] = -331, [10] = -331, [9] = -331, [8] = -331, [7] = -331, [6] = -331, [5] = -331, [4] = -331, [3] = -331, [2] = -331, [1] = -331, [0] = -331, [-1] = -331, [-2] = -331, [-3] = -331, [-4] = -331, [-5] = -331, [-6] = -331, [-7] = -331, [-8] = -331, [-9] = -331, [-10] = -331, [-11] = -331, [-12] = -331, [-13] = -331, [-14] = -331, [-15] = -331,},
+				[13] = {[15] = -225, [14] = -225, [13] = -225, [12] = -225, [11] = -225, [10] = -225, [9] = -225, [8] = -225, [7] = -225, [6] = -225, [5] = -225, [4] = -180, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -180, [-5] = -225, [-6] = -225, [-7] = -225, [-8] = -225, [-9] = -225, [-10] = -225, [-11] = -225, [-12] = -225, [-13] = -225, [-14] = -225, [-15] = -225,},
+				[14] = {[15] = -125, [14] = -125, [13] = -125, [12] = -125, [11] = -125, [10] = -125, [9] = -125, [8] = -125, [7] = -125, [6] = -125, [5] = -80, [4] = -20, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = -20, [-5] = -80, [-6] = -125, [-7] = -125, [-8] = -125, [-9] = -125, [-10] = -125, [-11] = -125, [-12] = -125, [-13] = -125, [-14] = -125, [-15] = -125,},
+				[15] = {[15] = -50, [14] = -50, [13] = -50, [12] = -50, [11] = -50, [10] = -50, [9] = -50, [8] = -50, [7] = -50, [6] = -30, [5] = -20, [4] = 0, [3] = 0, [2] = 0, [1] = 0, [0] = 0, [-1] = 0, [-2] = 0, [-3] = 0, [-4] = 0, [-5] = -20, [-6] = -30, [-7] = -50, [-8] = -50, [-9] = -50, [-10] = -50, [-11] = -50, [-12] = -50, [-13] = -50, [-14] = -50, [-15] = -50,},
 			},
 			TerrainTextures = {
 				Area = {X = 18, Y = 6,},
 				TextureList = "Coast",
 			},
 		},
-		Bridge2 = { -- y axis
+		Bridge2 = {-- y axis
 			Blocking = 20,
 			Entities = {
 				{Type = Entities.XD_Bridge2,},
@@ -552,38 +545,38 @@ function RMG.InitGenerationData()
 			TerrainHeights = {
 				Area = {X = 15, Y = 30},
 				LerpDist = 5,
-				BaseHeight = RMG.GenerationData.TerrainBaseHeight,
-				[-15] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-14] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-13] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-12] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-11] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-10] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-9] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-8] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-7] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-6] = {[15] = -30, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -30, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-5] = {[15] = -20, [14] = -80, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -80, [-15] = -20, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-4] = {[15] = 0, [14] = -20, [13] = -180, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -180, [-14] = -20, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-3] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-2] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[-1] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[0] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[1] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[2] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[3] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[4] = {[15] = 0, [14] = -20, [13] = -180, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -180, [-14] = -20, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[5] = {[15] = -20, [14] = -80, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -80, [-15] = -20, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[6] = {[15] = -30, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -30, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[7] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[8] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[9] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[10] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[11] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[12] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[13] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[14] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
-				[15] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0, },
+				BaseHeight = _GenerationData.TerrainBaseHeight,
+				[-15] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-14] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-13] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-12] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-11] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-10] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-9] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-8] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-7] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-6] = {[15] = -30, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -30, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-5] = {[15] = -20, [14] = -80, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -80, [-15] = -20, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-4] = {[15] = 0, [14] = -20, [13] = -180, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -180, [-14] = -20, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-3] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-2] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[-1] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[0] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[1] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[2] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[3] = {[15] = 0, [14] = 0, [13] = 0, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = 0, [-14] = 0, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[4] = {[15] = 0, [14] = -20, [13] = -180, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -180, [-14] = -20, [-15] = 0, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[5] = {[15] = -20, [14] = -80, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -80, [-15] = -20, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[6] = {[15] = -30, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -30, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[7] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[8] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[9] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[10] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[11] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[12] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[13] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[14] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
+				[15] = {[15] = -50, [14] = -125, [13] = -225, [12] = -331, [11] = -438, [10] = -538, [9] = -613, [8] = -663, [7] = -663, [6] = -663, [5] = -663, [4] = -663, [3] = -663, [2] = -663, [1] = -663, [0] = -663, [-1] = -663, [-2] = -663, [-3] = -663, [-4] = -663, [-5] = -663, [-6] = -663, [-7] = -663, [-8] = -663, [-9] = -613, [-10] = -538, [-11] = -438, [-12] = -331, [-13] = -225, [-14] = -125, [-15] = -50, [-16] = 0, [-17] = 0, [-18] = 0, [-19] = 0, [-20] = 0,},
 			},
 			TerrainTextures = {
 				Area = {X = 6, Y = 18,},
@@ -593,7 +586,7 @@ function RMG.InitGenerationData()
 		NeutralVillageCenter = {
 			Blocking = 18,
 			Entities = {
-				{Type = Entities.XD_VillageCenter, Player = 0,}, {Type = Entities.XD_ScriptEntity, Explore = explorevc * 6, Name = "green"},
+				{Type = Entities.XD_VillageCenter, Player = 0,}, {Type = Entities.XD_ScriptEntity, Explore = _GenerationData.ExploreVCs * 6, Name = "green"},
 			},
 			TerrainHeights = {
 				Area = 18,
@@ -618,380 +611,398 @@ function RMG.InitGenerationData()
 			},
 		},
 	}
-	
-	-- TODO: depend on number of players and teams
-	RMG.GenerationData.PlayerDistanceToMiddle = 0.9 -- in percent
-end
 
-function RMG.FillStructs()
+	local resoff = math.max(8, _GenerationData.NumberOfPlayers / 2)
+	local maphalf = Logic.WorldGetSize() / 200
+	local maxdist
+
+	if _GenerationData.NumberOfPlayers > 1 then
+		-- triangle calculation for distance between players of same team
+		local b = maphalf * _GenerationData.PlayerDistanceToMiddle
+		local alpha = _GenerationData.MirrorRadian
+		local beta = (math.rad(180) - alpha) / 2
+		local a = b / math.sin(beta) * math.sin(alpha)
+
+		maxdist = math.min(a / 2 - 10 - resoff, 120)
+		-- maxdist at 12+ players is 89.44 so basicly 90 (a good value in the old generator)
+		-- - 10 (blocking) - 5 (resoff) = 75
+	else
+		maxdist = maphalf / 2
+	end
+
+	_GenerationData.ResourceDistanceOffset = resoff
+	_GenerationData.MaxStructureDistance = maxdist
+end
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RMG.FillStructs(_GenerationData)
 	-- build player structure tables
 	RMG.StructureSets.NeutralStruct = RMG.GetNeutralStruct()
-	RMG.FillNeutralStruct()
+	RMG.FillNeutralStruct(_GenerationData)
 	
 	RMG.StructureSets.PlayerStruct = RMG.GetPlayerStruct()
-	RMG.FillPlayerStruct()
+	RMG.FillPlayerStruct(_GenerationData)
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.GetComposition()
-	
-	local nplayers = RMG.GenerationData.NumberOfPlayers
-	local nteams = RMG.GenerationData.NumberOfTeams
-	
+function RMG.GetComposition(_GenerationData)
+
+	local nplayers = _GenerationData.NumberOfPlayers
+	local nteams = _GenerationData.NumberOfTeams
+
 	-- define special compositions for 12+ players
-	local distance = math.min( ( nteams + 13 ) / 30 * Logic.WorldGetSize() / 200, 0.6 * Logic.WorldGetSize() / 200 )
+	local distance = math.min((nteams + 13) / 30 * Logic.WorldGetSize() / 200, 0.6 * Logic.WorldGetSize() / 200)
 	local compositions = {
-		--[[[ 11 ] = {
-			[ 2 ] = {
+		--[[[11] = {
+			[2] = {
 				NumberOfPlayers = 10, NumberOfTeams = 2, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 2, 3, 4, 5, 7, 8, 9, 10, 11 }, },
-				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, },
-				[  4 ] = { Slize =  4, AxisMirrorFlag = true, },
-				[  5 ] = { Slize =  5, },
-				[  6 ] = { Slize =  3, Distance = distance, Mirror = {}, },
-				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  8, },
-				[  9 ] = { Slize =  9, AxisMirrorFlag = true, },
-				[ 10 ] = { Slize = 10, },
-				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
-				TeamBorderSlizes = { 0, 6 },
+				[ 1] = {Slize =  1, Mirror = {2, 3, 4, 5, 7, 8, 9, 10, 11},},
+				[ 2] = {Slize =  2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3,},
+				[ 4] = {Slize =  4, AxisMirrorFlag = true,},
+				[ 5] = {Slize =  5,},
+				[ 6] = {Slize =  3, Distance = distance, Mirror = {},},
+				[ 7] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  8,},
+				[ 9] = {Slize =  9, AxisMirrorFlag = true,},
+				[10] = {Slize = 10,},
+				[11] = {Slize = 11, AxisMirrorFlag = true,},
+				TeamBorderSlizes = {0, 6},
 			},
 		},]]
-		[ 12 ] = {
-			[ 2 ] = {
+		[12] = {
+			[2] = {
 				NumberOfPlayers = 10, NumberOfTeams = 2, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 2, 3, 4, 5, 7, 8, 9, 10, 11 }, },
-				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, },
-				[  4 ] = { Slize =  4, AxisMirrorFlag = true, },
-				[  5 ] = { Slize =  5, },
-				[  6 ] = { Slize =  3, Distance = distance, Mirror = { 12 }, },
-				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  8, },
-				[  9 ] = { Slize =  9, AxisMirrorFlag = true, },
-				[ 10 ] = { Slize = 10, },
-				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
-				[ 12 ] = { Slize =  9, AxisMirrorFlag = true, Distance = distance, },
-				TeamBorderSlizes = { 0, 6 },
+				[ 1] = {Slize =  1, Mirror = {2, 3, 4, 5, 7, 8, 9, 10, 11},},
+				[ 2] = {Slize =  2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3,},
+				[ 4] = {Slize =  4, AxisMirrorFlag = true,},
+				[ 5] = {Slize =  5,},
+				[ 6] = {Slize =  3, Distance = distance, Mirror = {12},},
+				[ 7] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  8,},
+				[ 9] = {Slize =  9, AxisMirrorFlag = true,},
+				[10] = {Slize = 10,},
+				[11] = {Slize = 11, AxisMirrorFlag = true,},
+				[12] = {Slize =  9, AxisMirrorFlag = true, Distance = distance,},
+				TeamBorderSlizes = {0, 6},
 			},
-			[  3 ] = {
+			[ 3] = {
 				NumberOfPlayers = 9, NumberOfTeams = 3, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 2, 3, 5, 6, 7, 9, 10, 11 }, },
-				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, },
-				[  4 ] = { Slize =  2, Distance = distance, Mirror = { 8, 12 }, },
-				[  5 ] = { Slize =  5, AxisMirrorFlag = true, },
-				[  6 ] = { Slize =  6, },
-				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  6, AxisMirrorFlag = true, Distance = distance, },
-				[  9 ] = { Slize =  9, },
-				[ 10 ] = { Slize = 10, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 11, },
-				[ 12 ] = { Slize = 10, Distance = distance, },
-				TeamBorderSlizes = { 0, 4, 8 },
+				[ 1] = {Slize =  1, Mirror = {2, 3, 5, 6, 7, 9, 10, 11},},
+				[ 2] = {Slize =  2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3,},
+				[ 4] = {Slize =  2, Distance = distance, Mirror = {8, 12},},
+				[ 5] = {Slize =  5, AxisMirrorFlag = true,},
+				[ 6] = {Slize =  6,},
+				[ 7] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  6, AxisMirrorFlag = true, Distance = distance,},
+				[ 9] = {Slize =  9,},
+				[10] = {Slize = 10, AxisMirrorFlag = true,},
+				[11] = {Slize = 11,},
+				[12] = {Slize = 10, Distance = distance,},
+				TeamBorderSlizes = {0, 4, 8},
 			},
-			[  4 ] = {
+			[ 4] = {
 				NumberOfPlayers = 8, NumberOfTeams = 4, EqualTeams = true,
-				[  1 ] = { Slize =    1, Mirror = { 2, 4, 5, 7, 8, 10, 11 }, },
-				[  2 ] = { Slize =    2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  1.5, Distance = distance, Mirror = { 6, 9, 12 }, },
-				[  4 ] = { Slize =    4, },
-				[  5 ] = { Slize =    5, AxisMirrorFlag = true, },
-				[  6 ] = { Slize =  4.5, Distance = distance, },
-				[  7 ] = { Slize =    7, },
-				[  8 ] = { Slize =    8, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  7.5, Distance = distance, },
-				[ 10 ] = { Slize =   10, },
-				[ 11 ] = { Slize =   11, AxisMirrorFlag = true, },
-				[ 12 ] = { Slize = 10.5, Distance = distance, },
-				TeamBorderSlizes = { 0, 3, 6, 9 },
+				[ 1] = {Slize =    1, Mirror = {2, 4, 5, 7, 8, 10, 11},},
+				[ 2] = {Slize =    2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  1.5, Distance = distance, Mirror = {6, 9, 12},},
+				[ 4] = {Slize =    4,},
+				[ 5] = {Slize =    5, AxisMirrorFlag = true,},
+				[ 6] = {Slize =  4.5, Distance = distance,},
+				[ 7] = {Slize =    7,},
+				[ 8] = {Slize =    8, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  7.5, Distance = distance,},
+				[10] = {Slize =   10,},
+				[11] = {Slize =   11, AxisMirrorFlag = true,},
+				[12] = {Slize = 10.5, Distance = distance,},
+				TeamBorderSlizes = {0, 3, 6, 9},
 			},
-			[  6 ] = {
+			[ 6] = {
 				NumberOfPlayers = 6, NumberOfTeams = 6, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 3, 5, 7, 9, 11 }, },
-				[  2 ] = { Slize =  1, Distance = distance, Mirror = { 4, 6, 8, 10, 12 }, },
-				[  3 ] = { Slize =  3, AxisMirrorFlag = true, },
-				[  4 ] = { Slize =  3, AxisMirrorFlag = true, Distance = distance, },
-				[  5 ] = { Slize =  5, },
-				[  6 ] = { Slize =  5, Distance = distance, },
-				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
-				[  9 ] = { Slize =  9, },
-				[ 10 ] = { Slize =  9, Distance = distance, },
-				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
-				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
-				TeamBorderSlizes = { 0, 2, 4, 6, 8, 10 },
+				[ 1] = {Slize =  1, Mirror = {3, 5, 7, 9, 11},},
+				[ 2] = {Slize =  1, Distance = distance, Mirror = {4, 6, 8, 10, 12},},
+				[ 3] = {Slize =  3, AxisMirrorFlag = true,},
+				[ 4] = {Slize =  3, AxisMirrorFlag = true, Distance = distance,},
+				[ 5] = {Slize =  5,},
+				[ 6] = {Slize =  5, Distance = distance,},
+				[ 7] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  7, AxisMirrorFlag = true, Distance = distance,},
+				[ 9] = {Slize =  9,},
+				[10] = {Slize =  9, Distance = distance,},
+				[11] = {Slize = 11, AxisMirrorFlag = true,},
+				[12] = {Slize = 11, AxisMirrorFlag = true, Distance = distance,},
+				TeamBorderSlizes = {0, 2, 4, 6, 8, 10},
 			},
-			[ 12 ] = {
+			[12] = {
 				NumberOfPlayers = 12, NumberOfTeams = 0, EqualTeams = true,
-				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
-				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, Team = 0, },
-				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
-				[  5 ] = { Slize =  5, Team = 0, },
-				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
-				[  7 ] = { Slize =  7, Team = 0, },
-				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  9, Team = 0, },
-				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 11, Team = 0, },
-				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
+				[ 1] = {Slize =  1, Team = 0, Mirror = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},},
+				[ 2] = {Slize =  2, Team = 0, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3, Team = 0,},
+				[ 4] = {Slize =  4, Team = 0, AxisMirrorFlag = true,},
+				[ 5] = {Slize =  5, Team = 0,},
+				[ 6] = {Slize =  6, Team = 0, AxisMirrorFlag = true,},
+				[ 7] = {Slize =  7, Team = 0,},
+				[ 8] = {Slize =  8, Team = 0, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  9, Team = 0,},
+				[10] = {Slize = 10, Team = 0, AxisMirrorFlag = true,},
+				[11] = {Slize = 11, Team = 0,},
+				[12] = {Slize = 12, Team = 0, AxisMirrorFlag = true,},
 				TeamBorderSlizes = {},
 			},
 		},
-		[ 13 ] = {
-			[ 13 ] = {
+		[13] = {
+			[13] = {
 				NumberOfPlayers = 10, NumberOfTeams = 2, EqualTeams = true,
-				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
-				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, Team = 0, },
-				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
-				[  5 ] = { Slize =  5, Team = 0, },
-				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
-				[  7 ] = { Slize =  7, Team = 0, },
-				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  9, Team = 0, },
-				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 11, Team = 0, },
-				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
-				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.0, Mirror = {}, },
+				[ 1] = {Slize =  1, Team = 0, Mirror = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},},
+				[ 2] = {Slize =  2, Team = 0, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3, Team = 0,},
+				[ 4] = {Slize =  4, Team = 0, AxisMirrorFlag = true,},
+				[ 5] = {Slize =  5, Team = 0,},
+				[ 6] = {Slize =  6, Team = 0, AxisMirrorFlag = true,},
+				[ 7] = {Slize =  7, Team = 0,},
+				[ 8] = {Slize =  8, Team = 0, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  9, Team = 0,},
+				[10] = {Slize = 10, Team = 0, AxisMirrorFlag = true,},
+				[11] = {Slize = 11, Team = 0,},
+				[12] = {Slize = 12, Team = 0, AxisMirrorFlag = true,},
+				[13] = {Slize =  0, Team = 0, Distance = 0.0, Mirror = {},},
 				TeamBorderSlizes = {},
 			},
 		},
-		[ 14 ] = {
-			[  7 ] = {
+		[14] = {
+			[ 7] = {
 				NumberOfPlayers = 7, NumberOfTeams = 7, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 3, 5, 7, 9, 11, 13 }, },
-				[  2 ] = { Slize =  1, Distance = distance, Mirror = { 4, 6, 8, 10, 12, 14 }, },
-				[  3 ] = { Slize =  3, AxisMirrorFlag = true, },
-				[  4 ] = { Slize =  3, AxisMirrorFlag = true, Distance = distance, },
-				[  5 ] = { Slize =  5, },
-				[  6 ] = { Slize =  5, Distance = distance, },
-				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
-				[  9 ] = { Slize =  9, },
-				[ 10 ] = { Slize =  9, Distance = distance, },
-				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
-				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
-				[ 13 ] = { Slize = 13, },
-				[ 14 ] = { Slize = 13, Distance = distance, },
-				TeamBorderSlizes = { 0, 2, 4, 6, 8, 10, 12 },
+				[ 1] = {Slize =  1, Mirror = {3, 5, 7, 9, 11, 13},},
+				[ 2] = {Slize =  1, Distance = distance, Mirror = {4, 6, 8, 10, 12, 14},},
+				[ 3] = {Slize =  3, AxisMirrorFlag = true,},
+				[ 4] = {Slize =  3, AxisMirrorFlag = true, Distance = distance,},
+				[ 5] = {Slize =  5,},
+				[ 6] = {Slize =  5, Distance = distance,},
+				[ 7] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  7, AxisMirrorFlag = true, Distance = distance,},
+				[ 9] = {Slize =  9,},
+				[10] = {Slize =  9, Distance = distance,},
+				[11] = {Slize = 11, AxisMirrorFlag = true,},
+				[12] = {Slize = 11, AxisMirrorFlag = true, Distance = distance,},
+				[13] = {Slize = 13,},
+				[14] = {Slize = 13, Distance = distance,},
+				TeamBorderSlizes = {0, 2, 4, 6, 8, 10, 12},
 			},
-			[ 14 ] = {
+			[14] = {
 				NumberOfPlayers = 14, NumberOfTeams = 0, EqualTeams = true,
-				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
-				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, Team = 0, },
-				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
-				[  5 ] = { Slize =  5, Team = 0, },
-				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
-				[  7 ] = { Slize =  7, Team = 0, },
-				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  9, Team = 0, },
-				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 11, Team = 0, },
-				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
-				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14 }, },
-				[ 14 ] = { Slize =  6, Team = 0, Distance = 0.3, },
+				[ 1] = {Slize =  1, Team = 0, Mirror = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},},
+				[ 2] = {Slize =  2, Team = 0, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3, Team = 0,},
+				[ 4] = {Slize =  4, Team = 0, AxisMirrorFlag = true,},
+				[ 5] = {Slize =  5, Team = 0,},
+				[ 6] = {Slize =  6, Team = 0, AxisMirrorFlag = true,},
+				[ 7] = {Slize =  7, Team = 0,},
+				[ 8] = {Slize =  8, Team = 0, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  9, Team = 0,},
+				[10] = {Slize = 10, Team = 0, AxisMirrorFlag = true,},
+				[11] = {Slize = 11, Team = 0,},
+				[12] = {Slize = 12, Team = 0, AxisMirrorFlag = true,},
+				[13] = {Slize =  0, Team = 0, Distance = 0.3, Mirror = {14},},
+				[14] = {Slize =  6, Team = 0, Distance = 0.3,},
 				TeamBorderSlizes = {},
 			},
 		},
-		[ 15 ] = {
-			[  3 ] = {
+		[15] = {
+			[ 3] = {
 				NumberOfPlayers = 9, NumberOfTeams = 3, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 3, 4, 6, 8, 9, 11, 13, 14 }, },
-				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, },
-				[  4 ] = { Slize =  1, Distance = distance, Mirror = { 2, 5, 7, 10, 12, 15 }, },
-				[  5 ] = { Slize =  3, Distance = distance, },
-				[  6 ] = { Slize =  5, AxisMirrorFlag = true, },
-				[  7 ] = { Slize =  6, },
-				[  8 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  5, AxisMirrorFlag = true, Distance = distance, },
-				[ 10 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
-				[ 11 ] = { Slize =  9, },
-				[ 12 ] = { Slize = 10, AxisMirrorFlag = true, },
-				[ 13 ] = { Slize = 11, },
-				[ 14 ] = { Slize =  9, Distance = distance, },
-				[ 15 ] = { Slize = 11, Distance = distance, },
-				TeamBorderSlizes = { 0, 4, 8 },
+				[ 1] = {Slize =  1, Mirror = {3, 4, 6, 8, 9, 11, 13, 14},},
+				[ 2] = {Slize =  2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3,},
+				[ 4] = {Slize =  1, Distance = distance, Mirror = {2, 5, 7, 10, 12, 15},},
+				[ 5] = {Slize =  3, Distance = distance,},
+				[ 6] = {Slize =  5, AxisMirrorFlag = true,},
+				[ 7] = {Slize =  6,},
+				[ 8] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  5, AxisMirrorFlag = true, Distance = distance,},
+				[10] = {Slize =  7, AxisMirrorFlag = true, Distance = distance,},
+				[11] = {Slize =  9,},
+				[12] = {Slize = 10, AxisMirrorFlag = true,},
+				[13] = {Slize = 11,},
+				[14] = {Slize =  9, Distance = distance,},
+				[15] = {Slize = 11, Distance = distance,},
+				TeamBorderSlizes = {0, 4, 8},
 			},
-			[  5 ] = {
+			[ 5] = {
 				NumberOfPlayers = 10, NumberOfTeams = 5, EqualTeams = true,
-				[  1 ] = { Slize =    1, Mirror = { 2, 4, 5, 7, 8, 10, 11, 13, 14 }, },
-				[  2 ] = { Slize =    2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  1.5, Distance = distance, Mirror = { 6, 9, 12, 15 }, },
-				[  4 ] = { Slize =    4, },
-				[  5 ] = { Slize =    5, AxisMirrorFlag = true, },
-				[  6 ] = { Slize =  4.5, Distance = distance, },
-				[  7 ] = { Slize =    7, },
-				[  8 ] = { Slize =    8, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  7.5, Distance = distance, },
-				[ 10 ] = { Slize =   10, },
-				[ 11 ] = { Slize =   11, AxisMirrorFlag = true, },
-				[ 12 ] = { Slize = 10.5, Distance = distance, },
-				[ 13 ] = { Slize =   13, },
-				[ 14 ] = { Slize =   14, AxisMirrorFlag = true, },
-				[ 15 ] = { Slize = 13.5, Distance = distance, },
-				TeamBorderSlizes = { 0, 3, 6, 9, 12 },
+				[ 1] = {Slize =    1, Mirror = {2, 4, 5, 7, 8, 10, 11, 13, 14},},
+				[ 2] = {Slize =    2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  1.5, Distance = distance, Mirror = {6, 9, 12, 15},},
+				[ 4] = {Slize =    4,},
+				[ 5] = {Slize =    5, AxisMirrorFlag = true,},
+				[ 6] = {Slize =  4.5, Distance = distance,},
+				[ 7] = {Slize =    7,},
+				[ 8] = {Slize =    8, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  7.5, Distance = distance,},
+				[10] = {Slize =   10,},
+				[11] = {Slize =   11, AxisMirrorFlag = true,},
+				[12] = {Slize = 10.5, Distance = distance,},
+				[13] = {Slize =   13,},
+				[14] = {Slize =   14, AxisMirrorFlag = true,},
+				[15] = {Slize = 13.5, Distance = distance,},
+				TeamBorderSlizes = {0, 3, 6, 9, 12},
 			},
-			[ 15 ] = {
+			[15] = {
 				NumberOfPlayers = 15, NumberOfTeams = 0, EqualTeams = true,
-				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
-				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, Team = 0, },
-				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
-				[  5 ] = { Slize =  5, Team = 0, },
-				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
-				[  7 ] = { Slize =  7, Team = 0, },
-				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  9, Team = 0, },
-				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 11, Team = 0, },
-				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
-				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14, 15 }, },
-				[ 14 ] = { Slize =  5, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
-				[ 15 ] = { Slize =  7, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
+				[ 1] = {Slize =  1, Team = 0, Mirror = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},},
+				[ 2] = {Slize =  2, Team = 0, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3, Team = 0,},
+				[ 4] = {Slize =  4, Team = 0, AxisMirrorFlag = true,},
+				[ 5] = {Slize =  5, Team = 0,},
+				[ 6] = {Slize =  6, Team = 0, AxisMirrorFlag = true,},
+				[ 7] = {Slize =  7, Team = 0,},
+				[ 8] = {Slize =  8, Team = 0, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  9, Team = 0,},
+				[10] = {Slize = 10, Team = 0, AxisMirrorFlag = true,},
+				[11] = {Slize = 11, Team = 0,},
+				[12] = {Slize = 12, Team = 0, AxisMirrorFlag = true,},
+				[13] = {Slize =  0, Team = 0, Distance = 0.3, Mirror = {14, 15},},
+				[14] = {Slize =  5, Team = 0, Distance = 0.3, AxisMirrorFlag = true,},
+				[15] = {Slize =  7, Team = 0, Distance = 0.3, AxisMirrorFlag = true,},
 				TeamBorderSlizes = {},
 			},
 		},
-		[ 16 ] = {
-			[  2 ] = {
+		[16] = {
+			[ 2] = {
 				NumberOfPlayers = 12, NumberOfTeams = 2, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15 }, },
-				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, },
-				[  4 ] = { Slize =  2, Distance = distance, Mirror = { 8, 12, 16 }, },
-				[  5 ] = { Slize =  4, AxisMirrorFlag = true, },
-				[  6 ] = { Slize =  5, },
-				[  7 ] = { Slize =  6, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  5, AxisMirrorFlag = true, Distance = distance, },
-				[  9 ] = { Slize =  8, },
-				[ 10 ] = { Slize =  9, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 10, },
-				[ 12 ] = { Slize =  9, Distance = distance, },
-				[ 13 ] = { Slize = 11, AxisMirrorFlag = true, },
-				[ 14 ] = { Slize = 12, },
-				[ 15 ] = { Slize = 13, AxisMirrorFlag = true, },
-				[ 16 ] = { Slize = 12, AxisMirrorFlag = true, Distance = distance, },
-				TeamBorderSlizes = { 0, 7 },
+				[ 1] = {Slize =  1, Mirror = {2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15},},
+				[ 2] = {Slize =  2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3,},
+				[ 4] = {Slize =  2, Distance = distance, Mirror = {8, 12, 16},},
+				[ 5] = {Slize =  4, AxisMirrorFlag = true,},
+				[ 6] = {Slize =  5,},
+				[ 7] = {Slize =  6, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  5, AxisMirrorFlag = true, Distance = distance,},
+				[ 9] = {Slize =  8,},
+				[10] = {Slize =  9, AxisMirrorFlag = true,},
+				[11] = {Slize = 10,},
+				[12] = {Slize =  9, Distance = distance,},
+				[13] = {Slize = 11, AxisMirrorFlag = true,},
+				[14] = {Slize = 12,},
+				[15] = {Slize = 13, AxisMirrorFlag = true,},
+				[16] = {Slize = 12, AxisMirrorFlag = true, Distance = distance,},
+				TeamBorderSlizes = {0, 7},
 			},
-			[  4 ] = {
+			[ 4] = {
 				NumberOfPlayers = 12, NumberOfTeams = 4, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15 }, },
-				[  2 ] = { Slize =  2, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, },
-				[  4 ] = { Slize =  2, Distance = distance, Mirror = { 8, 12, 16 }, },
-				[  5 ] = { Slize =  5, AxisMirrorFlag = true, },
-				[  6 ] = { Slize =  6, },
-				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  6, AxisMirrorFlag = true, Distance = distance, },
-				[  9 ] = { Slize =  9, },
-				[ 10 ] = { Slize = 10, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 11, },
-				[ 12 ] = { Slize = 10, Distance = distance, },
-				[ 13 ] = { Slize = 13, AxisMirrorFlag = true, },
-				[ 14 ] = { Slize = 14, },
-				[ 15 ] = { Slize = 15, AxisMirrorFlag = true, },
-				[ 16 ] = { Slize = 14, AxisMirrorFlag = true, Distance = distance, },
-				TeamBorderSlizes = { 0, 4, 8, 12 },
+				[ 1] = {Slize =  1, Mirror = {2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15},},
+				[ 2] = {Slize =  2, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3,},
+				[ 4] = {Slize =  2, Distance = distance, Mirror = {8, 12, 16},},
+				[ 5] = {Slize =  5, AxisMirrorFlag = true,},
+				[ 6] = {Slize =  6,},
+				[ 7] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  6, AxisMirrorFlag = true, Distance = distance,},
+				[ 9] = {Slize =  9,},
+				[10] = {Slize = 10, AxisMirrorFlag = true,},
+				[11] = {Slize = 11,},
+				[12] = {Slize = 10, Distance = distance,},
+				[13] = {Slize = 13, AxisMirrorFlag = true,},
+				[14] = {Slize = 14,},
+				[15] = {Slize = 15, AxisMirrorFlag = true,},
+				[16] = {Slize = 14, AxisMirrorFlag = true, Distance = distance,},
+				TeamBorderSlizes = {0, 4, 8, 12},
 			},
-			[  8 ] = {
+			[ 8] = {
 				NumberOfPlayers = 8, NumberOfTeams = 8, EqualTeams = true,
-				[  1 ] = { Slize =  1, Mirror = { 3, 5, 7, 9, 11, 13, 15 }, },
-				[  2 ] = { Slize =  1, Distance = distance, Mirror = { 4, 6, 8, 10, 12, 14, 16 }, },
-				[  3 ] = { Slize =  3, AxisMirrorFlag = true, },
-				[  4 ] = { Slize =  3, AxisMirrorFlag = true, Distance = distance, },
-				[  5 ] = { Slize =  5, },
-				[  6 ] = { Slize =  5, Distance = distance, },
-				[  7 ] = { Slize =  7, AxisMirrorFlag = true, },
-				[  8 ] = { Slize =  7, AxisMirrorFlag = true, Distance = distance, },
-				[  9 ] = { Slize =  9, },
-				[ 10 ] = { Slize =  9, Distance = distance, },
-				[ 11 ] = { Slize = 11, AxisMirrorFlag = true, },
-				[ 12 ] = { Slize = 11, AxisMirrorFlag = true, Distance = distance, },
-				[ 13 ] = { Slize = 13, },
-				[ 14 ] = { Slize = 13, Distance = distance, },
-				[ 15 ] = { Slize = 15, AxisMirrorFlag = true, },
-				[ 16 ] = { Slize = 15, AxisMirrorFlag = true, Distance = distance, },
-				TeamBorderSlizes = { 0, 2, 4, 6, 8, 10, 12, 14 },
+				[ 1] = {Slize =  1, Mirror = {3, 5, 7, 9, 11, 13, 15},},
+				[ 2] = {Slize =  1, Distance = distance, Mirror = {4, 6, 8, 10, 12, 14, 16},},
+				[ 3] = {Slize =  3, AxisMirrorFlag = true,},
+				[ 4] = {Slize =  3, AxisMirrorFlag = true, Distance = distance,},
+				[ 5] = {Slize =  5,},
+				[ 6] = {Slize =  5, Distance = distance,},
+				[ 7] = {Slize =  7, AxisMirrorFlag = true,},
+				[ 8] = {Slize =  7, AxisMirrorFlag = true, Distance = distance,},
+				[ 9] = {Slize =  9,},
+				[10] = {Slize =  9, Distance = distance,},
+				[11] = {Slize = 11, AxisMirrorFlag = true,},
+				[12] = {Slize = 11, AxisMirrorFlag = true, Distance = distance,},
+				[13] = {Slize = 13,},
+				[14] = {Slize = 13, Distance = distance,},
+				[15] = {Slize = 15, AxisMirrorFlag = true,},
+				[16] = {Slize = 15, AxisMirrorFlag = true, Distance = distance,},
+				TeamBorderSlizes = {0, 2, 4, 6, 8, 10, 12, 14},
 			},
-			[ 16 ] = {
+			[16] = {
 				NumberOfPlayers = 16, NumberOfTeams = 0, EqualTeams = true,
-				[  1 ] = { Slize =  1, Team = 0, Mirror = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }, },
-				[  2 ] = { Slize =  2, Team = 0, AxisMirrorFlag = true, },
-				[  3 ] = { Slize =  3, Team = 0, },
-				[  4 ] = { Slize =  4, Team = 0, AxisMirrorFlag = true, },
-				[  5 ] = { Slize =  5, Team = 0, },
-				[  6 ] = { Slize =  6, Team = 0, AxisMirrorFlag = true, },
-				[  7 ] = { Slize =  7, Team = 0, },
-				[  8 ] = { Slize =  8, Team = 0, AxisMirrorFlag = true, },
-				[  9 ] = { Slize =  9, Team = 0, },
-				[ 10 ] = { Slize = 10, Team = 0, AxisMirrorFlag = true, },
-				[ 11 ] = { Slize = 11, Team = 0, },
-				[ 12 ] = { Slize = 12, Team = 0, AxisMirrorFlag = true, },
-				[ 13 ] = { Slize =  0, Team = 0, Distance = 0.3, Mirror = { 14, 15, 16 }, },
-				[ 14 ] = { Slize =  3, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
-				[ 15 ] = { Slize =  6, Team = 0, Distance = 0.3, },
-				[ 16 ] = { Slize =  9, Team = 0, Distance = 0.3, AxisMirrorFlag = true, },
+				[ 1] = {Slize =  1, Team = 0, Mirror = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},},
+				[ 2] = {Slize =  2, Team = 0, AxisMirrorFlag = true,},
+				[ 3] = {Slize =  3, Team = 0,},
+				[ 4] = {Slize =  4, Team = 0, AxisMirrorFlag = true,},
+				[ 5] = {Slize =  5, Team = 0,},
+				[ 6] = {Slize =  6, Team = 0, AxisMirrorFlag = true,},
+				[ 7] = {Slize =  7, Team = 0,},
+				[ 8] = {Slize =  8, Team = 0, AxisMirrorFlag = true,},
+				[ 9] = {Slize =  9, Team = 0,},
+				[10] = {Slize = 10, Team = 0, AxisMirrorFlag = true,},
+				[11] = {Slize = 11, Team = 0,},
+				[12] = {Slize = 12, Team = 0, AxisMirrorFlag = true,},
+				[13] = {Slize =  0, Team = 0, Distance = 0.3, Mirror = {14, 15, 16},},
+				[14] = {Slize =  3, Team = 0, Distance = 0.3, AxisMirrorFlag = true,},
+				[15] = {Slize =  6, Team = 0, Distance = 0.3,},
+				[16] = {Slize =  9, Team = 0, Distance = 0.3, AxisMirrorFlag = true,},
 				TeamBorderSlizes = {},
 			},
 		},
 	}
-	
+
 	-- no team borders in big ffa
 	if nteams < nplayers and nteams > 8 then
 		nteams = 0
 	end
-	
-	-- return special composition if it fits the setup
-	if compositions[ nplayers ] then
 
-		local composition = compositions[ nplayers ][ nteams ]
+	-- return special composition if it fits the setup
+	if compositions[nplayers] then
+
+		local composition = compositions[nplayers][nteams]
 
 		if composition then
-			
+
 			-- set teams, but not for ffa
 			if nteams > 0 then
 				for player = 1, nplayers do
-					composition[ player ].Team = RMG.GenerationData.Players[ player ].Team
+					composition[player].Team = _GenerationData.Players[player].Team
 				end
 			end
-			
-			return compositions[ nplayers ][ nteams ]
+
+			return compositions[nplayers][nteams]
 		end
 	end
-	
+
 	local currentteam = 0
 	local slize = 0
-	local composition = { NumberOfPlayers = nplayers, NumberOfTeams = nteams, TeamBorderSlizes = {}, }
-	
+	local composition = {NumberOfPlayers = nplayers, NumberOfTeams = nteams, TeamBorderSlizes = {},}
+
 	-- create default generic composition
 	for player = 1, nplayers do
-		
+
 		-- teamborder gets it own slize
-		if nteams > 0 and RMG.GenerationData.Players[ player ].Team > currentteam then
-			
-			currentteam = RMG.GenerationData.Players[ player ].Team
-			table.insert( composition.TeamBorderSlizes, slize )
-			
+		if nteams > 0 and _GenerationData.Players[player].Team > currentteam then
+
+			currentteam = _GenerationData.Players[player].Team
+			table.insert(composition.TeamBorderSlizes, slize)
+
 			slize = slize + 1
 		end
-		
-		composition[ player ] = { Slize = slize, Team = currentteam, AxisMirrorFlag = math.mod( player, 2 ) == 0, }
-		
+
+		composition[player] = {Slize = slize, Team = currentteam, AxisMirrorFlag = math.mod(player, 2) == 0,}
+
 		-- setup mirroring
-		if RMG.GenerationData.MirrorMap then
+		if _GenerationData.MirrorMap then
 			if player == 1 then
-				composition[ player ].Mirror = {}
+				composition[player].Mirror = {}
 			else
-				table.insert( composition[ 1 ].Mirror, player )
+				table.insert(composition[1].Mirror, player)
 			end
 		end
-		
+
 		slize = slize + 1
 	end
-	
+
 	return composition
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
@@ -1015,7 +1026,7 @@ function RMG.GetNeutralStruct()
 	}]]
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.FillNeutralStruct()
+function RMG.FillNeutralStruct(_GenerationData)
 	-- for modding
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1045,267 +1056,227 @@ function RMG.GetPlayerStruct()
 	}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.FillPlayerStruct()
-	
-	local amountClayPit		= EMS.RD.Rules.RMG_AmountClayPit:GetValue()
-	local amountClayPile	= EMS.RD.Rules.RMG_AmountClayPile:GetValue()
-	local amountStonePit	= EMS.RD.Rules.RMG_AmountStonePit:GetValue()
-	local amountStonePile	= EMS.RD.Rules.RMG_AmountStonePile:GetValue()
-	local amountIronPit		= EMS.RD.Rules.RMG_AmountIronPit:GetValue()
-	local amountIronPile	= EMS.RD.Rules.RMG_AmountIronPile:GetValue()
-	local amountSulfurPit	= EMS.RD.Rules.RMG_AmountSulfurPit:GetValue()
-	local amountSulfurPile	= EMS.RD.Rules.RMG_AmountSulfurPile:GetValue()
-	local amountWoodPile	= EMS.RD.Rules.RMG_AmountWoodPile:GetValue()
-	local amountVillageCenter = EMS.RD.Rules.RMG_AmountVC:GetValue()
-	
-	-- triangle calculation for distance between players of same team
-	local maphalf = Logic.WorldGetSize() / 200
-	local b = maphalf * RMG.GenerationData.PlayerDistanceToMiddle
-	local alpha = RMG.GenerationData.MirrorRadian
-	local beta = ( math.rad( 180 ) - alpha ) / 2
-	local a = b / math.sin( beta ) * math.sin( alpha )
-	
-	local resoff = math.max( 5, RMG.GenerationData.NumberOfPlayers / 2 )
-	local maxdist = math.min( a / 2 - 10 - resoff, 120 )
-	-- maxdist at 12+ players is 89.44 so basicly 90 ( a good value in the old generator )
-	-- - 10 (blocking) - 5 (resoff) = 75
-	
+function RMG.FillPlayerStruct(_GenerationData)
+
+	local resoff = _GenerationData.ResourceDistanceOffset
+	local maxdist = _GenerationData.MaxStructureDistance
+
 	local heightmin = -100
 	local heightmax = 100
-	
+
 	local currentindex = 1
-	
+
 	-- village
-	currentindex = RMG.AddResourcePitToPlayerStruct( 1, "NeutralVillageCenter", 0, "", maxdist - 25, maxdist - 25, resoff, RMG.GenerationData.TerrainBaseHeight, heightmin, heightmax, currentindex )
-	RMG.StructureSets.PlayerStruct.Childs[2].Childs = { { Data = { Entities = { { Type = Entities.PB_VillageCenter1, SkipDummy = true, } } } } }
-	currentindex = RMG.AddResourcePitToPlayerStruct( amountVillageCenter - 1, "NeutralVillageCenter", 0, "", maxdist - 5, maxdist - 5, resoff, RMG.GenerationData.TerrainBaseHeight, heightmin, heightmax, currentindex )
-	
+	currentindex = RMG.AddResourcePitToPlayerStruct(1, "NeutralVillageCenter", 0, "", maxdist - 25, maxdist - 25, resoff, _GenerationData.TerrainBaseHeight, heightmin, heightmax, currentindex)
+	RMG.StructureSets.PlayerStruct.Childs[2].Childs = {{Data = {Entities = {{Type = Entities.PB_VillageCenter1, SkipDummy = true,}}}}}
+	currentindex = RMG.AddResourcePitToPlayerStruct(_GenerationData.AmountVillageCenter - 1, "NeutralVillageCenter", 0, "", maxdist - 5, maxdist - 5, resoff, _GenerationData.TerrainBaseHeight, heightmin, heightmax, currentindex)
+
 	local woodpileindexbuffer, possiblewoodpileindices = {}, {}
-	
+
 	heightmin = -200
 	heightmax = 200
-	
+
 	-- clay
-	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountClayPit, "ClayPit", amountClayPile, "ClayPile", maxdist - 20, maxdist - 20, resoff, RMG.GenerationData.ThresholdCoast, 0, heightmax, currentindex )
-	for _,v in ipairs( woodpileindexbuffer ) do
-		table.insert( possiblewoodpileindices, v )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct(_GenerationData.AmountClayPit, "ClayPit", _GenerationData.AmountClayPile, "ClayPile", maxdist - 20, maxdist - 20, resoff, _GenerationData.ThresholdCoast, 0, heightmax, currentindex)
+	for _,v in ipairs(woodpileindexbuffer) do
+		table.insert(possiblewoodpileindices, v)
 	end
-	
+
 	-- stone
-	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountStonePit, "StonePit", amountStonePile, "StonePile", maxdist - 15, maxdist - 15, resoff, RMG.GenerationData.ThresholdHill, heightmin, 0, currentindex )
-	for _,v in ipairs( woodpileindexbuffer ) do
-		table.insert( possiblewoodpileindices, v )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct(_GenerationData.AmountStonePit, "StonePit", _GenerationData.AmountStonePile, "StonePile", maxdist - 15, maxdist - 15, resoff, _GenerationData.ThresholdHill, heightmin, 0, currentindex)
+	for _,v in ipairs(woodpileindexbuffer) do
+		table.insert(possiblewoodpileindices, v)
 	end
-	
+
 	-- iron
-	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountIronPit, "IronPit", amountIronPile, "IronPile", maxdist - 5, maxdist - 5, resoff, RMG.GenerationData.ThresholdHill, 0, heightmax, currentindex )
-	for _,v in ipairs( woodpileindexbuffer ) do
-		table.insert( possiblewoodpileindices, v )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct(_GenerationData.AmountIronPit, "IronPit", _GenerationData.AmountIronPile, "IronPile", maxdist - 5, maxdist - 5, resoff, _GenerationData.ThresholdHill, 0, heightmax, currentindex)
+	for _,v in ipairs(woodpileindexbuffer) do
+		table.insert(possiblewoodpileindices, v)
 	end
-	
+
 	-- sulfur
-	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct( amountSulfurPit, "SulfurPit", amountSulfurPile, "SulfurPile", maxdist - 0, maxdist, resoff, RMG.GenerationData.ThresholdCoast, heightmin, 0, currentindex )
-	for _,v in ipairs( woodpileindexbuffer ) do
-		table.insert( possiblewoodpileindices, v )
+	currentindex, woodpileindexbuffer = RMG.AddResourcePitToPlayerStruct(_GenerationData.AmountSulfurPit, "SulfurPit", _GenerationData.AmountSulfurPile, "SulfurPile", maxdist - 0, maxdist, resoff, _GenerationData.ThresholdCoast, heightmin, 0, currentindex)
+	for _,v in ipairs(woodpileindexbuffer) do
+		table.insert(possiblewoodpileindices, v)
 	end
-	
+
 	currentindex = 0
-	
+
 	-- wood
-	if table.getn( possiblewoodpileindices ) == 0 then
-		for i = 1, amountWoodPile do
-			
-			table.insert( RMG.StructureSets.PlayerStruct.Childs, { Placement = RMG.StructureSets.Placement.PileAtPit, Data = RMG.StructureSets.WoodPileExplored, } )
+	if table.getn(possiblewoodpileindices) == 0 then
+		for i = 1, _GenerationData.AmountWoodPile do
+
+			table.insert(RMG.StructureSets.PlayerStruct.Childs, {Placement = RMG.StructureSets.Placement.PileAtPit, Data = RMG.StructureSets.WoodPileExplored,})
 		end
 	else
-		for i = 1, amountWoodPile do
-			
+		for i = 1, _GenerationData.AmountWoodPile do
+
 			currentindex = currentindex + 1
-			if currentindex > table.getn( possiblewoodpileindices ) then
+			if currentindex > table.getn(possiblewoodpileindices) then
 				currentindex = 1
 			end
-			
-			table.insert( RMG.StructureSets.PlayerStruct.Childs[ possiblewoodpileindices[ currentindex ] ].Childs[1].Childs, { Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets.WoodPileExplored, } )
+
+			table.insert(RMG.StructureSets.PlayerStruct.Childs[possiblewoodpileindices[currentindex]].Childs[1].Childs, {Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets.WoodPileExplored,})
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AddResourcePitToPlayerStruct( _PitAmount, _PitType, _PileAmount, _PileType, _DistMin, _DistMax, _ResOff, _Noise, _NoiseMin, _NoiseMax, _Index )
-	
+function RMG.AddResourcePitToPlayerStruct(_PitAmount, _PitType, _PileAmount, _PileType, _DistMin, _DistMax, _ResOff, _Noise, _NoiseMin, _NoiseMax, _Index)
+
 	local possiblewoodpileindices = {}
-	
-	-- do we have a pit
+
 	if _PitAmount > 0 then
-		
-		local pileamount, pileamountleft = math.floor( _PileAmount / _PitAmount ), math.mod( _PileAmount, _PitAmount )
-		
+
+		local pileamount, pileamountleft = math.floor(_PileAmount / _PitAmount), math.mod(_PileAmount, _PitAmount)
+
 		for i = 1, _PitAmount do
-		
-			local dist = math.random( _DistMin, _DistMax )
-			local noise = math.random ( _NoiseMin, _NoiseMax )
+
+			local dist = math.random(_DistMin, _DistMax)
+			local noise = math.random(_NoiseMin, _NoiseMax)
 			local child = {
 				Placement = {
 					AreaMin = dist - _ResOff,
 					AreaMax = dist + _ResOff,
 					Height = _Noise + noise,
-					--HeightMin = _NoiseMin,
-					--HeightMax = _NoiseMax,
 					Grid = 4,
 				},
-				Data = RMG.StructureSets[ _PitType ],
+				Data = RMG.StructureSets[_PitType],
 				Childs = {},
 			}
 			local n = 1
-			--if i <= pileamountleft then
-				--n = 0
-			--end
 			for j = n, pileamount do
 				if j == 1 then
-					table.insert( child.Childs, { Placement = RMG.StructureSets.Placement.PileAtPit, Data = RMG.StructureSets[ _PileType ], Childs = {}, } )
-					table.insert( possiblewoodpileindices, _Index + i )
+					table.insert(child.Childs, {Placement = RMG.StructureSets.Placement.PileAtPit, Data = RMG.StructureSets[_PileType], Childs = {},})
+					table.insert(possiblewoodpileindices, _Index + i)
 				else
-					table.insert( child.Childs[ 1 ].Childs, { Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets[ _PileType ], } )
+					table.insert(child.Childs[1].Childs, {Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets[_PileType],})
 				end
 			end
 
-			table.insert( RMG.StructureSets.PlayerStruct.Childs, child )
+			table.insert(RMG.StructureSets.PlayerStruct.Childs, child)
 		end
-		
+
 		_Index = _Index + _PitAmount
 	else
 		local mainpileindex
-		
+
 		for i = 1, _PileAmount do
 			if i == 1 then
-				
-				local dist = math.random( _DistMin, _DistMax )
+
+				local dist = math.random(_DistMin, _DistMax)
+				local noise = math.random(_NoiseMin, _NoiseMax)
 				local child = {
 					Placement = {
 						AreaMin = dist - _ResOff,
 						AreaMax = dist + _ResOff,
 						Height = _Noise + noise,
-						--HeightMin = _NoiseMin,
-						--HeightMax = _NoiseMax,
 					},
-					Data = RMG.StructureSets[ _PileType .. "Explored" ],
+					Data = RMG.StructureSets[_PileType .. "Explored"],
 					Childs = {},
 				}
-				table.insert( RMG.StructureSets.PlayerStruct.Childs, child )
-				mainpileindex = table.getn( RMG.StructureSets.PlayerStruct.Childs )
+				table.insert(RMG.StructureSets.PlayerStruct.Childs, child)
+				mainpileindex = table.getn(RMG.StructureSets.PlayerStruct.Childs)
 			else
-				table.insert( RMG.StructureSets.PlayerStruct.Childs[ mainpileindex ].Childs, { Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets[ _PileType ], } )
+				table.insert(RMG.StructureSets.PlayerStruct.Childs[mainpileindex].Childs, {Placement = RMG.StructureSets.Placement.PileAtPile, Data = RMG.StructureSets[_PileType],})
 			end
 		end
-		
+
 		_Index = _Index + _PileAmount
 	end
-	
+
 	return _Index, possiblewoodpileindices
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RMG.GetPlayersAndTeams()
-	
+
 	local nplayers = 0
 	local players = {}
 	local nteams = 0
 	local teams = {}
-	
+
 	if XNetwork.Manager_DoesExist() == 1 then
-	
+
 		for p = 1, 16 do
-			if Logic.PlayerGetGameState( p ) == 1 then
+			if Logic.PlayerGetGameState(p) == 1 then
 				nplayers = nplayers + 1
-				
-				local team = XNetwork.GameInformation_GetLogicPlayerTeam( p )
+
+				local team = XNetwork.GameInformation_GetLogicPlayerTeam(p)
 				local isIn = false
-		
-				for k,v in pairs( teams ) do
+
+				for k,v in pairs(teams) do
 					if v == team then
 						isIn = true
 						break
 					end
 				end
-		
+
 				if not isIn then
 					nteams = nteams + 1
-					teams[ nteams ] = team
+					teams[nteams] = team
 				end
-			
-				players[ nplayers ] = { Id = p, Team = team, IsHuman = 1 }
+
+				players[nplayers] = {Id = p, Team = team, IsHuman = 1}
 			end
 		end
- 
+
 	else
 		-- just some testing in SP - amount must fit table size now due to new sorting system
-		players[1] = { Id = 1, Team = 1, IsHuman = 1 }
-		players[2] = { Id = 2, Team = 1, IsHuman = 1 }
-		players[3] = { Id = 3, Team = 2, IsHuman = 1 }
-		players[4] = { Id = 4, Team = 2, IsHuman = 1 }
-		--players[5] = { Id = 5, Team = 5, IsHuman = 1 }
-		--players[6] = { Id = 6, Team = 6, IsHuman = 1 }
-		--players[7] = { Id = 7, Team = 7, IsHuman = 1 }
-		--players[8] = { Id = 8, Team = 8, IsHuman = 1 }
-		--players[9] = { Id = 1, Team = 9, IsHuman = 1 }
-		--players[10]= { Id = 2, Team = 10, IsHuman = 1 }
-		--players[11]= { Id = 3, Team = 11, IsHuman = 1 }
-		--players[12]= { Id = 4, Team = 12, IsHuman = 1 }
-		--players[13]= { Id = 5, Team = 4, IsHuman = 1 }
-		--players[14]= { Id = 6, Team = 4, IsHuman = 1 }
-		--players[15]= { Id = 7, Team = 4, IsHuman = 1 }
-		--players[16]= { Id = 8, Team = 4, IsHuman = 1 }
-		
-		nplayers = table.getn( players )
-		
-		teams[1] = 1
-		teams[2] = 2
-		--teams[3] = 3
-		--teams[4] = 4
-		--teams[5] = 5
-		--teams[6] = 6
-		--teams[7] = 7
-		--teams[8] = 8
-		--teams[9] = 9
-		--teams[10] = 10
-		--teams[11] = 11
-		--teams[12] = 12
-		
-		nteams = table.getn( teams )
+		table.insert(players, {Id = 1, Team = 1, IsHuman = 1})
+		table.insert(players, {Id = 2, Team = 2, IsHuman = 1})
+		table.insert(players, {Id = 3, Team = 1, IsHuman = 1})
+		table.insert(players, {Id = 4, Team = 2, IsHuman = 1})
+		--table.insert(players, {Id = 5, Team = 5, IsHuman = 1})
+		--table.insert(players, {Id = 6, Team = 6, IsHuman = 1})
+		--table.insert(players, {Id = 7, Team = 7, IsHuman = 1})
+		--table.insert(players, {Id = 8, Team = 8, IsHuman = 1})
+		--table.insert(players, {Id = 1, Team = 9, IsHuman = 1})
+		--table.insert(players, {Id = 2, Team = 10, IsHuman = 1})
+		--table.insert(players, {Id = 3, Team = 11, IsHuman = 1})
+		--table.insert(players, {Id = 4, Team = 12, IsHuman = 1})
+		--table.insert(players, {Id = 5, Team = 4, IsHuman = 1})
+		--table.insert(players, {Id = 6, Team = 4, IsHuman = 1})
+		--table.insert(players, {Id = 7, Team = 4, IsHuman = 1})
+		--table.insert(players, {Id = 8, Team = 4, IsHuman = 1})
+
+		nplayers = table.getn(players)
+
+		nteams = 2
+		for i = 1, nteams do
+			table.insert(teams, i)
+		end
+
 	end
-	
+
 	-- sort MUST be done here !
 	-- sort team by id
-	table.sort( teams,
-	function( a, b )
+	table.sort(teams,
+	function(a, b)
 		return a < b
 	end
 	)
-	
+
 	-- sort players by team
-	table.sort( players,
-	function( a, b )
-		return ( a.Team < b.Team ) --or (a.Team == b.Team and a.Id < b.Id)
+	table.sort(players,
+	function(a, b)
+		return (a.Team < b.Team) --or (a.Team == b.Team and a.Id < b.Id)
 	end
 	)
 
 	return nplayers, players, nteams, teams
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.FinalizeGenerationData()
-	
-	local _generationdata = RMG.GenerationData
-	
-	-- set landscapeSet if not existing or key is valid
-	if not _generationdata.LandscapeSet or RMG.LandscapeSets[ _generationdata.LandscapeSetKey ] then
-		
-		_generationdata.LandscapeSet = RMG.LandscapeSets[ _generationdata.LandscapeSetKey ]
-	end
-	
-	_generationdata.Structures = { -- level 0 = world
+function RMG.FinalizeGenerationData(_GenerationData)
 
+	-- set landscapeSet if not existing or key is valid
+	if not _GenerationData.LandscapeSet or RMG.LandscapeSets[_GenerationData.LandscapeSetKey] then
+		_GenerationData.LandscapeSet = RMG.LandscapeSets[_GenerationData.LandscapeSetKey]
+	end
+
+	_GenerationData.Structures = {-- level 0 = world
 		Childs = {}, -- level 1
 		Current = {
-			Levels = { [ 0 ] = 1, [ 1 ] = 0 }, -- 2nd is player to start with (set to 0 or 1)
-			Players = { [ 0 ] = 0 },
+			Levels = {[0] = 1, [1] = 0}, -- 2nd is player to start with (set to 0 or 1)
+			Players = {[0] = 0},
 			Structs = {
 				Placement = {
 					X = 0,
@@ -1315,63 +1286,60 @@ function RMG.FinalizeGenerationData()
 			},
 		},
 	}
-	
-	_generationdata.PlayerStruct = RMG.StructureSets.PlayerStruct
-	_generationdata.NeutralStruct = RMG.StructureSets.NeutralStruct
+	_GenerationData.PlayerStruct = RMG.StructureSets.PlayerStruct
+	_GenerationData.NeutralStruct = RMG.StructureSets.NeutralStruct
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.StartGenerateMap()
-	
-	FixVillageCenters()
-	
-	local _generationdata = RMG.GenerationData
-	
-	RMG.FillNoiseTable(_generationdata)
-	RMG.FillPlayerLocationTable(_generationdata)
-	
-	if _generationdata.TeamBorderType == 2 then
-		RMG.CreateFences(_generationdata)
-	elseif _generationdata.TeamBorderType == 3 then
-		RMG.InitRivers( _generationdata )
-		RMG.FillRiverLocationTable(_generationdata)
-		RMG.CreateRivers(_generationdata)
-		RMG.ApplyNoiseOverride(_generationdata, RMG.BlockingTypes.River, math.min)
+function RMG.StartGenerateMap(_GenerationData)
+
+	--FixVillageCenters()
+
+	RMG.FillNoiseTable(_GenerationData)
+	RMG.FillPlayerLocationTable(_GenerationData)
+
+	if _GenerationData.TeamBorderType == 2 then
+		RMG.CreateFences(_GenerationData)
+	elseif _GenerationData.TeamBorderType == 3 then
+		RMG.InitRivers(_GenerationData)
+		RMG.FillRiverLocationTable(_GenerationData)
+		RMG.CreateRivers(_GenerationData)
+		RMG.ApplyNoiseOverride(_GenerationData, RMG.BlockingTypes.River, math.min)
 	end
-	
-	if _generationdata.GenerateRoads then
-		RMG.InitRoads( _generationdata )
-		RMG.FillRoadLocationTable(_generationdata)
-		RMG.CreateRoads(_generationdata)
-		RMG.ApplyNoiseOverride(_generationdata, RMG.BlockingTypes.Road)
+
+	if _GenerationData.GenerateRoads then
+		RMG.InitRoads(_GenerationData)
+		RMG.FillRoadLocationTable(_GenerationData)
+		RMG.CreateRoads(_GenerationData)
+		RMG.ApplyNoiseOverride(_GenerationData, RMG.BlockingTypes.Road)
 	end
-	
-	RMG.SetTerrainTextures(_generationdata)
-	
-	if RMG.GenerateStructures(_generationdata) or _generationdata.DebugMode then
-	
-		RMG.SetTerrainHeights(_generationdata)
-		RMG.UpdateBlocking(_generationdata)
-	
-		RMG.CreateEntities(_generationdata)
-		
-		RMG.Finalize(_generationdata)
-		
+
+	RMG.SetTerrainTextures(_GenerationData)
+
+	if RMG.GenerateStructures(_GenerationData) or _GenerationData.DebugMode then
+		RMG.SetTerrainHeights(_GenerationData)
+		RMG.UpdateBlocking(_GenerationData)
+		RMG.CreateEntities(_GenerationData)
+		RMG.Finalize(_GenerationData)
 		return true
 	end
-	
+
 	return false
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function RMG.GenerateMap()
-	RMG.InitGenerationData()
-	RMG.FillStructs()
-	RMG.FinalizeGenerationData()
-	return RMG.StartGenerateMap()
+	local generationData = RMG.InitGenerationData()
+	RMG.CustomizeGenerationData(generationData)
+	RMG.InitGenerationData2(generationData)
+	RMG.CustomizeGenerationData2(generationData)
+	RMG.FillStructs(generationData)
+	RMG.FinalizeGenerationData(generationData)
+	RMG.GenerationData = generationData
+	return RMG.StartGenerateMap(generationData)
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Noise Calculation
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.FillNoiseTable( _generationdata )
+function RMG.FillNoiseTable(_GenerationData)
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -1384,15 +1352,15 @@ function RMG.FillNoiseTable( _generationdata )
 	-- set heightnoise for map border
 	local bordernoise
 	
-	if _generationdata.TeamBorderType == 3 then -- river
+	if _GenerationData.TeamBorderType == 3 then -- river
 		bordernoise = -0.5
-	--elseif _generationdata.TeamBorderType == 4 then -- mountain (WIP)
+	--elseif _GenerationData.TeamBorderType == 4 then -- mountain (WIP)
 		--bordernoise = 0.75
 	else
-		bordernoise = _generationdata.ThresholdRoad
+		bordernoise = _GenerationData.ThresholdRoad
 	end
 	
-	local composition = _generationdata.Composition
+	local composition = _GenerationData.Composition
 	
 	-- if we need this once more, write this to RMG.GenerationData.Composition
 	local currentteam = 0
@@ -1400,71 +1368,71 @@ function RMG.FillNoiseTable( _generationdata )
 	local slizes = {}
 	local mirror = 0
 	
-	local mirroroffset = _generationdata.MirrorOffset - _generationdata.MirrorRadian / 2
+	local mirroroffset = _GenerationData.MirrorOffset - _GenerationData.MirrorRadian / 2
 	
-	for player = 1, _generationdata.NumberOfPlayers do
+	for player = 1, _GenerationData.NumberOfPlayers do
 		
 		-- TODO: not very modding compatible solution
 		-- only for players on the outer ring
-		if not composition[ player ].Distance then
-			if composition[ player ].Team > currentteam then
+		if not composition[player].Distance then
+			if composition[player].Team > currentteam then
 				
-				currentteam = composition[ player ].Team
-				slizes[ slize ] = { T = currentteam } -- can also be true or 1 or whatever
+				currentteam = composition[player].Team
+				slizes[slize] = {T = currentteam} -- can also be true or 1 or whatever
 				
 				slize = slize + 1
 			end
 			
-			slizes[ slize ] = { M = mirror}
+			slizes[slize] = {M = mirror}
 			slize = slize + 1
 			
 			-- mirror every seccond player slize on the outer ring
-			mirror = ( 1 - mirror )
+			mirror = (1 - mirror)
 		end
 	end
 	
 	-- do the main grid
 	for x = 0, mapsize, 2 do
 		
-		_generationdata.TerrainNodes[ x ] = {}
+		_GenerationData.TerrainNodes[x] = {}
 		
 		for y = 0, mapsize, 2 do
 	
-			local distance = math.sqrt( ( maphalf - x ) ^ 2 + ( maphalf - y ) ^ 2 )
+			local distance = math.sqrt((maphalf - x) ^ 2 + (maphalf - y) ^ 2)
 			
 			if distance < maphalf then
 				
 				local mx, my = x, y
-				if _generationdata.MirrorMap then
+				if _GenerationData.MirrorMap then
 					
-					local sourceindex, axismirrorflag = RMG.GetMirrorSlize( _generationdata, x, y, maphalf, mirroroffset )
+					local sourceindex, axismirrorflag = RMG.GetMirrorSlize(_GenerationData, x, y, maphalf, mirroroffset)
 					local targetindex = 1
 					
 					-- is team border slize
-					if slizes[ sourceindex ].T then
+					if slizes[sourceindex].T then
 						
 						-- first slize must be mirrored, if number of players on outer ring is odd
-						if sourceindex == 0 and math.mod( composition.NumberOfPlayers, 2 ) ~= 0 then
+						if sourceindex == 0 and math.mod(composition.NumberOfPlayers, 2) ~= 0 then
 							axismirrorflag = true
 						end	
 						
-						mx, my = RMG.MirrorNode( _generationdata, mx, my, sourceindex * _generationdata.MirrorRadian + mirroroffset, ( sourceindex + 1 ) * _generationdata.MirrorRadian + mirroroffset, axismirrorflag )
+						mx, my = RMG.MirrorNode(_GenerationData, mx, my, sourceindex * _GenerationData.MirrorRadian + mirroroffset, (sourceindex + 1) * _GenerationData.MirrorRadian + mirroroffset, axismirrorflag)
 						sourceindex = sourceindex + 1
 					end	
 					
-					-- a check on slizes[ sourceindex ].M is not neccessary, since we always increased source index to a player slize and last valid slize is allways a player slize
+					-- a check on slizes[sourceindex].M is not neccessary, since we always increased source index to a player slize and last valid slize is allways a player slize
 					-- mirror every seccond player slize on the outer ring
-					axismirrorflag = slizes[ sourceindex ].M == 1
+					axismirrorflag = slizes[sourceindex].M == 1
 					
-					mx, my = RMG.MirrorNode( _generationdata, mx, my, sourceindex * _generationdata.MirrorRadian + mirroroffset, targetindex * _generationdata.MirrorRadian, axismirrorflag )
+					mx, my = RMG.MirrorNode(_GenerationData, mx, my, sourceindex * _GenerationData.MirrorRadian + mirroroffset, targetindex * _GenerationData.MirrorRadian, axismirrorflag)
 				end
 				
-				heightnoise = RMG.GetSimplexNoise( 4, mx, my, 0.5, _generationdata.NoiseFactorXY )
-				vegetationnoise = RMG.GetSimplexNoise( 4, mx + mapsize, my, 0.5, _generationdata.NoiseFactorXY * 2.35 )
+				heightnoise = RMG.GetSimplexNoise(4, mx, my, 0.5, _GenerationData.NoiseFactorXY)
+				vegetationnoise = RMG.GetSimplexNoise(4, mx + mapsize, my, 0.5, _GenerationData.NoiseFactorXY * 2.35)
 				
 				-- modify heightnoise if close to map border
 				if distance > lerpRadius then
-					heightnoise = Lerp( bordernoise, heightnoise, ( distance - lerpRadius ) / 16 )
+					heightnoise = Lerp(bordernoise, heightnoise, (distance - lerpRadius) / 16)
 				end
 				
 			else
@@ -1472,21 +1440,21 @@ function RMG.FillNoiseTable( _generationdata )
 				vegetationnoise = 0
 			end
 			
-			_generationdata.TerrainNodes[ x ][ y ] = RMG.CreateTerrainNode( _generationdata, x, y, heightnoise, vegetationnoise )
+			_GenerationData.TerrainNodes[x][y] = RMG.CreateTerrainNode(_GenerationData, x, y, heightnoise, vegetationnoise)
 		end
 	end
 	
 	-- not every node needs the expensive noise calculation, average values of neighboring nodes create no visible difference but are much faster
 	for x = 1, mapsize, 2 do
 
-		_generationdata.TerrainNodes[ x ] = {}
+		_GenerationData.TerrainNodes[x] = {}
 
 		for y = 0, mapsize, 2 do
 		
-			heightnoise = ( _generationdata.TerrainNodes[ x-1 ][ y ].HeightNoise + _generationdata.TerrainNodes[ x+1 ][ y ].HeightNoise ) / 2
-			vegetationnoise = (_generationdata.TerrainNodes[ x-1 ][ y ].VegetationNoise + _generationdata.TerrainNodes[ x+1 ][ y ].VegetationNoise ) / 2
+			heightnoise = (_GenerationData.TerrainNodes[x-1][y].HeightNoise + _GenerationData.TerrainNodes[x+1][y].HeightNoise) / 2
+			vegetationnoise = (_GenerationData.TerrainNodes[x-1][y].VegetationNoise + _GenerationData.TerrainNodes[x+1][y].VegetationNoise) / 2
 			
-			_generationdata.TerrainNodes[ x ][ y ] = RMG.CreateTerrainNode( _generationdata, x, y, heightnoise, vegetationnoise )
+			_GenerationData.TerrainNodes[x][y] = RMG.CreateTerrainNode(_GenerationData, x, y, heightnoise, vegetationnoise)
 			
 		end
 	end
@@ -1494,10 +1462,10 @@ function RMG.FillNoiseTable( _generationdata )
 	for x = 0, mapsize do
 		for y = 1, mapsize, 2 do
 		
-			heightnoise = ( _generationdata.TerrainNodes[ x ][ y-1 ].HeightNoise + _generationdata.TerrainNodes[ x ][ y+1 ].HeightNoise ) / 2
-			vegetationnoise = ( _generationdata.TerrainNodes[ x ][ y-1 ].VegetationNoise + _generationdata.TerrainNodes[ x ][ y+1 ].VegetationNoise) / 2
+			heightnoise = (_GenerationData.TerrainNodes[x][y-1].HeightNoise + _GenerationData.TerrainNodes[x][y+1].HeightNoise) / 2
+			vegetationnoise = (_GenerationData.TerrainNodes[x][y-1].VegetationNoise + _GenerationData.TerrainNodes[x][y+1].VegetationNoise) / 2
 			
-			_generationdata.TerrainNodes[ x ][ y ] = RMG.CreateTerrainNode( _generationdata, x, y, heightnoise, vegetationnoise )
+			_GenerationData.TerrainNodes[x][y] = RMG.CreateTerrainNode(_GenerationData, x, y, heightnoise, vegetationnoise)
 			
 		end
 	end
@@ -1505,7 +1473,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Noise Utility
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetSimplexNoise( _octaves, _x, _y, _persistence, _scale )
+function RMG.GetSimplexNoise(_octaves, _x, _y, _persistence, _scale)
 
 	local maxAmp = 0
 	local amp = 1
@@ -1514,7 +1482,7 @@ function RMG.GetSimplexNoise( _octaves, _x, _y, _persistence, _scale )
 
 	--add successively smaller, higher-frequency terms
 	for i = 1, _octaves do
-		noise = noise + SimplexNoise.Noise2D( SimplexNoise.perm[ i ], _x * freq, _y * freq ) * amp
+		noise = noise + SimplexNoise.Noise2D(SimplexNoise.perm[i], _x * freq, _y * freq) * amp
 		maxAmp = maxAmp + amp
 		amp = amp * _persistence
 		freq = freq * 2
@@ -1526,62 +1494,62 @@ function RMG.GetSimplexNoise( _octaves, _x, _y, _persistence, _scale )
 	return noise
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.CreateTerrainNode( _generationdata, _x, _y, _heightnoise, _vegetaionnoise )
+function RMG.CreateTerrainNode(_GenerationData, _x, _y, _heightnoise, _vegetaionnoise)
 
-	return { X = _x, Y = _y, HeightNoise = _heightnoise, Height = RMG.GetTerrainHeightFromNoise( _generationdata, _heightnoise ), VegetationNoise = _vegetaionnoise, Blocking = 0 }
+	return {X = _x, Y = _y, HeightNoise = _heightnoise, Height = RMG.GetTerrainHeightFromNoise(_GenerationData, _heightnoise), VegetationNoise = _vegetaionnoise, Blocking = 0}
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Player Locations
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.FillPlayerLocationTable( _generationdata )
+function RMG.FillPlayerLocationTable(_GenerationData)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
-	local distancetomiddle = math.min( maphalf - 30, maphalf * _generationdata.PlayerDistanceToMiddle )
+	local distancetomiddle = math.min(maphalf - 30, maphalf * _GenerationData.PlayerDistanceToMiddle)
 	
-	_generationdata.Players[ 0 ] = { X = maphalf, Y = maphalf, Id = 0, Team = 0 }
+	_GenerationData.Players[0] = {X = maphalf, Y = maphalf, Id = 0, Team = 0}
 	
-	local nplayers = _generationdata.NumberOfPlayers
+	local nplayers = _GenerationData.NumberOfPlayers
 	local slize = 0
 	
 	for p = 1, nplayers do
 		
-		local composition = _generationdata.Composition[ p ]
+		local composition = _GenerationData.Composition[p]
 		local delta, x, y, distance
 
-		if _generationdata.RandomPlayerPosition then
-			delta = math.random( 0, math.rad( 360 ) )
-			distance = math.random( 5, maphalf - 15 )
+		if _GenerationData.RandomPlayerPosition then
+			delta = math.random(0, math.rad(360))
+			distance = math.random(5, maphalf - 15)
 		else
-			delta = composition.Slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+			delta = composition.Slize * _GenerationData.MirrorRadian + _GenerationData.MirrorOffset
 			distance = composition.Distance or distancetomiddle
 		end
 		
-		x = distance * math.cos( delta ) + maphalf
-		y = distance * math.sin( delta ) + maphalf
+		x = distance * math.cos(delta) + maphalf
+		y = distance * math.sin(delta) + maphalf
 		
-		if _generationdata.RandomPlayerPosition then
-			x, y = SnapToGrid( 4, x, y )
+		if _GenerationData.RandomPlayerPosition then
+			x, y = SnapToGrid(4, x, y)
 		else
-			x, y = RMG.FindBestPoint( _generationdata, x, y, 8, 4 )
+			x, y = RMG.FindBestPoint(_GenerationData, x, y, 8, 4)
 		end
 		
-		_generationdata.Players[ p ].X = x
-		_generationdata.Players[ p ].Y = y
+		_GenerationData.Players[p].X = x
+		_GenerationData.Players[p].Y = y
 		
-		if composition.Mirror or not _generationdata.MirrorMap then
+		if composition.Mirror or not _GenerationData.MirrorMap then
 			
 			-- lookup table for player id
-			table.insert( _generationdata.Structures.Current.Players, p )
+			table.insert(_GenerationData.Structures.Current.Players, p)
 			
 			-- actual structure must be continuous
-			table.insert( _generationdata.Structures.Childs,
+			table.insert(_GenerationData.Structures.Childs,
 				{
 					Placement = {
 						AbsolutX = x,
 						AbsolutY = y,
 					},
-					Childs = { _generationdata.PlayerStruct, },
+					Childs = {_GenerationData.PlayerStruct,},
 				}
 			)
 		end
@@ -1589,92 +1557,92 @@ function RMG.FillPlayerLocationTable( _generationdata )
 		slize = slize + 1
 	end
 	
-	_generationdata.Structures.Childs[ 0 ] = {
+	_GenerationData.Structures.Childs[0] = {
 		Placement = {
 			AbsolutX = 0,
 			AbsolutY = 0,
 		},
-		Childs = { _generationdata.NeutralStruct },
+		Childs = {_GenerationData.NeutralStruct},
 	}
 	
 	return true
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.MirrorPosition( _generationdata, _x, _y, _sourceindex, _targetindex, _mirror )
-	return RMG.Mirror( _generationdata, _x, _y, _sourceindex, _targetindex, Logic.WorldGetSize(), _mirror )
+function RMG.MirrorPosition(_GenerationData, _x, _y, _sourceindex, _targetindex, _mirror)
+	return RMG.Mirror(_GenerationData, _x, _y, _sourceindex, _targetindex, Logic.WorldGetSize(), _mirror)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.MirrorNode( _generationdata, _x, _y, _sourceindex, _targetindex, _mirror )
-	return RMG.Mirror( _generationdata, _x, _y, _sourceindex, _targetindex, Logic.WorldGetSize() / 100, _mirror )
+function RMG.MirrorNode(_GenerationData, _x, _y, _sourceindex, _targetindex, _mirror)
+	return RMG.Mirror(_GenerationData, _x, _y, _sourceindex, _targetindex, Logic.WorldGetSize() / 100, _mirror)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.Mirror( _generationdata, _x, _y, _sourceindex, _targetindex, _mapsize, _mirror )
+function RMG.Mirror(_GenerationData, _x, _y, _sourceindex, _targetindex, _mapsize, _mirror)
 	
 	local maphalf = _mapsize / 2
-	local sourceradian = _sourceindex -- * _generationdata.MirrorRadian
-	local targetradian = _targetindex -- * _generationdata.MirrorRadian
+	local sourceradian = _sourceindex -- * _GenerationData.MirrorRadian
+	local targetradian = _targetindex -- * _GenerationData.MirrorRadian
 	
 	-- allign position to map center as 0,0
 	_x, _y = _x - maphalf, _y - maphalf
-	local dist = math.sqrt( _x ^ 2 + _y ^ 2 )
+	local dist = math.sqrt(_x ^ 2 + _y ^ 2)
 	
 	-- point mirror
-	_x, _y = RMG.GetMirrorPosition( dist, sourceradian, targetradian, math.atan2( _y, _x ), maphalf, 0, _offset )
+	_x, _y = RMG.GetMirrorPosition(dist, sourceradian, targetradian, math.atan2(_y, _x), maphalf, 0, _offset)
 	
-	if _mirror then --math.mod( _sourceindex - _targetindex, 2 ) ~= 0 then
+	if _mirror then --math.mod(_sourceindex - _targetindex, 2) ~= 0 then
 		
 		-- set mirror axis to middle of point mirrored area
 		_x, _y = _x - maphalf, _y - maphalf
-		sourceradian = targetradian + _generationdata.MirrorRadian * 0.5
+		sourceradian = targetradian + _GenerationData.MirrorRadian * 0.5
 		targetradian = sourceradian + 180
 		
 		-- axis mirror
-		_x, _y = RMG.GetMirrorPosition( dist, sourceradian, targetradian, math.atan2( _y, _x ), maphalf, 1, _offset )
+		_x, _y = RMG.GetMirrorPosition(dist, sourceradian, targetradian, math.atan2(_y, _x), maphalf, 1, _offset)
 	end
 	
 	-- do not round the outcome
-	--_x, _y = Round( _x ), Round( _y )
+	--_x, _y = Round(_x), Round(_y)
 	
 	return _x, _y
 end
 ----------------------------------------------------------------------------------------------------------------
 -- this is a copy from MTT in rad not deg - but the params are switched somehow !?	
-function RMG.GetMirrorPosition( _Dist, _SourceRadian, _TargetRadian, _Radian, _Maphalf, _Mode, _Offset )
+function RMG.GetMirrorPosition(_Dist, _SourceRadian, _TargetRadian, _Radian, _Maphalf, _Mode, _Offset)
 	
 	if _Mode == 1 then
-		_Radian = -( _Radian - _SourceRadian * 2 )
+		_Radian = -(_Radian - _SourceRadian * 2)
 	else
-		_Radian = _TargetRadian + ( _Radian - _SourceRadian )
+		_Radian = _TargetRadian + (_Radian - _SourceRadian)
 	end
 	
-	local x = _Dist * math.cos( _Radian ) + _Maphalf
-	local y = _Dist * math.sin( _Radian ) + _Maphalf
+	local x = _Dist * math.cos(_Radian) + _Maphalf
+	local y = _Dist * math.sin(_Radian) + _Maphalf
 	
 	return x, y
 end
 ----------------------------------------------------------------------------------------------------------------
 -- returns:
 -- int: slize index, bool: radian lies in 2nd half of slize
-function RMG.GetMirrorSlize( _generationdata, _x, _y, _maphalf, _offset )
+function RMG.GetMirrorSlize(_GenerationData, _x, _y, _maphalf, _offset)
 	
-	local radian = math.atan2( _y - _maphalf, _x - _maphalf )
+	local radian = math.atan2(_y - _maphalf, _x - _maphalf)
 	
 	if radian < 0 then
-		radian = radian + math.rad( 360 )
+		radian = radian + math.rad(360)
 	end
 	
-	local slize = math.floor( ( radian - _offset ) / _generationdata.MirrorRadian )
+	local slize = math.floor((radian - _offset) / _GenerationData.MirrorRadian)
 	
 	if slize < 0 then
-		slize = slize + _generationdata.NumberOfSlizes
-	elseif slize >= _generationdata.NumberOfSlizes then
-		slize = slize - _generationdata.NumberOfSlizes
+		slize = slize + _GenerationData.NumberOfSlizes
+	elseif slize >= _GenerationData.NumberOfSlizes then
+		slize = slize - _GenerationData.NumberOfSlizes
 	end
 	
-	return slize, ( radian - _offset ) >= ( slize + 0.5 ) * _generationdata.MirrorRadian
+	return slize, (radian - _offset) >= (slize + 0.5) * _GenerationData.MirrorRadian
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.FindBestPoint( _generationdata, _x, _y, _dist, _grid, _heightnoise )
+function RMG.FindBestPoint(_GenerationData, _x, _y, _dist, _grid, _heightnoise)
 	
 	_heightnoise = _heightnoise or 0
 	_grid = _grid or 1
@@ -1682,14 +1650,14 @@ function RMG.FindBestPoint( _generationdata, _x, _y, _dist, _grid, _heightnoise 
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local px, py = _x, _y
-	local noise = _generationdata.TerrainNodes[ _x ][ _y ].HeightNoise
+	local noise = _GenerationData.TerrainNodes[_x][_y].HeightNoise
   
-	for x = math.max( _x -_dist, 0 ), math.min( _x + _dist, mapsize ), _grid do
-		for y = math.max( _y - _dist, 0 ), math.min( _y + _dist, mapsize ), _grid do
+	for x = math.max(_x -_dist, 0), math.min(_x + _dist, mapsize), _grid do
+		for y = math.max(_y - _dist, 0), math.min(_y + _dist, mapsize), _grid do
 			
-			if math.abs( _generationdata.TerrainNodes[ x ][ y ].HeightNoise - _heightnoise ) < math.abs( noise - _heightnoise ) then
+			if math.abs(_GenerationData.TerrainNodes[x][y].HeightNoise - _heightnoise) < math.abs(noise - _heightnoise) then
 				
-				noise = _generationdata.TerrainNodes[ x ][ y ].HeightNoise
+				noise = _GenerationData.TerrainNodes[x][y].HeightNoise
 				px, py = x, y
 			end
 		end
@@ -1700,7 +1668,7 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Teamborders
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.CreateFences( _generationdata )
+function RMG.CreateFences(_GenerationData)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -1711,49 +1679,49 @@ function RMG.CreateFences( _generationdata )
 	local currentTeam = 0
 
 	local radea = {}
-	local composition = _generationdata.Composition
+	local composition = _GenerationData.Composition
 	
 	-- create fence lines from circle radius to map border
-	for _, slize in ipairs( composition.TeamBorderSlizes ) do
+	for _, slize in ipairs(composition.TeamBorderSlizes) do
 		
-		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+		local delta = slize * _GenerationData.MirrorRadian + _GenerationData.MirrorOffset
 		
-		table.insert( radea, delta )
+		table.insert(radea, delta)
 		
-		local x, y = (maphalf + 2) * math.cos( delta ) + maphalf, (maphalf + 2) * math.sin( delta ) + maphalf
+		local x, y = (maphalf + 2) * math.cos(delta) + maphalf, (maphalf + 2) * math.sin(delta) + maphalf
 		local offset = ((x >= 2 and y >= 2 and x <= mapsize and y <= mapsize) and 0) or 2
 
 		for i = r + 2, maphalf - offset, 2 do
-			local x = ( i - 1 ) * math.cos( delta ) + maphalf
-			local y = ( i - 1 ) * math.sin( delta ) + maphalf
+			local x = (i - 1) * math.cos(delta) + maphalf
+			local y = (i - 1) * math.sin(delta) + maphalf
 			
-			Logic.CreateEntity( Entities[ "XD_WoodenFence0"..math.random( 1, 8 ) ], x * 100, y * 100, math.deg( delta ), 0 )
+			Logic.CreateEntity(Entities["XD_WoodenFence0"..math.random(1, 8)], x * 100, y * 100, math.deg(delta), 0)
 		end
 	end
 	--[[local slize = 0
 
 	for player = 1, composition.NumberOfPlayers do
 		
-		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+		local delta = slize * _GenerationData.MirrorRadian + _GenerationData.MirrorOffset
 		
 		-- per player
-		if _generationdata.GateLayout == 2 then
-			table.insert( radea, delta )
+		if _GenerationData.GateLayout == 2 then
+			table.insert(radea, delta)
 		end
 
-		if _generationdata.Players[ player ].Team > currentTeam then
-			currentTeam = _generationdata.Players[ player ].Team
+		if _GenerationData.Players[player].Team > currentTeam then
+			currentTeam = _GenerationData.Players[player].Team
 			
 			-- per team
-			if _generationdata.GateLayout == 1 then
-				table.insert( radea, delta )
+			if _GenerationData.GateLayout == 1 then
+				table.insert(radea, delta)
 			end
 			
 			for i = r + 2, maphalf - 2, 2 do
-				local x = ( i - 1 ) * math.cos( delta ) + maphalf
-				local y = ( i - 1 ) * math.sin( delta ) + maphalf
+				local x = (i - 1) * math.cos(delta) + maphalf
+				local y = (i - 1) * math.sin(delta) + maphalf
 				
-				Logic.CreateEntity( Entities[ "XD_WoodenFence0"..math.random( 1, 8 ) ], x * 100, y * 100, math.deg( delta ), 0 )
+				Logic.CreateEntity(Entities["XD_WoodenFence0"..math.random(1, 8)], x * 100, y * 100, math.deg(delta), 0)
 			end
 				
 			slize = slize + 1
@@ -1763,41 +1731,41 @@ function RMG.CreateFences( _generationdata )
 	end]]
 	
 	local currentRadius = 1
-	local a = math.rad( 360 ) / ( ( math.pi * r * 2 ) / 2 ) -- 360° / (umfang / Zaunlänge)
-	local b = radea[ currentRadius + 1 ]
-	local c = radea[ currentRadius ] -- should always be 0
+	local a = math.rad(360) / ((math.pi * r * 2) / 2) -- 360° / (umfang / Zaunlänge)
+	local b = radea[currentRadius + 1]
+	local c = radea[currentRadius] -- should always be 0
 	
 	-- create fence circle
-	for delta = 0, math.rad( 360 ), a do
+	for delta = 0, math.rad(360), a do
 		
 		if delta > b then
 			currentRadius = currentRadius + 1
 			c = b
 			
-			if currentRadius >= table.getn( radea ) then
-				b = radea[ 1 ] + math.rad( 360 )
+			if currentRadius >= table.getn(radea) then
+				b = radea[1] + math.rad(360)
 			else
-				b = radea[ currentRadius + 1 ]
+				b = radea[currentRadius + 1]
 			end
 		end
 		
 		-- difference
 		-- defines the entry size: <= 2 = closed, 2.5 = small, 3 = medium, 4 = large, 6 = very large
-		local d = ( b - c ) / _generationdata.GateSize
+		local d = (b - c) / _GenerationData.GateSize
 		
-		local x = r * math.cos( delta ) + maphalf
-		local y = r * math.sin( delta ) + maphalf
+		local x = r * math.cos(delta) + maphalf
+		local y = r * math.sin(delta) + maphalf
 		
 		-- create fence or gate
 		if delta > c + d and delta < b - d then
 		
 			-- leave gap or create gate
-			if EMS_CustomMapConfig.Peacetime > 0 then
-				Logic.CreateEntity( Entities.XD_WoodenFence15, x * 100, y * 100, math.deg( delta ) + 90, 0 )
-			end
+			--if EMS_CustomMapConfig.Peacetime > 0 then
+				Logic.CreateEntity(Entities.XD_WoodenFence15, x * 100, y * 100, math.deg(delta) + 90, 0)
+			--end
 			
 		else
-			Logic.CreateEntity( Entities[ "XD_WoodenFence0"..math.random( 1, 8 ) ], x * 100, y * 100, math.deg( delta ) + 90, 0 )
+			Logic.CreateEntity(Entities["XD_WoodenFence0"..math.random(1, 8)], x * 100, y * 100, math.deg(delta) + 90, 0)
 		end
 	end
 	
@@ -1808,174 +1776,174 @@ function RMG.CreateFences( _generationdata )
 	for x = -r - l, r + l do
 		for y = -r - l, r + l do
 			
-			local distance = math.sqrt( x ^ 2 + y ^ 2 )
+			local distance = math.sqrt(x ^ 2 + y ^ 2)
 			
 			if distance < r + l then
 				
 				-- the lazy aproach ...
-				local heightnoise = _generationdata.TerrainNodes[ maphalf + x ][ maphalf + y ].HeightNoise
+				local heightnoise = _GenerationData.TerrainNodes[maphalf + x][maphalf + y].HeightNoise
 				local heightnoise2 = heightnoise / 1.8
 				
-				local vegetationnoise = _generationdata.TerrainNodes[ maphalf + x ][ maphalf + y ].VegetationNoise + 1
+				local vegetationnoise = _GenerationData.TerrainNodes[maphalf + x][maphalf + y].VegetationNoise + 1
 				local vegetationnoise2 = vegetationnoise / 1.4 - 1
 				
 				if distance > r then
 					
-					heightnoise2 = Lerp( heightnoise, heightnoise2, ( distance - r ) / l )
-					vegetationnoise2 = Lerp( vegetationnoise, vegetationnoise2, ( distance - r ) / l )
+					heightnoise2 = Lerp(heightnoise, heightnoise2, (distance - r) / l)
+					vegetationnoise2 = Lerp(vegetationnoise, vegetationnoise2, (distance - r) / l)
 				end
 				
-				_generationdata.TerrainNodes[ maphalf + x ][ maphalf + y ] = RMG.CreateTerrainNode( _generationdata, x + maphalf, y + maphalf, heightnoise2, vegetationnoise2 )
+				_GenerationData.TerrainNodes[maphalf + x][maphalf + y] = RMG.CreateTerrainNode(_GenerationData, x + maphalf, y + maphalf, heightnoise2, vegetationnoise2)
 			end
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.SimpleNoiseOverride( _generationdata, _x, _y, _innerrange, _outerrange, _targetheightnoise, _targetheightrange, _targetvegetationnoise, _targetvegetationrange, _overrideheightfunc, _offsetheight, _overridevegetationfunc, _offsetvegetation )
+function RMG.SimpleNoiseOverride(_GenerationData, _x, _y, _innerrange, _outerrange, _targetheightnoise, _targetheightrange, _targetvegetationnoise, _targetvegetationrange, _overrideheightfunc, _offsetheight, _overridevegetationfunc, _offsetvegetation)
 	
-	_overrideheightfunc = _overrideheightfunc or function( _noise, _targetrange, _targetnoise )
+	_overrideheightfunc = _overrideheightfunc or function(_noise, _targetrange, _targetnoise)
 		return _noise * _targetrange + _targetnoise
 	end
-	_overridevegetationfunc = _overridevegetationfunc or function( _noise, _targetrange, _targetnoise )
+	_overridevegetationfunc = _overridevegetationfunc or function(_noise, _targetrange, _targetnoise)
 		return _noise * _targetrange + _targetnoise
 	end
 	
 	local mapsize = Logic.WorldGetSize() / 100
-	local x1, y1, x2, y2 = math.max( _x - _outerrange, 0 ), math.max( _y - _outerrange, 0 ), math.min( _x + _outerrange, mapsize ), math.min( _y + _outerrange, mapsize )
+	local x1, y1, x2, y2 = math.max(_x - _outerrange, 0), math.max(_y - _outerrange, 0), math.min(_x + _outerrange, mapsize), math.min(_y + _outerrange, mapsize)
 	
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			local distance = SimpleGetDistance( x, y, _x, _y )
+			local distance = SimpleGetDistance(x, y, _x, _y)
 			
 			if distance < _outerrange then
 				
 				-- override height
 				if _targetheightnoise then
 					
-					local heightnoise = _generationdata.TerrainNodes[ x ][ y ].HeightNoise
-					local heightnoiseoverride = _overrideheightfunc( heightnoise, _targetheightrange, _targetheightnoise, _offsetheight )
+					local heightnoise = _GenerationData.TerrainNodes[x][y].HeightNoise
+					local heightnoiseoverride = _overrideheightfunc(heightnoise, _targetheightrange, _targetheightnoise, _offsetheight)
 					
 					if distance > _innerrange then
-						heightnoiseoverride = Lerp( heightnoise, heightnoiseoverride, ( distance - _innerrange ) / ( _outerrange - _innerrange ) )
+						heightnoiseoverride = Lerp(heightnoise, heightnoiseoverride, (distance - _innerrange) / (_outerrange - _innerrange))
 					end
 					
-					_generationdata.TerrainNodes[ x ][ y ].HeightNoise = heightnoiseoverride
-					_generationdata.TerrainNodes[ x ][ y ].Height = RMG.GetTerrainHeightFromNoise( _generationdata, heightnoiseoverride )
+					_GenerationData.TerrainNodes[x][y].HeightNoise = heightnoiseoverride
+					_GenerationData.TerrainNodes[x][y].Height = RMG.GetTerrainHeightFromNoise(_GenerationData, heightnoiseoverride)
 				end
 				
 				-- override
 				if _targetvegetationnoise then
 					
-					local vegetationnoise =  _generationdata.TerrainNodes[ x ][ y ].VegetationNoise
-					local vegetationnoiseoverride = _overridevegetationfunc( vegetationnoise, _targetvegetationrange, _targetvegetationnoise, _offsetvegetation )
+					local vegetationnoise =  _GenerationData.TerrainNodes[x][y].VegetationNoise
+					local vegetationnoiseoverride = _overridevegetationfunc(vegetationnoise, _targetvegetationrange, _targetvegetationnoise, _offsetvegetation)
 					
 					if distance > _innerrange then
-						vegetationnoiseoverride = Lerp( vegetationnoise, vegetationnoiseoverride, ( distance - _innerrange ) / ( _outerrange - _innerrange ) )
+						vegetationnoiseoverride = Lerp(vegetationnoise, vegetationnoiseoverride, (distance - _innerrange) / (_outerrange - _innerrange))
 					end
 					
-					_generationdata.TerrainNodes[ x ][ y ].VegetationNoise = vegetationnoiseoverride
+					_GenerationData.TerrainNodes[x][y].VegetationNoise = vegetationnoiseoverride
 				end
 			end
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.SimpleHeightOverride( _generationdata, _x, _y, _innerrange, _outerrange, _targetheight )
+function RMG.SimpleHeightOverride(_GenerationData, _x, _y, _innerrange, _outerrange, _targetheight)
 	
 	local mapsize = Logic.WorldGetSize() / 100
-	local x1, y1, x2, y2 = math.max( _x - _outerrange, 0 ), math.max( _y - _outerrange, 0 ), math.min( _x + _outerrange, mapsize ), math.min( _y + _outerrange, mapsize )
+	local x1, y1, x2, y2 = math.max(_x - _outerrange, 0), math.max(_y - _outerrange, 0), math.min(_x + _outerrange, mapsize), math.min(_y + _outerrange, mapsize)
 	
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			local distance = SimpleGetDistance( x, y, _x, _y )
+			local distance = SimpleGetDistance(x, y, _x, _y)
 			
 			if distance < _outerrange then
 			
-				local height = _generationdata.TerrainNodes[ x ][ y ].Height
+				local height = _GenerationData.TerrainNodes[x][y].Height
 				local heightoverride = _targetheight
 				
 				if distance > _innerrange then
-					heightoverride = Lerp( height, heightoverride, ( distance - _innerrange ) / ( _outerrange - _innerrange ) )
+					heightoverride = Lerp(height, heightoverride, (distance - _innerrange) / (_outerrange - _innerrange))
 				end
 				
-				_generationdata.TerrainNodes[ x ][ y ].Height = heightoverride
+				_GenerationData.TerrainNodes[x][y].Height = heightoverride
 			end
 		end
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.InitRivers( _generationdata )
+function RMG.InitRivers(_GenerationData)
 	
-	_generationdata.Rivers = {}
-	_generationdata.Rivers.StartPoints = {} -- start points
-	_generationdata.Rivers.Paths = {} -- connections
+	_GenerationData.Rivers = {}
+	_GenerationData.Rivers.StartPoints = {} -- start points
+	_GenerationData.Rivers.Paths = {} -- connections
 	
-	_generationdata.Rivers.Nodes = {}
-	_generationdata.Rivers.MirrorRadea = {}
+	_GenerationData.Rivers.Nodes = {}
+	_GenerationData.Rivers.MirrorRadea = {}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.FillRiverLocationTable( _generationdata )
+function RMG.FillRiverLocationTable(_GenerationData)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
 	
-	local composition = _generationdata.Composition
+	local composition = _GenerationData.Composition
 	
 	-- find the points at the egde of the map between different teams
-	for i, slize in ipairs( composition.TeamBorderSlizes ) do
+	for i, slize in ipairs(composition.TeamBorderSlizes) do
 		
-		local delta = slize * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+		local delta = slize * _GenerationData.MirrorRadian + _GenerationData.MirrorOffset
 
 		-- add mirror angles
-		if _generationdata.MirrorMap and delta ~= _generationdata.MirrorOffset then
+		if _GenerationData.MirrorMap and delta ~= _GenerationData.MirrorOffset then
 			
-			table.insert( _generationdata.Rivers.MirrorRadea, delta - _generationdata.MirrorOffset )
+			table.insert(_GenerationData.Rivers.MirrorRadea, delta - _GenerationData.MirrorOffset)
 		end
 	
-		if not _generationdata.MirrorMap or i == 1 then
+		if not _GenerationData.MirrorMap or i == 1 then
 		
-			local x = maphalf * math.cos( delta ) + maphalf
-			local y = maphalf * math.sin( delta ) + maphalf
+			local x = maphalf * math.cos(delta) + maphalf
+			local y = maphalf * math.sin(delta) + maphalf
 			
 			-- dont use FindBestPoint here, since the river might not touch the map border then
-			x, y = SnapToGrid( 4, x, y )
-			_generationdata.Rivers.StartPoints[ i ] = { X = x, Y = y }
+			x, y = SnapToGrid(4, x, y)
+			_GenerationData.Rivers.StartPoints[i] = {X = x, Y = y}
 			
 			-- start at the middle, since this is much cheaper due to negative side effects of water as map border
-			_generationdata.Rivers.Paths[ i ] = { _generationdata.NumberOfTeams + 1, i }
+			_GenerationData.Rivers.Paths[i] = {_GenerationData.NumberOfTeams + 1, i}
 		end
 	end
 	--[[local currentTeam = 0
 	local teamIndex = 0
 	local slize = 0
 
-	for player = 1, _generationdata.NumberOfPlayers do
-		if _generationdata.Players[ player ].Team > currentTeam then
+	for player = 1, _GenerationData.NumberOfPlayers do
+		if _GenerationData.Players[player].Team > currentTeam then
 			
-			currentTeam = _generationdata.Players[ player ].Team
+			currentTeam = _GenerationData.Players[player].Team
 			teamIndex = teamIndex + 1
 			
-			local delta = ( slize ) * _generationdata.MirrorRadian + _generationdata.MirrorOffset
+			local delta = (slize) * _GenerationData.MirrorRadian + _GenerationData.MirrorOffset
 
 			-- add mirror angles
-			if _generationdata.MirrorMap and delta ~= _generationdata.MirrorOffset then
+			if _GenerationData.MirrorMap and delta ~= _GenerationData.MirrorOffset then
 				
-				table.insert( _generationdata.Rivers.MirrorRadea, delta - _generationdata.MirrorOffset )
+				table.insert(_GenerationData.Rivers.MirrorRadea, delta - _GenerationData.MirrorOffset)
 			end
 			
-			if not _generationdata.MirrorMap or teamIndex == 1 then
+			if not _GenerationData.MirrorMap or teamIndex == 1 then
 			
-				local x = maphalf * math.cos( delta ) + maphalf
-				local y = maphalf * math.sin( delta ) + maphalf
+				local x = maphalf * math.cos(delta) + maphalf
+				local y = maphalf * math.sin(delta) + maphalf
 				
 				-- dont use FindBestPoint here, since the river might not touch the map border then
-				x, y = SnapToGrid( 4, x, y )
-				_generationdata.Rivers.StartPoints[ teamIndex ] = { X = x, Y = y }
+				x, y = SnapToGrid(4, x, y)
+				_GenerationData.Rivers.StartPoints[teamIndex] = {X = x, Y = y}
 				
 				-- start at the middle, since this is much cheaper due to negative side effects of water as map border
-				_generationdata.Rivers.Paths[ teamIndex ] = { _generationdata.NumberOfTeams + 1, teamIndex }
+				_GenerationData.Rivers.Paths[teamIndex] = {_GenerationData.NumberOfTeams + 1, teamIndex}
 			end
 			
 			slize = slize + 1
@@ -1988,41 +1956,41 @@ function RMG.FillRiverLocationTable( _generationdata )
 	-- must be the exact center if rivers will be mirrored
 	local x, y = maphalf, maphalf
 	
-	if not _generationdata.MirrorMap then
-		x, y = RMG.FindBestPoint( _generationdata, maphalf, maphalf, 16, 4, -1 )
+	if not _GenerationData.MirrorMap then
+		x, y = RMG.FindBestPoint(_GenerationData, maphalf, maphalf, 16, 4, -1)
 	end
 	
-	_generationdata.Rivers.StartPoints[ _generationdata.NumberOfTeams + 1 ] = { X = x, Y = y }
+	_GenerationData.Rivers.StartPoints[_GenerationData.NumberOfTeams + 1] = {X = x, Y = y}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.CreateRivers( _generationdata )
+function RMG.CreateRivers(_GenerationData)
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
 	
-	for i = 1, table.getn(_generationdata.Rivers.Paths) do
+	for i = 1, table.getn(_GenerationData.Rivers.Paths) do
 		
-		local a, b = _generationdata.Rivers.Paths[ i ][ 1 ], _generationdata.Rivers.Paths[ i ][ 2 ]
-		local x1, y1, x2, y2 = _generationdata.Rivers.StartPoints[ a ].X, _generationdata.Rivers.StartPoints[ a ].Y, _generationdata.Rivers.StartPoints[ b ].X, _generationdata.Rivers.StartPoints[ b ].Y
+		local a, b = _GenerationData.Rivers.Paths[i][1], _GenerationData.Rivers.Paths[i][2]
+		local x1, y1, x2, y2 = _GenerationData.Rivers.StartPoints[a].X, _GenerationData.Rivers.StartPoints[a].Y, _GenerationData.Rivers.StartPoints[b].X, _GenerationData.Rivers.StartPoints[b].Y
 		
-		local river = AStar.FindPath( _generationdata.TerrainNodes[ x1 ][ y1 ], _generationdata.TerrainNodes[ x2 ][ y2 ], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_River, RMG.AStar_GetPathCost_River )
+		local river = AStar.FindPath(_GenerationData.TerrainNodes[x1][y1], _GenerationData.TerrainNodes[x2][y2], _GenerationData.TerrainNodes, RMG.AStar_GetNeighborNodes_River, RMG.AStar_GetPathCost_River)
 		
 		if river then
 		
-			local riverheight = _generationdata.TerrainBaseHeight - 663
+			local riverheight = _GenerationData.TerrainBaseHeight - 663
 
-			local currNode = river[ 1 ]
-			RMG.AddRiverNodes( _generationdata, currNode.X, currNode.Y, riverheight )
+			local currNode = river[1]
+			RMG.AddRiverNodes(_GenerationData, currNode.X, currNode.Y, riverheight)
 
  			local prevNode = currNode
  
-			for j = 2, table.getn( river ) do
+			for j = 2, table.getn(river) do
 			
-				currNode = river[ j ]
-				RMG.AddRiverNodes( _generationdata, currNode.X, currNode.Y, riverheight )
+				currNode = river[j]
+				RMG.AddRiverNodes(_GenerationData, currNode.X, currNode.Y, riverheight)
 				
 				-- add the middle between two nodes so rivers and roads do not miss each other with two diagonals
-				RMG.AddRiverNodes( _generationdata, (currNode.X + prevNode.X) / 2, (currNode.Y + prevNode.Y) / 2 )
+				RMG.AddRiverNodes(_GenerationData, (currNode.X + prevNode.X) / 2, (currNode.Y + prevNode.Y) / 2)
 				
 				prevNode = currNode
 			end
@@ -2031,39 +1999,39 @@ function RMG.CreateRivers( _generationdata )
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- _height, _heightnoise, _vegetaionnoise are optional
-function RMG.AddRiverNodes( _generationdata, _x, _y, _height, _heightnoise, _vegetaionnoise )
+function RMG.AddRiverNodes(_GenerationData, _x, _y, _height, _heightnoise, _vegetaionnoise)
 	
-	RMG.AddRiverNode( _generationdata, _x, _y, 0, _height, _heightnoise, _vegetaionnoise )
+	RMG.AddRiverNode(_GenerationData, _x, _y, 0, _height, _heightnoise, _vegetaionnoise)
 	
-	for _, targetradian in ipairs( _generationdata.Rivers.MirrorRadea ) do
-		RMG.AddRiverNode( _generationdata, _x, _y, targetradian, _height, _heightnoise, _vegetaionnoise )
+	for _, targetradian in ipairs(_GenerationData.Rivers.MirrorRadea) do
+		RMG.AddRiverNode(_GenerationData, _x, _y, targetradian, _height, _heightnoise, _vegetaionnoise)
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AddRiverNode( _generationdata, _x, _y, _targetradian, _height, _heightnoise, _vegetaionnoise )
+function RMG.AddRiverNode(_GenerationData, _x, _y, _targetradian, _height, _heightnoise, _vegetaionnoise)
 	
 	local maphalf = Logic.WorldGetSize() / 200
 	
 	_x, _y = _x - maphalf, _y - maphalf
-	_x, _y = RMG.GetMirrorPosition( math.sqrt( _x ^ 2 + _y ^ 2 ), 0, _targetradian, math.atan2( _y, _x ), maphalf, 0 )
-	_x, _y = Round( _x ), Round( _y )
+	_x, _y = RMG.GetMirrorPosition(math.sqrt(_x ^ 2 + _y ^ 2), 0, _targetradian, math.atan2(_y, _x), maphalf, 0)
+	_x, _y = Round(_x), Round(_y)
 	
-	table.insert( _generationdata.Rivers.Nodes, {X = _x, Y = _y} )
+	table.insert(_GenerationData.Rivers.Nodes, {X = _x, Y = _y})
 	
 	if _height then
-		RMG.SetNoiseOverride( _generationdata, _x, _y, 20, 4, _height, _heightnoise, _vegetaionnoise )
+		RMG.SetNoiseOverride(_GenerationData, _x, _y, 20, 4, _height, _heightnoise, _vegetaionnoise)
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.InitRoads( _generationdata )
+function RMG.InitRoads(_GenerationData)
 	
-	_generationdata.Roads = {}
-	_generationdata.Roads.StartPoints = {}
-	_generationdata.Roads.Paths = {}
+	_GenerationData.Roads = {}
+	_GenerationData.Roads.StartPoints = {}
+	_GenerationData.Roads.Paths = {}
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: add road system to composition
-function RMG.FillRoadLocationTable( _generationdata )
+function RMG.FillRoadLocationTable(_GenerationData)
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -2071,67 +2039,67 @@ function RMG.FillRoadLocationTable( _generationdata )
 	local delta, x, y
  
 	-- check for specific case with only 2 players on 2 teams
-	if _generationdata.NumberOfPlayers == 2 and _generationdata.NumberOfTeams == 2 then
+	if _GenerationData.NumberOfPlayers == 2 and _GenerationData.NumberOfTeams == 2 then
 	
-		_generationdata.Roads.Paths = {{1, 2}, {3, 1}, {4, 1}, {3, 2}, {4, 2}} -- from player 1 to player 2 and from imaginary player 3 and 4 to each player 1 and 2
+		_GenerationData.Roads.Paths = {{1, 2}, {3, 1}, {4, 1}, {3, 2}, {4, 2}} -- from player 1 to player 2 and from imaginary player 3 and 4 to each player 1 and 2
 		
-		_generationdata.Roads.StartPoints[1] = _generationdata.Players[1]
-		_generationdata.Roads.StartPoints[2] = _generationdata.Players[2]
+		_GenerationData.Roads.StartPoints[1] = _GenerationData.Players[1]
+		_GenerationData.Roads.StartPoints[2] = _GenerationData.Players[2]
 		
-		delta = _generationdata.MirrorRadian / 2 -- 90°
+		delta = _GenerationData.MirrorRadian / 2 -- 90°
 		x = distance * math.cos(delta) + maphalf
 		y = distance * math.sin(delta) + maphalf
 		
-		x, y = RMG.FindBestPoint(_generationdata, x, y, 16, 4, 0)
-		_generationdata.Roads.StartPoints[3] = {X = x, Y = y}
+		x, y = RMG.FindBestPoint(_GenerationData, x, y, 16, 4, 0)
+		_GenerationData.Roads.StartPoints[3] = {X = x, Y = y}
   
 		delta = delta * 3 -- 270°
 		x = distance * math.cos(delta) + maphalf
 		y = distance * math.sin(delta) + maphalf
 		
-		x, y = RMG.FindBestPoint(_generationdata, x, y, 16, 4, 0)
-		_generationdata.Roads.StartPoints[4] = {X = x, Y = y}
+		x, y = RMG.FindBestPoint(_GenerationData, x, y, 16, 4, 0)
+		_GenerationData.Roads.StartPoints[4] = {X = x, Y = y}
 	
 	-- otherwise use the generic system
 	else
    
 		-- players
-		for p = 1, _generationdata.NumberOfPlayers do
+		for p = 1, _GenerationData.NumberOfPlayers do
 		
-			_generationdata.Roads.StartPoints[p] = _generationdata.Players[p]
-			--table.insert(_generationdata.Roads.Paths, {_generationdata.NumberOfPlayers + 1, p}) -- from middle to player is faster than player to middle when rivers are generated, without its equal fast
+			_GenerationData.Roads.StartPoints[p] = _GenerationData.Players[p]
+			--table.insert(_GenerationData.Roads.Paths, {_GenerationData.NumberOfPlayers + 1, p}) -- from middle to player is faster than player to middle when rivers are generated, without its equal fast
    
-			if p < _generationdata.NumberOfPlayers then
+			if p < _GenerationData.NumberOfPlayers then
 			
-				table.insert(_generationdata.Roads.Paths, {p, p + 1})
+				table.insert(_GenerationData.Roads.Paths, {p, p + 1})
 			else
 			
-				table.insert(_generationdata.Roads.Paths, {1, p})
+				table.insert(_GenerationData.Roads.Paths, {1, p})
 			end
 		end
   
 		-- center of map
-		if _generationdata.MirrorMap then
+		if _GenerationData.MirrorMap then
 			x, y = maphalf, maphalf
 		else
-			x, y = RMG.FindBestPoint( _generationdata, maphalf, maphalf, 16, 4, 0 )
+			x, y = RMG.FindBestPoint(_GenerationData, maphalf, maphalf, 16, 4, 0)
 		end
 		
-		_generationdata.Roads.StartPoints[ _generationdata.NumberOfPlayers + 1 ] = { X = x, Y = y }
+		_GenerationData.Roads.StartPoints[_GenerationData.NumberOfPlayers + 1] = {X = x, Y = y}
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.CreateRoads( _generationdata )
+function RMG.CreateRoads(_GenerationData)
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local bridges = {}
 	
-	for i = 1, table.getn( _generationdata.Roads.Paths ) do
+	for i = 1, table.getn(_GenerationData.Roads.Paths) do
 		
-		local a, b = _generationdata.Roads.Paths[ i ][ 1 ], _generationdata.Roads.Paths[ i ][ 2 ]
-		local x1, y1, x2, y2 = _generationdata.Roads.StartPoints[a].X, _generationdata.Roads.StartPoints[a].Y, _generationdata.Roads.StartPoints[b].X, _generationdata.Roads.StartPoints[b].Y
+		local a, b = _GenerationData.Roads.Paths[i][1], _GenerationData.Roads.Paths[i][2]
+		local x1, y1, x2, y2 = _GenerationData.Roads.StartPoints[a].X, _GenerationData.Roads.StartPoints[a].Y, _GenerationData.Roads.StartPoints[b].X, _GenerationData.Roads.StartPoints[b].Y
 
-		local road = AStar.FindPath ( _generationdata.TerrainNodes[x1][y1], _generationdata.TerrainNodes[x2][y2], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road )
+		local road = AStar.FindPath (_GenerationData.TerrainNodes[x1][y1], _GenerationData.TerrainNodes[x2][y2], _GenerationData.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road)
 		
 		if road then
   
@@ -2149,11 +2117,11 @@ function RMG.CreateRoads( _generationdata )
 				
 				x1, y1, x2, y2 = nodeA.X, nodeA.Y, (nodeA.X + nodeB.X) / 2, (nodeA.Y + nodeB.Y) / 2
 				
-				if _generationdata.Rivers then
+				if _GenerationData.Rivers then
 				
-					for k = 1, table.getn(_generationdata.Rivers.Nodes) do
+					for k = 1, table.getn(_GenerationData.Rivers.Nodes) do
 					
-						nodeB = _generationdata.Rivers.Nodes[k]
+						nodeB = _GenerationData.Rivers.Nodes[k]
 						
 						if (x1 == nodeB.X or x2 == nodeB.X) and (y1 == nodeB.Y or y2 == nodeB.Y) then
 						
@@ -2193,7 +2161,7 @@ function RMG.CreateRoads( _generationdata )
 				
 				for _,v in pairs(bridges) do
 					
-					if IsInRange(v.Placement.AbsolutX, v.Placement.AbsolutY, bridge.Placement.AbsolutX, bridge.Placement.AbsolutY, 28.14) then -- sqrt( 20 ^ 2 + 20 ^ 2 ) = 28.28
+					if IsInRange(v.Placement.AbsolutX, v.Placement.AbsolutY, bridge.Placement.AbsolutX, bridge.Placement.AbsolutY, 28.14) then -- sqrt(20 ^ 2 + 20 ^ 2) = 28.28
 						isblocked = true
 					end
 				end
@@ -2201,7 +2169,7 @@ function RMG.CreateRoads( _generationdata )
 				if not isblocked then
 					table.insert(bridges, bridge)
 				end
-				--table.insert(_generationdata.Structures.Childs[0].Childs, bridge)
+				--table.insert(_GenerationData.Structures.Childs[0].Childs, bridge)
 			end
    
 				--[[x, y = nodeA.X - ax, nodeA.Y - ay
@@ -2216,11 +2184,11 @@ function RMG.CreateRoads( _generationdata )
 				end
      
 				-- now B is the lower node
-				local raod1 = AStar.FindPath ( _generationdata.TerrainNodes[x][y], _generationdata.TerrainNodes[nodeB.X][nodeB.Y], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road )
+				local raod1 = AStar.FindPath (_GenerationData.TerrainNodes[x][y], _GenerationData.TerrainNodes[nodeB.X][nodeB.Y], _GenerationData.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road)
    
 				x, y = x + ax * 2, y + ay * 2
    
-				local road2 = AStar.FindPath ( _generationdata.TerrainNodes[x][y], _generationdata.TerrainNodes[nodeC.X][nodeC.Y], _generationdata.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road )
+				local road2 = AStar.FindPath (_GenerationData.TerrainNodes[x][y], _GenerationData.TerrainNodes[nodeC.X][nodeC.Y], _GenerationData.TerrainNodes, RMG.AStar_GetNeighborNodes_Road, RMG.AStar_GetPathCost_Road)
 			end
    
 			for i = c, b, -1 do
@@ -2235,30 +2203,30 @@ function RMG.CreateRoads( _generationdata )
 				table.insert(road, {X = road2[i].X, Y = road2[i].Y})
 			end]]
 			
-			local currNode = road[ 1 ]
+			local currNode = road[1]
 			
-			local height = _generationdata.TerrainNodes[ currNode.X ][ currNode.Y ].Height - 100
-			local heightnoise = _generationdata.ThresholdRoad
+			local height = _GenerationData.TerrainNodes[currNode.X][currNode.Y].Height - 100
+			local heightnoise = _GenerationData.ThresholdRoad
 			
-			if _generationdata.TerrainNodes[ currNode.X ][ currNode.Y ].Blocking ~= RMG.BlockingTypes.River then
-				RMG.SetNoiseOverride( _generationdata, currNode.X, currNode.Y, 6, 1, height, heightnoise )
+			if _GenerationData.TerrainNodes[currNode.X][currNode.Y].Blocking ~= RMG.BlockingTypes.River then
+				RMG.SetNoiseOverride(_GenerationData, currNode.X, currNode.Y, 6, 1, height, heightnoise)
 			end
 			
 			local prevNode = currNode
 			
-			for j = 2, table.getn( road ) do
+			for j = 2, table.getn(road) do
 		
-				currNode = road[ j ]
+				currNode = road[j]
 				
 				-- same as for rivers we need at least the middle node to make shure river and road dont miss each other at a diagonal
 				for k = 4, 1, -1 do
 				
-					local x, y = Lerp( currNode.X, prevNode.X, k / 4 ), Lerp( currNode.Y, prevNode.Y, k / 4 )
-					height = _generationdata.TerrainNodes[ x ][ y ].Height - 100
+					local x, y = Lerp(currNode.X, prevNode.X, k / 4), Lerp(currNode.Y, prevNode.Y, k / 4)
+					height = _GenerationData.TerrainNodes[x][y].Height - 100
 					
 					-- do not override rivers
-					if _generationdata.TerrainNodes[ x ][ y ].Blocking ~= RMG.BlockingTypes.River then
-						RMG.SetNoiseOverride( _generationdata, x, y, 6, 1, height, heightnoise )
+					if _GenerationData.TerrainNodes[x][y].Blocking ~= RMG.BlockingTypes.River then
+						RMG.SetNoiseOverride(_GenerationData, x, y, 6, 1, height, heightnoise)
 					end
 				end
 				
@@ -2267,17 +2235,17 @@ function RMG.CreateRoads( _generationdata )
 		end
 	end
 	
-	for _,v in pairs( bridges ) do
-		table.insert( _generationdata.Structures.Childs[ 0 ].Childs, v )
+	for _,v in pairs(bridges) do
+		table.insert(_GenerationData.Structures.Childs[0].Childs, v)
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- _height, _heightnoise, _vegetaionnoise are optional
-function RMG.SetNoiseOverride( _generationdata, _nodeX, _nodeY, _radius, _lerpRadius, _height, _heightnoise, _vegetationnoise )
+function RMG.SetNoiseOverride(_GenerationData, _nodeX, _nodeY, _radius, _lerpRadius, _height, _heightnoise, _vegetationnoise)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	
-	local x1, x2, y1, y2 = math.max( _nodeX - _radius , 0 ), math.min( _nodeX + _radius, mapsize ), math.max( _nodeY - _radius, 0 ), math.min( _nodeY + _radius, mapsize )
+	local x1, x2, y1, y2 = math.max(_nodeX - _radius , 0), math.min(_nodeX + _radius, mapsize), math.max(_nodeY - _radius, 0), math.min(_nodeY + _radius, mapsize)
 	local radiusSq = _radius ^ 2
 	
 	for x = x1, x2 do
@@ -2292,43 +2260,43 @@ function RMG.SetNoiseOverride( _generationdata, _nodeX, _nodeY, _radius, _lerpRa
 					factor = (dist - _lerpRadius) / (_radius - _lerpRadius)
 				end
 				
-				local override = _generationdata.TerrainNodes[ x ][ y ].Override
+				local override = _GenerationData.TerrainNodes[x][y].Override
 				
 				if override then
-					_generationdata.TerrainNodes[ x ][ y ].Override.Factor = math.min( override.Factor, factor )
+					_GenerationData.TerrainNodes[x][y].Override.Factor = math.min(override.Factor, factor)
 				else
-					_generationdata.TerrainNodes[ x ][ y ].Override = { HeightNoise = _heightnoise, Height = _height, VegetationNoise = _vegetationnoise, Factor = factor }
+					_GenerationData.TerrainNodes[x][y].Override = {HeightNoise = _heightnoise, Height = _height, VegetationNoise = _vegetationnoise, Factor = factor}
 				end
 			end
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.ApplyNoiseOverride( _generationdata, _blockingtype, _heightfunc, _heightnoisefunc, _vegetationnoisefunc )
+function RMG.ApplyNoiseOverride(_GenerationData, _blockingtype, _heightfunc, _heightnoisefunc, _vegetationnoisefunc)
 
 	local mapsize = Logic.WorldGetSize() / 100
-	local keys = { "Height", "HeightNoise", "VegetationNoise" }
-	local funcs = { _heightfunc, _heightnoisefunc, _vegetationnoisefunc }
+	local keys = {"Height", "HeightNoise", "VegetationNoise"}
+	local funcs = {_heightfunc, _heightnoisefunc, _vegetationnoisefunc}
 	
 	for x = 0, mapsize do
 		for y = 0, mapsize do
 		
-			local override = _generationdata.TerrainNodes[ x ][ y ].Override
+			local override = _GenerationData.TerrainNodes[x][y].Override
 			
 			if override then
 				
 				local updateblocking = false
 				
-				for i, key in ipairs( keys ) do
-					if override[ key ] then
+				for i, key in ipairs(keys) do
+					if override[key] then
 						
-						local value = CurvedLerp( _generationdata.TerrainNodes[ x ][ y ][ key ], override[ key ], override.Factor )
+						local value = CurvedLerp(_GenerationData.TerrainNodes[x][y][key], override[key], override.Factor)
 						
-						if funcs[ i ] then
-							value = funcs[ i ]( _generationdata.TerrainNodes[ x ][ y ][ key ], value )
+						if funcs[i] then
+							value = funcs[i](_GenerationData.TerrainNodes[x][y][key], value)
 						end
 						
-						_generationdata.TerrainNodes[ x ][ y ][ key ] = value
+						_GenerationData.TerrainNodes[x][y][key] = value
 						updateblocking = true
 					end
 				end
@@ -2336,10 +2304,10 @@ function RMG.ApplyNoiseOverride( _generationdata, _blockingtype, _heightfunc, _h
 				-- set blocking if weight is more than 50%
 				-- note that factor is inverted
 				if updateblocking and override.Factor < 0.5 then
-					_generationdata.TerrainNodes[ x ][ y ].Blocking = _blockingtype
+					_GenerationData.TerrainNodes[x][y].Blocking = _blockingtype
 				end
 				
-				_generationdata.TerrainNodes[ x ][ y ].Override = nil
+				_GenerationData.TerrainNodes[x][y].Override = nil
 			end
 		end
 	end
@@ -2347,19 +2315,19 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- AStar Utility
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AStar_GetNeighborNodes( _thisnode, _nodes, _steps )
+function RMG.AStar_GetNeighborNodes(_thisnode, _nodes, _steps)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
 	local neighbors = {}
 	local node
-	local x1, x2, y1, y2 = math.max( _thisnode.X - _steps, 0), math.min( _thisnode.X + _steps, mapsize ), math.max( _thisnode.Y - _steps, 0 ), math.min( _thisnode.Y + _steps, mapsize )
+	local x1, x2, y1, y2 = math.max(_thisnode.X - _steps, 0), math.min(_thisnode.X + _steps, mapsize), math.max(_thisnode.Y - _steps, 0), math.min(_thisnode.Y + _steps, mapsize)
 	
 	for x = x1, x2, _steps do
 		for y = y1, y2, _steps do
-			node = _nodes[ x ][ y ]
-			if ( node.X ~= _thisnode.X or node.Y ~= _thisnode.Y ) and IsValidMapIndex( 0, node.X, node.Y ) then
-				table.insert ( neighbors, node )
+			node = _nodes[x][y]
+			if (node.X ~= _thisnode.X or node.Y ~= _thisnode.Y) and IsValidMapIndex(0, node.X, node.Y) then
+				table.insert (neighbors, node)
 			end
 		end
 	end
@@ -2367,12 +2335,12 @@ function RMG.AStar_GetNeighborNodes( _thisnode, _nodes, _steps )
 	return neighbors
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AStar_GetNeighborNodes_Road( _thisnode, _nodes )
-	return RMG.AStar_GetNeighborNodes( _thisnode, _nodes, 4 )
+function RMG.AStar_GetNeighborNodes_Road(_thisnode, _nodes)
+	return RMG.AStar_GetNeighborNodes(_thisnode, _nodes, 4)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AStar_GetNeighborNodes_River( _thisnode, _nodes )
-	return RMG.AStar_GetNeighborNodes( _thisnode, _nodes, 4 )
+function RMG.AStar_GetNeighborNodes_River(_thisnode, _nodes)
+	return RMG.AStar_GetNeighborNodes(_thisnode, _nodes, 4)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
  -- fast distance calculation for neighboring nodes
@@ -2380,27 +2348,27 @@ end
  -- where if both are not equal, the result is eather 1 or -1 which results in 1 so dist = 1 + 1 * 0.414 = 1.414
  -- river nodes have a higher distance since only every 4th node is used so 4 + 16 * 0.104 = 5.657 = 4 * 1.414
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AStar_GetPathDist( _nodeA, _nodeB, _straight, _diagonalfraction )
-	return _straight + math.abs( ( _nodeA.X - _nodeB.X ) * ( _nodeA.Y - _nodeB.Y ) ) * _diagonalfraction
+function RMG.AStar_GetPathDist(_nodeA, _nodeB, _straight, _diagonalfraction)
+	return _straight + math.abs((_nodeA.X - _nodeB.X) * (_nodeA.Y - _nodeB.Y)) * _diagonalfraction
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AStar_GetPathCost_Road ( _nodeA, _nodeB )
+function RMG.AStar_GetPathCost_Road (_nodeA, _nodeB)
 	 -- adjust factor by needs, be carefull this has heavy impact on performance
 	 -- higher factor = better result but slower vs lower factor = worse result but faster
-	local cost = math.abs( ( _nodeA.Height + _nodeB.Height ) / 2 - RMG.GenerationData.TerrainBaseHeight ) * 0.04
-	return RMG.AStar_GetPathDist ( _nodeA, _nodeB, 1.0, 1.41421353816986083984375 ) * cost
+	local cost = math.abs((_nodeA.Height + _nodeB.Height) / 2 - RMG.GenerationData.TerrainBaseHeight) * 0.04
+	return RMG.AStar_GetPathDist (_nodeA, _nodeB, 1.0, 1.41421353816986083984375) * cost
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.AStar_GetPathCost_River ( _nodeA, _nodeB )
+function RMG.AStar_GetPathCost_River (_nodeA, _nodeB)
 	 -- adjust factor by needs, be carefull this has heavy impact on performance
 	 -- higher factor = better result but slower vs lower factor = worse result but faster
-	local cost = ( ( _nodeA.HeightNoise + _nodeB.HeightNoise ) / 4 + 0.5 ) * 2.5
-	return RMG.AStar_GetPathDist ( _nodeA, _nodeB, 4.0, 0.103553391993045806884765625 ) * cost
+	local cost = ((_nodeA.HeightNoise + _nodeB.HeightNoise) / 4 + 0.5) * 2.5
+	return RMG.AStar_GetPathDist (_nodeA, _nodeB, 4.0, 0.103553391993045806884765625) * cost
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Set Terrain Textures
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.SetTerrainTextures( _generationdata )
+function RMG.SetTerrainTextures(_GenerationData)
 
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -2408,54 +2376,54 @@ function RMG.SetTerrainTextures( _generationdata )
 	-- set terrain textures
  	for x = 0, mapsize, 4 do
 		for y = 0, mapsize, 4 do
-			if math.sqrt( ( x - maphalf ) ^ 2 + ( y - maphalf ) ^ 2 ) < maphalf then
+			if math.sqrt((x - maphalf) ^ 2 + (y - maphalf) ^ 2) < maphalf then
 				
-				RMG.SetRandomTexture( x, y, RMG.GetTerrainNodeLandscapeSetData( _generationdata, _generationdata.TerrainNodes[ x ][ y ], "Textures", true ) )
+				RMG.SetRandomTexture(x, y, RMG.GetTerrainNodeLandscapeSetData(_GenerationData, _GenerationData.TerrainNodes[x][y], "Textures", true))
 			end
 		end
 	end
 	
 	-- set water textures
-	local watertype = _generationdata.LandscapeSet.Water
+	local watertype = _GenerationData.LandscapeSet.Water
 	
 	if watertype then
-		Logic.WaterSetType( 0, 0, mapsize, mapsize, watertype )
+		Logic.WaterSetType(0, 0, mapsize, mapsize, watertype)
 	end
 	
 	-- set water height
-	Logic.WaterSetAbsoluteHeight( 0, 0, mapsize, mapsize, _generationdata.WaterBaseHeight )
+	Logic.WaterSetAbsoluteHeight(0, 0, mapsize, mapsize, _GenerationData.WaterBaseHeight)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.SetRandomTexture( _nodeX, _nodeY, _textures )
+function RMG.SetRandomTexture(_nodeX, _nodeY, _textures)
 
 	if _textures then
 	
-		Logic.SetTerrainNodeType( _nodeX, _nodeY, RMG.GetRandomValueFromTable( _textures ) )
+		Logic.SetTerrainNodeType(_nodeX, _nodeY, RMG.GetRandomValueFromTable(_textures))
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.SetRandomVertexColor( _nodeX, _nodeY, _colors )
+function RMG.SetRandomVertexColor(_nodeX, _nodeY, _colors)
 	
 	if _colors then
 	
-		local color = RMG.GetRandomValueFromTable( _colors )
-		Logic.SetTerrainVertexColor( _nodeX, _nodeY, color.R, color.G, color.B )
+		local color = RMG.GetRandomValueFromTable(_colors)
+		Logic.SetTerrainVertexColor(_nodeX, _nodeY, color.R, color.G, color.B)
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.GetTerrainNodeLandscapeSetData( _generationdata, _terrainnode, _tablekey, _usedefaults )
+function RMG.GetTerrainNodeLandscapeSetData(_GenerationData, _terrainnode, _tablekey, _usedefaults)
 	
-	local heightkey, vegetationkey = RMG.GetBiomeKeys( _generationdata, _terrainnode )
+	local heightkey, vegetationkey = RMG.GetBiomeKeys(_GenerationData, _terrainnode)
 	
-	return RMG.GetLandscapeSetData( _generationdata, _tablekey, heightkey, vegetationkey, _usedefaults )
+	return RMG.GetLandscapeSetData(_GenerationData, _tablekey, heightkey, vegetationkey, _usedefaults)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- generic getter function for landscape set data
 -- note that the output can still be nil
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetLandscapeSetData( _generationdata, _tablekey, _heightkey, _vegetationkey, _usedefaults )
+function RMG.GetLandscapeSetData(_GenerationData, _tablekey, _heightkey, _vegetationkey, _usedefaults)
 	
-	local datatable = _generationdata.LandscapeSet[ _tablekey ]
+	local datatable = _GenerationData.LandscapeSet[_tablekey]
 	
 	-- no landscapset is defined
 	if not datatable then
@@ -2465,10 +2433,10 @@ function RMG.GetLandscapeSetData( _generationdata, _tablekey, _heightkey, _veget
 		end
 		
 		-- use default landscape set
-		datatable = RMG.LandscapeSets.Normal[ _tablekey ]
+		datatable = RMG.LandscapeSets.Normal[_tablekey]
 	end
 	
-	local heighttable = datatable[ _heightkey ]
+	local heighttable = datatable[_heightkey]
 	
 	-- landscape set is missing requested height table
 	if not heighttable then
@@ -2478,7 +2446,7 @@ function RMG.GetLandscapeSetData( _generationdata, _tablekey, _heightkey, _veget
 		end
 		
 		-- try with default height table
-		heighttable = datatable[ "Normal" ]
+		heighttable = datatable["Normal"]
 		
 		if not heighttable then
 			
@@ -2487,52 +2455,52 @@ function RMG.GetLandscapeSetData( _generationdata, _tablekey, _heightkey, _veget
 			end
 			
 			-- use default landscape set
-			heighttable = RMG.LandscapeSets.Normal[ _tablekey ]
+			heighttable = RMG.LandscapeSets.Normal[_tablekey]
 		end
 	end
 	
-	local vegetationtable = heighttable[ _vegetationkey ]
+	local vegetationtable = heighttable[_vegetationkey]
 	
 	-- heighttable is mission requested vegetation table
 	if not vegetationtable then
 		
 		-- use default vegetation key, no matter what
-		vegetationtable = heighttable[ "Normal" ]
+		vegetationtable = heighttable["Normal"]
 	end
 	
 	return vegetationtable
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.GetRandomValueFromTable( _table )
-	return GetRandomValueFromTable( GetRandomValueFromTable( _table.Sets or _table, _table.Weights ) )
+function RMG.GetRandomValueFromTable(_table)
+	return GetRandomValueFromTable(GetRandomValueFromTable(_table.Sets or _table, _table.Weights))
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function GetRandomValueFromTable( _table, _weights )
+function GetRandomValueFromTable(_table, _weights)
 
-	if type( _table ) == "table" then
+	if type(_table) == "table" then
 		
-		if type( _weights ) == "table" then
+		if type(_weights) == "table" then
 			
 			local totalweight = 0
 			
-			for i = 1, table.getn( _table ) do
-				totalweight = totalweight + ( _weights[ i ] or 1 )
+			for i = 1, table.getn(_table) do
+				totalweight = totalweight + (_weights[i] or 1)
 			end
 			
-			local randomvalue = math.random( 1, totalweight )
+			local randomvalue = math.random(1, totalweight)
 			local weight = 0
 			
-			for i = 1, table.getn( _table ) do
+			for i = 1, table.getn(_table) do
 				
-				weight = weight + ( _weights[ i ] or 1 )
+				weight = weight + (_weights[i] or 1)
 				
 				if weight >= randomvalue then
-					return _table[ i ]
+					return _table[i]
 				end
 			end
 		end
 		
-		return _table[ math.random( 1, table.getn( _table ) ) ]
+		return _table[math.random(1, table.getn(_table))]
 	end
 	
 	return _table
@@ -2540,17 +2508,17 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
  -- this way, we can use the same biome logic for terrain and entities
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.GetBiomeKeys( _generationdata, _terrainnode )
+function RMG.GetBiomeKeys(_GenerationData, _terrainnode)
 	
-	return RMG.GetHeightKey( _generationdata, _terrainnode ), RMG.GetVegetationKey( _generationdata, _terrainnode )
+	return RMG.GetHeightKey(_GenerationData, _terrainnode), RMG.GetVegetationKey(_GenerationData, _terrainnode)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetHeightKey( _generationdata, _terrainnode )
+function RMG.GetHeightKey(_GenerationData, _terrainnode)
 
 	-- height noise equals threshold road indicates a road, no matter the actual height
 	local heightnoise = _terrainnode.HeightNoise
 	
-	if heightnoise == _generationdata.ThresholdRoad then
+	if heightnoise == _GenerationData.ThresholdRoad then
 		return "Road"
 	end
 	
@@ -2558,35 +2526,35 @@ function RMG.GetHeightKey( _generationdata, _terrainnode )
 	local height= _terrainnode.Height
 	local heightkey = "Normal"
 	
-	if height > _generationdata.ThresholdPike then
+	if height > _GenerationData.ThresholdPike then
 		heightkey = "Pike"
-	elseif height > _generationdata.ThresholdMountain then
+	elseif height > _GenerationData.ThresholdMountain then
 		heightkey = "Mountain"
-	elseif height > _generationdata.ThresholdHill then
+	elseif height > _GenerationData.ThresholdHill then
 		heightkey = "Hill"
-	elseif height < _generationdata.ThresholdSea then
+	elseif height < _GenerationData.ThresholdSea then
 		heightkey = "Sea"
-	elseif height < _generationdata.ThresholdLake then
+	elseif height < _GenerationData.ThresholdLake then
 		heightkey = "Lake"
-	elseif height < _generationdata.ThresholdCoast then
+	elseif height < _GenerationData.ThresholdCoast then
 		heightkey = "Coast"
 	end
 	
 	return heightkey
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetVegetationKey( _generationdata, _terrainnode )
+function RMG.GetVegetationKey(_GenerationData, _terrainnode)
 	
 	local vegetationnoise = _terrainnode.VegetationNoise
 	local vegetationkey = "Medium"
 	
-	if vegetationnoise > _generationdata.ThresholdVeryStrongGroth then
+	if vegetationnoise > _GenerationData.ThresholdVeryStrongGroth then
 		vegetationkey = "VeryStrong"
-	elseif vegetationnoise > _generationdata.ThresholdStrongGroth then
+	elseif vegetationnoise > _GenerationData.ThresholdStrongGroth then
 		vegetationkey = "Strong"
-	elseif vegetationnoise < _generationdata.ThresholdVeryWeakGroth then
+	elseif vegetationnoise < _GenerationData.ThresholdVeryWeakGroth then
 		vegetationkey = "VeryWeak"
-	elseif vegetationnoise < _generationdata.ThresholdWeakGroth then
+	elseif vegetationnoise < _GenerationData.ThresholdWeakGroth then
 		vegetationkey = "Weak"
 	end
 	
@@ -2595,7 +2563,7 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Set Terrain Heights
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.SetTerrainHeights(_generationdata)
+function RMG.SetTerrainHeights(_GenerationData)
  
 	local mapsize = Logic.WorldGetSize() / 100
 	local maphalf = mapsize / 2
@@ -2603,18 +2571,18 @@ function RMG.SetTerrainHeights(_generationdata)
 	for x = 0, mapsize do
 		for y = 0, mapsize do
 		
-			Logic.SetTerrainNodeHeight( x, y, _generationdata.TerrainNodes[ x ][ y ].Height )
+			Logic.SetTerrainNodeHeight(x, y, _GenerationData.TerrainNodes[x][y].Height)
 			
 			-- this is more a textures thing but since textures use a 4 stepped loop we do it here
-			if math.sqrt( ( x - maphalf ) ^ 2 + ( y - maphalf ) ^ 2 ) < maphalf then
+			if math.sqrt((x - maphalf) ^ 2 + (y - maphalf) ^ 2) < maphalf then
 				
-				RMG.SetRandomVertexColor( x, y, RMG.GetTerrainNodeLandscapeSetData( _generationdata, _generationdata.TerrainNodes[ x ][ y ], "VertexColors" ) )
+				RMG.SetRandomVertexColor(x, y, RMG.GetTerrainNodeLandscapeSetData(_GenerationData, _GenerationData.TerrainNodes[x][y], "VertexColors"))
 			end
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetTerrainHeightFromNoise(_generationdata, _noise)
+function RMG.GetTerrainHeightFromNoise(_GenerationData, _noise)
 	
 	-- experimental 
 	--[[if _noise > 0 then
@@ -2623,44 +2591,44 @@ function RMG.GetTerrainHeightFromNoise(_generationdata, _noise)
 		_noise = math.sin((_noise + 0.5) * math.pi) / 2 - 0.5
 	end]]
 		
-	--[[if _noise < 0 then --_generationdata.ThresholdRoad then
-		_noise = math.min( _noise - _generationdata.ThresholdLowFlatland, 0 ) / ( 1 + _generationdata.ThresholdLowFlatland )
+	--[[if _noise < 0 then --_GenerationData.ThresholdRoad then
+		_noise = math.min(_noise - _GenerationData.ThresholdLowFlatland, 0) / (1 + _GenerationData.ThresholdLowFlatland)
 	else
-		_noise = math.max( math.min(_noise, _generationdata.ThresholdPlateau) - _generationdata.ThresholdFlatland, 0 ) / ( 1 - _generationdata.ThresholdFlatland ) * (2 - _generationdata.ThresholdPlateau)
+		_noise = math.max(math.min(_noise, _GenerationData.ThresholdPlateau) - _GenerationData.ThresholdFlatland, 0) / (1 - _GenerationData.ThresholdFlatland) * (2 - _GenerationData.ThresholdPlateau)
 	end]]
 	
-	local noise = ( _noise * 1.2 ) ^ 2
+	local noise = (_noise * 1.2) ^ 2
 	
 	if _noise < 0.0 then
 		noise = -noise
 	end
 	
-	return math.max( noise * _generationdata.NoiseFactorZ + _generationdata.TerrainBaseHeight, 0 )
+	return math.max(noise * _GenerationData.NoiseFactorZ + _GenerationData.TerrainBaseHeight, 0)
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Generate Structures
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.GenerateStructures( _generationdata )
+function RMG.GenerateStructures(_GenerationData)
 	
 	local success = false
 	local failure = false
 	
 	while not success and not failure do
-		success, failure = RMG.GenerateStructure( _generationdata )
+		success, failure = RMG.GenerateStructure(_GenerationData)
 	end
 	
 	if failure then
-		GUI.AddStaticNote( "@color:255,0,0,255 RMG ERROR: Auf der Karte ist nicht genug Platz um alle Strukturen platzieren zu können. @cr @color:255,255,255 Ändert den Seed oder verwendet eine größere Karte." )-- oder verringert die Anzahl an Strukturen.")
+		GUI.AddStaticNote("@color:255,0,0,255 RMG ERROR: Auf der Karte ist nicht genug Platz um alle Strukturen platzieren zu können. @cr @color:255,255,255 Ändert den Seed oder verwendet eine größere Karte.")-- oder verringert die Anzahl an Strukturen.")
 		return false
 	end
 	
 	return true
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GenerateStructure( _generationdata )
+function RMG.GenerateStructure(_GenerationData)
  
-	local struct = RMG.GetCurrentStruct( _generationdata )
-	local parent = RMG.GetCurrentParentData( _generationdata )
+	local struct = RMG.GetCurrentStruct(_GenerationData)
+	local parent = RMG.GetCurrentParentData(_GenerationData)
  
 	local placement, x, y, forcePlacement
  
@@ -2701,7 +2669,7 @@ function RMG.GenerateStructure( _generationdata )
 		
 		if placement.AreaMax then
 			
-			node = RMG.GetRandomPosition( _generationdata, struct, parent, placement.Grid )
+			node = RMG.GetRandomPosition(_GenerationData, struct, parent, placement.Grid)
 			
 			if node then
 				x, y = node.X, node.Y
@@ -2715,54 +2683,54 @@ function RMG.GenerateStructure( _generationdata )
 	
 	if forcePlacement or node then
 		
-		local playerindex = RMG.StructGetCurrentPlayer( _generationdata )
+		local playerindex = RMG.StructGetCurrentPlayer(_GenerationData)
 		
-		if playerindex > 0 and _generationdata.MirrorMap then
+		if playerindex > 0 and _GenerationData.MirrorMap then
 			
-			local composition = _generationdata.Composition
-			local player = composition[ playerindex ]
+			local composition = _GenerationData.Composition
+			local player = composition[playerindex]
 
 			if player.Mirror then
 				
 				-- mirror offset + 0.5 would be source of player 1, but we need it 0 based and this is an optimized version to write 
-				local offset = -0.5 * _generationdata.MirrorRadian + _generationdata.MirrorOffset
-				local sourceradian = player.Slize * _generationdata.MirrorRadian + offset
+				local offset = -0.5 * _GenerationData.MirrorRadian + _GenerationData.MirrorOffset
+				local sourceradian = player.Slize * _GenerationData.MirrorRadian + offset
 				
-				for _, mirror in ipairs( player.Mirror ) do
+				for _, mirror in ipairs(player.Mirror) do
 					
-					local targetradian = composition[ mirror ].Slize * _generationdata.MirrorRadian + offset
-					local mx, my = RMG.MirrorNode( _generationdata, x, y, sourceradian, targetradian, composition[ mirror ].AxisMirrorFlag )
+					local targetradian = composition[mirror].Slize * _GenerationData.MirrorRadian + offset
+					local mx, my = RMG.MirrorNode(_GenerationData, x, y, sourceradian, targetradian, composition[mirror].AxisMirrorFlag)
 					
-					RMG.CreateStructure( _generationdata, struct, Round( mx ), Round( my ), _generationdata.Players[ mirror ] )
+					RMG.CreateStructure(_GenerationData, struct, Round(mx), Round(my), _GenerationData.Players[mirror])
 				end
 			end
 		end
 		
 		-- if MirrorMap is true, this is player 1 and needs to be the last call to get the positioning for mirror sources right
-		RMG.CreateStructure( _generationdata, struct, x, y, _generationdata.Players[ playerindex ] )
+		RMG.CreateStructure(_GenerationData, struct, x, y, _GenerationData.Players[playerindex])
 				
 		-- never change anything in the following lines !!!
-		local level = _generationdata.Structures.Current.Levels[ 0 ]
+		local level = _GenerationData.Structures.Current.Levels[0]
 		
-		if struct.Childs and table.getn( struct.Childs ) > 0 then
+		if struct.Childs and table.getn(struct.Childs) > 0 then
 			
 			level = level + 1
-			_generationdata.Structures.Current.Levels[ 0 ] = level
-			_generationdata.Structures.Current.Levels[ level ] = 1
+			_GenerationData.Structures.Current.Levels[0] = level
+			_GenerationData.Structures.Current.Levels[level] = 1
      
 			return false, false
 		else
   
 			while level > 0 do
-				if _generationdata.Structures.Current.Levels[ level ] < table.getn( RMG.GetStructByLevel( _generationdata, level - 1 ).Childs ) then
+				if _GenerationData.Structures.Current.Levels[level] < table.getn(RMG.GetStructByLevel(_GenerationData, level - 1).Childs) then
 				
-					_generationdata.Structures.Current.Levels[ level ] = _generationdata.Structures.Current.Levels[ level ] + 1
+					_GenerationData.Structures.Current.Levels[level] = _GenerationData.Structures.Current.Levels[level] + 1
      
 					return false, false
 				else
 				
-					_generationdata.Structures.Current.Levels[ level ] = 1
-					_generationdata.Structures.Current.Levels[ 0 ] = _generationdata.Structures.Current.Levels[ 0 ] - 1
+					_GenerationData.Structures.Current.Levels[level] = 1
+					_GenerationData.Structures.Current.Levels[0] = _GenerationData.Structures.Current.Levels[0] - 1
 					level = level - 1
 					-- do not call return here, there could be more levels finished
 				end
@@ -2776,57 +2744,57 @@ function RMG.GenerateStructure( _generationdata )
 	return false, true
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetCurrentStruct( _generationdata )
-	return RMG.GetStructByLevel( _generationdata, _generationdata.Structures.Current.Levels[ 0 ] )
+function RMG.GetCurrentStruct(_GenerationData)
+	return RMG.GetStructByLevel(_GenerationData, _GenerationData.Structures.Current.Levels[0])
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetStructByLevel( _generationdata, _level )
+function RMG.GetStructByLevel(_GenerationData, _level)
 	
-	local struct = _generationdata.Structures
+	local struct = _GenerationData.Structures
 	
 	for l = 1, _level do
-		struct = struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ]
+		struct = struct.Childs[_GenerationData.Structures.Current.Levels[l]]
 	end
 	
 	return struct
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetCurrentParentData( _generationdata )
-	return RMG.GetStructDataByLevel(_generationdata, _generationdata.Structures.Current.Levels[0] - 1)
+function RMG.GetCurrentParentData(_GenerationData)
+	return RMG.GetStructDataByLevel(_GenerationData, _GenerationData.Structures.Current.Levels[0] - 1)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetStructDataByLevel( _generationdata, _level )
+function RMG.GetStructDataByLevel(_GenerationData, _level)
 	
-	local struct = _generationdata.Structures.Current.Structs
+	local struct = _GenerationData.Structures.Current.Structs
 	
 	for l = 1, _level do
-		struct = struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ]
+		struct = struct.Childs[_GenerationData.Structures.Current.Levels[l]]
 	end
 	
 	return struct
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.SetCurrentStructData( _generationdata, _nodeX, _nodeY, _radius )
+function RMG.SetCurrentStructData(_GenerationData, _nodeX, _nodeY, _radius)
 	
 	local mapsize = Logic.WorldGetSize() / 100
-	local x1, x2, y1, y2 = math.max( _nodeX - _radius, 0 ), math.min( _nodeX + _radius, mapsize ), math.max( _nodeY - _radius, 0 ), math.min( _nodeY + _radius, mapsize )
+	local x1, x2, y1, y2 = math.max(_nodeX - _radius, 0), math.min(_nodeX + _radius, mapsize), math.max(_nodeY - _radius, 0), math.min(_nodeY + _radius, mapsize)
 	
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			if SimpleGetDistance( x, y, _nodeX, _nodeY ) < _radius then
+			if SimpleGetDistance(x, y, _nodeX, _nodeY) < _radius then
 			
-				_generationdata.TerrainNodes[ x ][ y ].Blocking = RMG.BlockingTypes.Structure
+				_GenerationData.TerrainNodes[x][y].Blocking = RMG.BlockingTypes.Structure
 			end
 		end
 	end
 	
-	RMG.SetStructDataBylevel( _generationdata, _generationdata.Structures.Current.Levels[ 0 ], _nodeX, _nodeY, _radius )
+	RMG.SetStructDataBylevel(_GenerationData, _GenerationData.Structures.Current.Levels[0], _nodeX, _nodeY, _radius)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.SetStructDataBylevel( _generationdata, _level, _x, _y, _blocking )
+function RMG.SetStructDataBylevel(_GenerationData, _level, _x, _y, _blocking)
 	
-	local struct = _generationdata.Structures.Current.Structs
+	local struct = _GenerationData.Structures.Current.Structs
 	
 	for l = 1, _level do
 		
@@ -2834,11 +2802,11 @@ function RMG.SetStructDataBylevel( _generationdata, _level, _x, _y, _blocking )
 			struct.Childs = {}
 		end
 		
-		if not struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ] then
-			struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ] = {}
+		if not struct.Childs[_GenerationData.Structures.Current.Levels[l]] then
+			struct.Childs[_GenerationData.Structures.Current.Levels[l]] = {}
 		end
 		
-		struct = struct.Childs[ _generationdata.Structures.Current.Levels[ l ] ]
+		struct = struct.Childs[_GenerationData.Structures.Current.Levels[l]]
 	end
 	
 	struct.X = _x
@@ -2847,11 +2815,11 @@ function RMG.SetStructDataBylevel( _generationdata, _level, _x, _y, _blocking )
 	struct.Blocking = _blocking
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.StructGetCurrentPlayer( _generationdata )
-	return _generationdata.Structures.Current.Players[ _generationdata.Structures.Current.Levels[ 1 ] ] --math.min( _generationdata.Structures.Current.Levels[ 1 ], 16 )
+function RMG.StructGetCurrentPlayer(_GenerationData)
+	return _GenerationData.Structures.Current.Players[_GenerationData.Structures.Current.Levels[1]] --math.min(_GenerationData.Structures.Current.Levels[1], 16)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.IsAvailableMapIndex( _generationdata, _nodeX, _nodeY, _radius )
+function RMG.IsAvailableMapIndex(_GenerationData, _nodeX, _nodeY, _radius)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local x1, x2, y1, y2 = _nodeX - _radius, _nodeX + _radius, _nodeY - _radius, _nodeY + _radius
@@ -2865,7 +2833,7 @@ function RMG.IsAvailableMapIndex( _generationdata, _nodeX, _nodeY, _radius )
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			if IsInRangeSq( x, y, _nodeX, _nodeY, radiussq ) and _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
+			if IsInRangeSq(x, y, _nodeX, _nodeY, radiussq) and _GenerationData.TerrainNodes[x][y].Blocking ~= 0 then
 				return false
 			end
 		end
@@ -2874,28 +2842,28 @@ function RMG.IsAvailableMapIndex( _generationdata, _nodeX, _nodeY, _radius )
 	return true
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.CreateStructure( _generationdata, _struct, _x, _y, _player, _doNotRegister )
+function RMG.CreateStructure(_GenerationData, _struct, _x, _y, _player, _doNotRegister)
  
 	-- Data
 	if _struct.Data then
 		local data = _struct.Data
 		
 		if not _doNotRegister then
-			RMG.SetCurrentStructData( _generationdata, _x, _y, data.Blocking or 0 )
+			RMG.SetCurrentStructData(_GenerationData, _x, _y, data.Blocking or 0)
 		end
 		
 		-- Entities
 		if data.Entities then
-			for i = 1, table.getn( data.Entities ) do
+			for i = 1, table.getn(data.Entities) do
 				
 				local entity = {}
-				entity.Data = data.Entities[ i ]
+				entity.Data = data.Entities[i]
 				entity.X = _x * 100
 				entity.Y = _y * 100
-				entity.P = data.Entities[ i ].Player or _player.Id
+				entity.P = data.Entities[i].Player or _player.Id
 				
-				if _player.IsHuman == 1 or ( ( not entity.Data.SkipDummy ) and ( not entity.Data.Explore ) ) then
-					table.insert( _generationdata.Entities, entity )
+				if _player.IsHuman == 1 or ((not entity.Data.SkipDummy) and (not entity.Data.Explore)) then
+					table.insert(_GenerationData.Entities, entity)
 				end
 			end
 		end
@@ -2906,17 +2874,17 @@ function RMG.CreateStructure( _generationdata, _struct, _x, _y, _player, _doNotR
 			local heights = data.TerrainHeights
 			local area = heights.Area or 10
 			local lerpdist = heights.LerpDist or 8
-			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData( area )
+			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData(area)
 			
 			local height, dist
-			local baseheight = heights.BaseHeight or math.max( _generationdata.WaterBaseHeight + 100, _generationdata.TerrainNodes[ _x ][ _y ].Height )--_generationdata.TerrainBaseHeight--
+			local baseheight = heights.BaseHeight or math.max(_GenerationData.WaterBaseHeight + 100, _GenerationData.TerrainNodes[_x][_y].Height)--_GenerationData.TerrainBaseHeight--
 			
 			for x = x1, x2 do
 				for y = y1, y2 do
-					if IsValidMapIndex( 0, x + _x, y + _y ) and ( isrect or IsInRangeSq( 0, 0, x, y, areasq ) ) then
+					if IsValidMapIndex(0, x + _x, y + _y) and (isrect or IsInRangeSq(0, 0, x, y, areasq)) then
 						
-						if heights[ x ] then
-							height = heights[ x ][ y ] or 0
+						if heights[x] then
+							height = heights[x][y] or 0
 						else
 							height = 0
 						end
@@ -2924,16 +2892,16 @@ function RMG.CreateStructure( _generationdata, _struct, _x, _y, _player, _doNotR
 						height = height + baseheight
 						
 						if isrect then
-							dist = math.min( math.abs( x1 - x ), math.abs( y1 - y ), math.abs( x2 - x ), math.abs( y2 - y ) ) -- shortest dist to border
+							dist = math.min(math.abs(x1 - x), math.abs(y1 - y), math.abs(x2 - x), math.abs(y2 - y)) -- shortest dist to border
 						else
-							dist = area - SimpleGetDistance( 0, 0, x, y ) -- 0 because its a relativ index
+							dist = area - SimpleGetDistance(0, 0, x, y) -- 0 because its a relativ index
 						end
 						
 						if dist < lerpdist then
-							height = CurvedLerp( height, _generationdata.TerrainNodes[ x + _x ][ y + _y ].Height, ( dist ) / ( lerpdist ) )
+							height = CurvedLerp(height, _GenerationData.TerrainNodes[x + _x][y + _y].Height, (dist) / (lerpdist))
 						end
 						
-						_generationdata.TerrainNodes[ x + _x ][ y + _y ].Height = height
+						_GenerationData.TerrainNodes[x + _x][y + _y].Height = height
 					end
 				end
 			end
@@ -2946,22 +2914,22 @@ function RMG.CreateStructure( _generationdata, _struct, _x, _y, _player, _doNotR
 			
 			local area = textures.Area or 10
 			local x, y = textures.RelativX or 0, textures.RelativY or 0
-			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData( area )
+			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData(area)
    
-			local px, py = SnapToGrid( 4, _x + x, _y + y )
-			x1, y1 = FloorToGrid( 4, px + x1, py + y1 )
-			x2, y2 = CeilToGrid( 4, px + x2, py + y2 )
+			local px, py = SnapToGrid(4, _x + x, _y + y)
+			x1, y1 = FloorToGrid(4, px + x1, py + y1)
+			x2, y2 = CeilToGrid(4, px + x2, py + y2)
 			
 			local textureList = textures.TextureList or TerrainTypes.EdgeColor01_AT
 			
-			if type( textureList ) == "string" then
-				textureList = _generationdata.LandscapeSet.Textures[ textureList ].Normal
+			if type(textureList) == "string" then
+				textureList = _GenerationData.LandscapeSet.Textures[textureList].Normal
 			end
 			
 			for x = x1, x2, 4 do
 				for y = y1, y2, 4 do
-					if isrect or IsInRangeSq( x, y, _x, _y, areasq ) then
-						RMG.SetRandomTexture( x, y, textureList )
+					if isrect or IsInRangeSq(x, y, _x, _y, areasq) then
+						RMG.SetRandomTexture(x, y, textureList)
 					end
 				end
 			end
@@ -2973,22 +2941,22 @@ function RMG.CreateStructure( _generationdata, _struct, _x, _y, _player, _doNotR
 			local water = data.Water
 			
 			local area = water.Area or 4 -- default for resource pits
-			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData( area )
+			local x1, y1, x2, y2, areasq, isrect = RMG.GetAreaData(area)
 			
-			local px, py = SnapToGrid( 4, _x, _y )
-			x1, y1 = FloorToGrid( 4, px + x1, py + y1 )
-			x2, y2 = CeilToGrid( 4, px + x2, py + y2 )
+			local px, py = SnapToGrid(4, _x, _y)
+			x1, y1 = FloorToGrid(4, px + x1, py + y1)
+			x2, y2 = CeilToGrid(4, px + x2, py + y2)
    
 			local height = water.Height or 0
-			Logic.WaterSetAbsoluteHeight( x1, y1, x2, y2, height )
+			Logic.WaterSetAbsoluteHeight(x1, y1, x2, y2, height)
    
 			if water.Type then
-				Logic.WaterSetType( x1, y1, x2, y2, water.Type )
+				Logic.WaterSetType(x1, y1, x2, y2, water.Type)
 			end
 		end
   
 	else
-		RMG.SetCurrentStructData( _generationdata, _x, _y, 0 )
+		RMG.SetCurrentStructData(_GenerationData, _x, _y, 0)
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2996,12 +2964,12 @@ function RMG.GetAreaData(_area)
 	
 	local x1, y1, x2, y2, areasq, isrect
 	
-	if type( _area ) == "number" then
+	if type(_area) == "number" then
 		
 		x1, y1, x2, y2 = -_area, -_area, _area, _area
 		areasq = _area ^ 2
 		isrect = false
-	else --if type( _area ) == "table" then
+	else --if type(_area) == "table" then
 		
 		areasq = 0--2 * _area ^ 2
 		isrect = true
@@ -3017,27 +2985,27 @@ function RMG.GetAreaData(_area)
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- this function must only be called if _struct.Placemant is valid
-function RMG.GetRandomPosition( _generationdata, _struct, _parent, _grid )
+function RMG.GetRandomPosition(_GenerationData, _struct, _parent, _grid)
 	
 	-- important for indexing
 	_grid = _grid or 1
 	
 	-- get the overall area
-	local x1, y1, x2, y2, areasq1, isrect1 = RMG.GetAreaData( _struct.Placement.AreaMax )
+	local x1, y1, x2, y2, areasq1, isrect1 = RMG.GetAreaData(_struct.Placement.AreaMax)
 	
 	-- and the excluded inner area
-	local x3, y3, x4, y4, areasq2, isrect2 = 0,0,0,0,0,true
+	local x3, y3, x4, y4, areasq2, isrect2 = 0, 0, 0, 0, 0, isrect1
 	
 	if _struct.Placement.AreaMin then
-		x3, y3, x4, y4, areasq2, isrect2 = RMG.GetAreaData( _struct.Placement.AreaMin )
+		x3, y3, x4, y4, areasq2, isrect2 = RMG.GetAreaData(_struct.Placement.AreaMin)
 	end
 	
-	local bestheight= _struct.Placement.Height
+	local bestheight = _struct.Placement.Height
 		
 	if not bestheight then
 		local heightmax = _struct.Placement.HeightMax or 1
 		local heightmin = _struct.Placement.HeightMin or -heightmax
-		bestheight = ( heightmin + heightmax ) / 2
+		bestheight = (heightmin + heightmax) / 2
 	end
 	
 	local blocking = 0
@@ -3049,8 +3017,8 @@ function RMG.GetRandomPosition( _generationdata, _struct, _parent, _grid )
 	local maphalf = Logic.WorldGetSize() / 200
 	local nodes = {}
 	
-	x1, y1 = CeilToGrid( _grid, x1, y1 )
-	x2, y2 = FloorToGrid( _grid, x2, y2 )
+	x1, y1 = CeilToGrid(_grid, x1, y1)
+	x2, y2 = FloorToGrid(_grid, x2, y2)
 	
 	local step = _grid or 1
 	
@@ -3058,32 +3026,32 @@ function RMG.GetRandomPosition( _generationdata, _struct, _parent, _grid )
 		for y = y1, y2, step do
 		
 			-- is inside outer area ?
-			local nx, ny = Round( x +_parent.X ), Round( y +_parent.Y )
-			if ( isrect1 or IsInRangeSq( 0, 0, x, y, areasq1 ) ) and SimpleGetDistance( nx, ny, maphalf, maphalf ) <= maphalf - blocking then --IsValidMapIndex(0, xn, yn) and 
+			local nx, ny = Round(x + _parent.X), Round(y + _parent.Y)
+			if (isrect1 or IsInRangeSq(0, 0, x, y, areasq1)) and SimpleGetDistance(nx, ny, maphalf, maphalf) <= maphalf - blocking then --IsValidMapIndex(0, xn, yn) and 
 			
 				-- is outside inner area ?
-				if not ( ( isrect2 and x > x3 and y > y3 and x < x4 and y < y4 ) or ( not isrect2 and IsInRangeSq( 0, 0, x, y, areasq2 ) ) ) then
+				if not ((isrect2 and x > x3 and y > y3 and x < x4 and y < y4) or (not isrect2 and IsInRangeSq(0, 0, x, y, areasq2))) then
 					
-					local node = _generationdata.TerrainNodes[ nx ][ ny ]
-					local cost = RMG.GetNodeBlockingCost( _generationdata, nx, ny, blocking ) * 100
+					local node = _GenerationData.TerrainNodes[nx][ny]
+					local cost = RMG.GetNodeBlockingCost(_GenerationData, nx, ny, blocking) * 100
 					
-					local dif = math.abs( node.Height - bestheight ) + cost
-					table.insert( nodes, { Dif = dif, X = nx, Y = ny } )
+					local dif = math.abs(node.Height - bestheight) + cost
+					table.insert(nodes, {Dif = dif, X = nx, Y = ny})
 				end
 			end
 		end
 	end
 	
-	table.sort( nodes,
-    function( e, e2 )
+	table.sort(nodes,
+    function(e, e2)
         return e.Dif < e2.Dif
     end
 	)
 	
-	return nodes[ 1 ]
+	return nodes[1]
 	
-	--for _,v in pairs( nodes ) do
-	--	if RMG.IsAvailableMapIndex( _generationdata, v.X, v.Y, blocking ) then
+	--for _,v in pairs(nodes) do
+	--	if RMG.IsAvailableMapIndex(_GenerationData, v.X, v.Y, blocking) then
 	--		return v
 	--	end
 	--end
@@ -3091,7 +3059,7 @@ function RMG.GetRandomPosition( _generationdata, _struct, _parent, _grid )
 	--return false
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.GetNodeBlockingCost( _generationdata, _nodeX, _nodeY, _radius )
+function RMG.GetNodeBlockingCost(_GenerationData, _nodeX, _nodeY, _radius)
 	
 	local mapsize = Logic.WorldGetSize() / 100
 	local x1, x2, y1, y2 = _nodeX - _radius, _nodeX + _radius, _nodeY - _radius, _nodeY + _radius
@@ -3102,7 +3070,7 @@ function RMG.GetNodeBlockingCost( _generationdata, _nodeX, _nodeY, _radius )
 	for x = x1, x2 do
 		for y = y1, y2 do
 			
-			if IsInRangeSq( x, y, _nodeX, _nodeY, _radius ) and _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
+			if IsInRangeSq(x, y, _nodeX, _nodeY, _radius) and _GenerationData.TerrainNodes[x][y].Blocking ~= 0 then
 				cost = cost + 1
 			end
 		end
@@ -3113,24 +3081,24 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Update Blocking
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.UpdateBlocking( _generationdata )
+function RMG.UpdateBlocking(_GenerationData)
 
 	local mapsize = Logic.WorldGetSize() / 100
-	Logic.UpdateBlocking( 1, 1, mapsize - 1, mapsize - 1 )
+	Logic.UpdateBlocking(1, 1, mapsize - 1, mapsize - 1)
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Create Entities
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.CreateEntities( _generationdata )
+function RMG.CreateEntities(_GenerationData)
 	
 	-- structural entities
-	for _, entity in ipairs( _generationdata.Entities ) do
-		RMG.CreateEntity( _generationdata, entity )
+	for _, entity in ipairs(_GenerationData.Entities) do
+		RMG.CreateEntity(_GenerationData, entity)
 	end
 	
 	-- environmental entities
 	-- skip if density is 0
-	local entitydensity = _generationdata.ForestDensity
+	local entitydensity = _GenerationData.ForestDensity
 	
 	if entitydensity > 0 then
 		
@@ -3142,19 +3110,19 @@ function RMG.CreateEntities( _generationdata )
 		for x = 8, mapsize - 8 do
 			for y = 8, mapsize - 8 do
 			
-				local blocking = _generationdata.TerrainNodes[ x ][ y ].Blocking
+				local blocking = _GenerationData.TerrainNodes[x][y].Blocking
 				
-				if blocking ~= RMG.BlockingTypes.Structure and blocking ~= RMG.BlockingTypes.Road and IsInRangeSq( x, y, maphalf, maphalf, maphalfsqared ) then
+				if blocking ~= RMG.BlockingTypes.Structure and blocking ~= RMG.BlockingTypes.Road and IsInRangeSq(x, y, maphalf, maphalf, maphalfsqared) then
 					
-					local landscapesetdata = RMG.GetTerrainNodeLandscapeSetData( _generationdata, _generationdata.TerrainNodes[ x ][ y ], "Entities" )
+					local landscapesetdata = RMG.GetTerrainNodeLandscapeSetData(_GenerationData, _GenerationData.TerrainNodes[x][y], "Entities")
 					
 					if landscapesetdata then
 						
 						local density = landscapesetdata.Density or 3
 						
-						if math.mod( x, density ) == 0 and math.mod( y, density ) == 0 then
+						if math.mod(x, density) == 0 and math.mod(y, density) == 0 then
 							
-							RMG.CreateRandomEntity( x * 100, y * 100, landscapesetdata, density * 33 )
+							RMG.CreateRandomEntity(x * 100, y * 100, landscapesetdata, density * 33)
 						end
 					end
 				end
@@ -3165,64 +3133,64 @@ function RMG.CreateEntities( _generationdata )
 	-- crate wood piles
 	local woodpilecounter = 1
 	
-	for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.XD_ScriptEntity ) ) do
+	for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.XD_ScriptEntity)) do
 		
-		local name = GetEntityName( id )
+		local name = GetEntityName(id)
 		
 		if name == "woodpile" then
 				
-			Logic.SetEntityName( id, "woodpile"..woodpilecounter )
-			CreateWoodPile( "woodpile"..woodpilecounter, EMS.RD.Rules.RMG_ContentWoodPile:GetValue() )
+			Logic.SetEntityName(id, "woodpile"..woodpilecounter)
+			CreateWoodPile("woodpile"..woodpilecounter, _GenerationData.ContentWoodPile)
 			woodpilecounter = woodpilecounter + 1
 		end
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.CreateRandomEntity( _x, _y, _entities, _offset )
+function RMG.CreateRandomEntity(_x, _y, _entities, _offset)
 	
 	_offset = _offset or 100
 	
 	if _entities then
-		Logic.CreateEntity( RMG.GetRandomValueFromTable( _entities ), _x + math.random( -_offset, _offset ), _y + math.random( -_offset, _offset ), math.random( 0, 360 ), 0 )
+		Logic.CreateEntity(RMG.GetRandomValueFromTable(_entities), _x + math.random(-_offset, _offset), _y + math.random(-_offset, _offset), math.random(0, 360), 0)
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.CreateEntity( _generationdata, _entity )
+function RMG.CreateEntity(_GenerationData, _entity)
 
 	local entity = _entity.Data
-	local etype = GetRandomValueFromTable( entity.Type )
+	local etype = GetRandomValueFromTable(entity.Type)
 	local x, y = _entity.X, _entity.Y
 	
 	if entity.Grid then
-		x, y = SnapToGrid( entity.Grid, x, y )
+		x, y = SnapToGrid(entity.Grid, x, y)
 	end
 	
-	x = x + ( entity.RelativX or 0 )
-	y = y + ( entity.RelativY or 0 )
+	x = x + (entity.RelativX or 0)
+	y = y + (entity.RelativY or 0)
 	
 	local rotation = entity.Rotation or 0
 	
 	if rotation == -1 then
-		rotation = math.random( 0, 360 )
+		rotation = math.random(0, 360)
 	end
 	
 	if entity.Angle then
-		rotation = SnapToGrid( entity.Angle, rotation )
+		rotation = SnapToGrid(entity.Angle, rotation)
 	end
 	
 	local player = _entity.P
 	local id
 	
-	if entity.Soldiers and type( entity.Soldiers ) == "number" then
-		id = Tools.CreateGroup( player, etype, entity.Soldiers, x, y, rotation )
+	if entity.Soldiers and type(entity.Soldiers) == "number" then
+		id = Tools.CreateGroup(player, etype, entity.Soldiers, x, y, rotation)
 	else
-		id = Logic.CreateEntity( etype, x, y, rotation, player )
+		id = Logic.CreateEntity(etype, x, y, rotation, player)
 	end
 	
 	if entity.Explore then
 		local name = entity.Name or ""
-		Logic.SetEntityExplorationRange( id, entity.Explore )
-		Logic.SetEntityName( id, "rmg_explore" )--..player.."_"..name ) -- TODO: this is ugly
+		Logic.SetEntityExplorationRange(id, entity.Explore)
+		Logic.SetEntityName(id, "rmg_explore")--..player.."_"..name) -- TODO: this is ugly
 		return
 	end
 	
@@ -3231,124 +3199,111 @@ function RMG.CreateEntity( _generationdata, _entity )
 	--end
 	
 	if entity.Resource then
-		Logic.SetResourceDoodadGoodAmount( id, entity.Resource )
+		Logic.SetResourceDoodadGoodAmount(id, entity.Resource)
 	end
 	
 	if entity.Name then
-		Logic.SetEntityName( id, entity.Name )
+		Logic.SetEntityName(id, entity.Name)
 	end
 	
 	if entity.Health then
-		SetHealth( id, entity.Health )
+		SetHealth(id, entity.Health)
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Finalize
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.Finalize( _generationdata )
+function RMG.Finalize(_GenerationData)
 
 	GUI.RebuildMinimapTerrain()
 	local playerindex = 0
-	
+
 	-- set initial camera position
 	if GUI.GetPlayerID() == 17 then -- observer
-		Camera.ScrollSetLookAt( Logic.WorldGetSize() / 2, Logic.WorldGetSize() / 2 )
+		Camera.ScrollSetLookAt(Logic.WorldGetSize() / 2, Logic.WorldGetSize() / 2)
 	else
-		for i = 1, _generationdata.NumberOfPlayers do
-		
-			local player = _generationdata.Players[ i ]
-			
+		for i = 1, _GenerationData.NumberOfPlayers do
+
+			local player = _GenerationData.Players[i]
+
 			if player.Id == GUI.GetPlayerID() then
-				
+
 				playerindex = i
-				
-				RMG.SetCameraStart( player )
+
+				RMG.SetCameraStart(player)
 				break
 			end
 		end
 	end
-	
+
 	-- update blocking
 	CUtil.UpdateBlockingWholeMapWithHeight()
 
 	-- peacetime with rivers
-	RMG.DeleteBridges( _generationdata )
-	
+	if EMS then
+		RMG.DeleteBridges(_GenerationData)
+	end
+
 	-- debug
-	if _generationdata.DebugMode then
-		
+	if _GenerationData.DebugMode then
+
 		function RMG.Debug()
-			
-			if Counter.Tick2( "RMG_Debug", 11 ) then
-				Game.GameTimeSetFactor( 1 )
-				for i = 1,18 do Display.GfxSetSetFogParams( i,0,0,0,0,0,0,0 ) end
-				
-				XGUIEng.ShowWidget( "GameClock", 1 )
-				
+
+			if Counter.Tick2("RMG_Debug", 11) then
+				Game.GameTimeSetFactor(1)
+				for i = 1,18 do Display.GfxSetSetFogParams(i,0,0,0,0,0,0,0) end
+
+				XGUIEng.ShowWidget("GameClock", 1)
+				Display.SetRenderFogOfWar(0)
+				Camera.ZoomSetFactorMax(5)
+
 				local mapsize = Logic.WorldGetSize() / 100
 				for x = 0, mapsize do
 					for y = 0, mapsize do
-						if _generationdata.TerrainNodes[ x ][ y ].Blocking ~= 0 then
-							--Logic.SetTerrainVertexColor( x, y, 191, 63, 63 )
+						if _GenerationData.TerrainNodes[x][y].Blocking ~= 0 then
+							--Logic.SetTerrainVertexColor(x, y, 191, 63, 63)
 						end
 					end
 				end
-				
+
 				return true
 			end
 		end
-		
-		StartSimpleJob( RMG.Debug )
+
+		Game.GameTimeSetFactor(10)
+		StartSimpleJob(RMG.Debug)
 	else
-		
-		-- clear _generationdata
-		_generationdata.Entities = nil
-		_generationdata.Rivers = nil
-		_generationdata.Roads = nil
-		_generationdata.Structures = nil
-		_generationdata.TerrainNodes = nil
-		
+
+		-- clear _GenerationData
+		_GenerationData.Entities = nil
+		_GenerationData.Rivers = nil
+		_GenerationData.Roads = nil
+		_GenerationData.Structures = nil
+		_GenerationData.TerrainNodes = nil
+
 		RMG.TextureSets = nil
 		RMG.VertexColorSets = nil
 		RMG.EntitySets = nil
 		RMG.LandscapeSets = nil
 	end
-	
+
 	if CNetwork then
-		EMS.GL.HideMainMenu()
-		GUI.AddStaticNote( "RMG: Der Countdown startet, sobald die Karte bei allen Spielern fertig generiert wurde." )
-		CNetwork.SendCommand( "RMG.PlayerFeedbackReady", playerindex )
+		if EMS then
+			EMS.GL.HideMainMenu()
+		end
+		GUI.AddStaticNote("RMG: Das Spiel startet automatisch, sobald die Karte bei allen Spielern fertig generiert wurde.")
+		CNetwork.SendCommand("RMG.PlayerFeedbackReady", playerindex)
 	else
-		RMG.EMS_GL_StartRequestYes()
+		RMG.Callback_OnGenerationFinished()
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
--- for override purposes
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.SetCameraStart( _player )
-	Camera.ScrollSetLookAt( _player.X * 100, _player.Y * 100 )
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.DeleteBridges( _generationdata )
-	if EMS_CustomMapConfig.Peacetime > 0 and _generationdata.TeamBorderType == 3 then
-		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge1 ) ) do
-			DestroyEntity( id )
-		end
-		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.PB_Bridge2 ) ) do
-			DestroyEntity( id )
-		end
-		for p = 1, RMG.GenerationData.NumberOfPlayers do
-			ForbidTechnology( Technologies.B_Bridge, p )
-		end
-	end
-end
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-function RMG.PlayerFeedbackReady( _name, _playerindex )
+function RMG.PlayerFeedbackReady(_name, _playerindex)
 	
-	RMG.GenerationData.Players[ _playerindex ].IsReady = true
+	RMG.GenerationData.Players[_playerindex].IsReady = true
 	
 	-- check if every human player is ready
-	for i, player in ipairs( RMG.GenerationData.Players ) do
+	for i, player in ipairs(RMG.GenerationData.Players) do
 		if player.IsHuman == 1 and not player.IsReady then
 			return
 		end
@@ -3356,9 +3311,10 @@ function RMG.PlayerFeedbackReady( _name, _playerindex )
 	
 	GUI.ClearNotes()
 	
-	-- host: start game
-	if GUI.GetPlayerID() == EMS.GV.HostId or not CNetwork then
-		RMG.EMS_GL_StartRequestYes()
+	-- for EMS in MP only call if player is host, since the ems start func is synced
+	-- maybe i will find a better way, but for now it works like this
+	if not CNetwork or not EMS or GUI.GetPlayerID() == EMS.GV.HostId then
+		RMG.Callback_OnGenerationFinished()
 	end
 end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
@@ -3366,27 +3322,27 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 function RMG.Callback_OnGameStart()
 	
-	for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.XD_ScriptEntity ) ) do
+	for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.XD_ScriptEntity)) do
 		
-		local name = GetEntityName( id )
+		local name = GetEntityName(id)
 		
 		if not name or name == "rmg_explore" then
 			
-			DestroyEntity( id )
+			DestroyEntity(id)
 		
 			-- code for minimap markers
-			--[[if Logic.GetEntityExplorationRange( id ) > 0 and string.find( name, "rmg_explore" .. GUI.GetPlayerID() .. "_" ) then
+			--[[if Logic.GetEntityExplorationRange(id) > 0 and string.find(name, "rmg_explore" .. GUI.GetPlayerID() .. "_") then
 			
-				local pos = GetPosition( id )
+				local pos = GetPosition(id)
 				local col = 0
 				
-				if string.find( name, "blue" ) then
+				if string.find(name, "blue") then
 					col = 1
-				elseif string.find( name, "white" ) then
+				elseif string.find(name, "white") then
 					col = 2
 				end
 				
-				GUI.CreateMinimapMarker( pos.X, pos.Y, col )
+				GUI.CreateMinimapMarker(pos.X, pos.Y, col)
 			end]]
 		end
 	end
@@ -3394,18 +3350,18 @@ end
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
 -- Peacetime Callback
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-function RMG.Callback_OnPeacetimeEnded()
+function RMG.Callback_OnPeacetimeEnded(_GenerationData)
 	
-	if RMG.GenerationData.TeamBorderType == 2 then
+	if _GenerationData.TeamBorderType == 2 then
 	
-		for id in CEntityIterator.Iterator( CEntityIterator.OfTypeFilter( Entities.XD_WoodenFence15 ) ) do
-			DestroyEntity( id )
+		for id in CEntityIterator.Iterator(CEntityIterator.OfTypeFilter(Entities.XD_WoodenFence15)) do
+			DestroyEntity(id)
 		end
 		
-	elseif RMG.GenerationData.TeamBorderType == 3 then
+	elseif _GenerationData.TeamBorderType == 3 then
 		
-		for p = 1, RMG.GenerationData.NumberOfPlayers do
-			AllowTechnology( Technologies.B_Bridge, RMG.GenerationData.Players[ p ].Id )
+		for p = 1, _GenerationData.NumberOfPlayers do
+			AllowTechnology(Technologies.B_Bridge, _GenerationData.Players[p].Id)
 		end
 	end
 end
@@ -3520,96 +3476,53 @@ function Num2Bool(_n)
  end
  return true; 
 end
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
--- override EMS StartRequest
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-RMG.EMS_GL_StartRequestYes = EMS.GL.StartRequestYes
-EMS.GL.StartRequestYes = function()
-	
-	if not RMG.GenerationStarted then
-		
-		RMG.GenerationStarted = true
-		
-		if EMS.UseCNetwork then
-			Sync.Call( "EMS.GL.SetRulesByConfig", Sync.TableToString( EMS.RD.GetRuleConfig() ) );
-		else
-			Sync.Call( "EMS.GL.SetRulesByConfig", EMS.RD.GetRuleConfig() );
-		end
-		
-		if CNetwork and EMS.CanChangeRules then
-			CNetwork.SendCommand( "RMG.GenerateMap" )
-		else
-			RMG.GenerateMap()
-		end
-	end
-end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 if CNetwork then
-	CNetwork.SetNetworkHandler( "RMG.GenerateMap", RMG.GenerateMap )
-	CNetwork.SetNetworkHandler( "RMG.PlayerFeedbackReady", RMG.PlayerFeedbackReady )
+	CNetwork.SetNetworkHandler("RMG.GenerateMap", RMG.GenerateMap)
+	CNetwork.SetNetworkHandler("RMG.PlayerFeedbackReady", RMG.PlayerFeedbackReady)
 end
---++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
- -- load these files at the end due to dependencies
- --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
-Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_guil.lua")
-Script.Load("maps\\user\\EMS\\tools\\rmg\\rmg_ruledata.lua")
-
-RMG.GL_Setup()
-RMG.SetRulesToDefault()
-
--- init on rule page changed, not immediately because player data is not yet available >:(
-RMG.EMS_GL_ToggleRulePage = EMS.GL.ToggleRulePage
-EMS.GL.ToggleRulePage = function( _value )
-	RMG.PackPlayerConfig( unpack({ RMG.GetPlayersAndTeams() }) )
-	XGUIEng.ShowWidget("RMG6", 1)
-	EMS.GL.DbgShow_PlayerConfig()
-	
-	EMS.GL.ToggleRulePage = RMG.EMS_GL_ToggleRulePage
-	RMG.EMS_GL_ToggleRulePage = nil
-	EMS.GL.ToggleRulePage( _value )
-end
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 function FixVillageCenters()
 	
 	RMG.GameCallback_OnBuildingConstructionComplete = GameCallback_OnBuildingConstructionComplete
-	function GameCallback_OnBuildingConstructionComplete( _BuildingId, _PlayerId )
+	function GameCallback_OnBuildingConstructionComplete(_BuildingId, _PlayerId)
 		
-		RMG.GameCallback_OnBuildingConstructionComplete( _BuildingId, _PlayerId )
+		RMG.GameCallback_OnBuildingConstructionComplete(_BuildingId, _PlayerId)
 		
-		if Logic.GetEntityType( _BuildingId ) == Entities.PB_VillageCenter1 then
+		if Logic.GetEntityType(_BuildingId) == Entities.PB_VillageCenter1 then
 			
-			S5Hook.GetEntityMem( _BuildingId )[ 66 ]:SetFloat( -400 )
-			S5Hook.GetEntityMem( _BuildingId )[ 67 ]:SetFloat( -600 )
-			S5Hook.GetEntityMem( _BuildingId )[ 68 ]:SetFloat( -500 )
-			S5Hook.GetEntityMem( _BuildingId )[ 69 ]:SetFloat( -600 )
+			S5Hook.GetEntityMem(_BuildingId)[66]:SetFloat(-400)
+			S5Hook.GetEntityMem(_BuildingId)[67]:SetFloat(-600)
+			S5Hook.GetEntityMem(_BuildingId)[68]:SetFloat(-500)
+			S5Hook.GetEntityMem(_BuildingId)[69]:SetFloat(-600)
 		end
 	end
 	
 	RMG.GameCallback_OnBuildingUpgradeComplete = GameCallback_OnBuildingUpgradeComplete
-	function GameCallback_OnBuildingUpgradeComplete( _OldId, _NewId )
+	function GameCallback_OnBuildingUpgradeComplete(_OldId, _NewId)
 		
-		RMG.GameCallback_OnBuildingUpgradeComplete( _OldId, _NewId )
+		RMG.GameCallback_OnBuildingUpgradeComplete(_OldId, _NewId)
 		
-		if Logic.GetEntityType( _NewId ) == Entities.PB_VillageCenter2 or Logic.GetEntityType( _NewId ) == Entities.PB_VillageCenter3 then
+		if Logic.GetEntityType(_NewId) == Entities.PB_VillageCenter2 or Logic.GetEntityType(_NewId) == Entities.PB_VillageCenter3 then
 			
-			S5Hook.GetEntityMem( _NewId )[ 66 ]:SetFloat( -400 )
-			S5Hook.GetEntityMem( _NewId )[ 67 ]:SetFloat( -600 )
-			S5Hook.GetEntityMem( _NewId )[ 68 ]:SetFloat( -500 )
-			S5Hook.GetEntityMem( _NewId )[ 69 ]:SetFloat( -600 )
+			S5Hook.GetEntityMem(_NewId)[66]:SetFloat(-400)
+			S5Hook.GetEntityMem(_NewId)[67]:SetFloat(-600)
+			S5Hook.GetEntityMem(_NewId)[68]:SetFloat(-500)
+			S5Hook.GetEntityMem(_NewId)[69]:SetFloat(-600)
 		end
 	end
 	
 	--[[RMG.Logic_CreateEntity = Logic.CreateEntity
-	function Logic.CreateEntity( _EntityType, _X, _Y, _Rotation, _Player )
+	function Logic.CreateEntity(_EntityType, _X, _Y, _Rotation, _Player)
 		
-		local id = RMG.Logic_CreateEntity( _EntityType, _X, _Y, _Rotation, _Player )
+		local id = RMG.Logic_CreateEntity(_EntityType, _X, _Y, _Rotation, _Player)
 		
 		if _EntityType == Entities.PB_VillageCenter1 or _EntityType == Entities.PB_VillageCenter2 or _EntityType == Entities.PB_VillageCenter3 then
 			
-			S5Hook.GetEntityMem( id )[ 66 ]:SetFloat( -400 )
-			S5Hook.GetEntityMem( id )[ 67 ]:SetFloat( -600 )
-			S5Hook.GetEntityMem( id )[ 68 ]:SetFloat( -500 )
-			S5Hook.GetEntityMem( id )[ 69 ]:SetFloat( -600 )
+			S5Hook.GetEntityMem(id)[66]:SetFloat(-400)
+			S5Hook.GetEntityMem(id)[67]:SetFloat(-600)
+			S5Hook.GetEntityMem(id)[68]:SetFloat(-500)
+			S5Hook.GetEntityMem(id)[69]:SetFloat(-600)
 		end
 	end]]
 end
