@@ -10,7 +10,7 @@
 EMS_CustomMapConfig =
 {
 	-- version is set by the generator
-	Version = 1,
+	Version = 1.1,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -44,7 +44,7 @@ EMS_CustomMapConfig =
 	-- * Called after the peace time ends
 	-- ********************************************************************************************
 	Callback_OnPeacetimeEnded = function()
-		RMG.Callback_OnPeacetimeEnded()
+		RMG.Callback_OnPeacetimeEnded(RMG.GenerationData)
 	end,
 	
 	Peacetime = 40,
