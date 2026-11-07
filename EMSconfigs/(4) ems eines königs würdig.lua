@@ -9,7 +9,7 @@
 
 EMS_CustomMapConfig =
 {
-	Version = 2,
+	Version = 3,
 	-- ********************************************************************************************
 	-- * Callback_OnMapStart
 	-- * this function is called directly after the loading screen vanishes
@@ -25,7 +25,7 @@ EMS_CustomMapConfig =
 		gvMission.PlayerID = GUI.GetPlayerID()
 
 		-- TODO: Debug path
-		--local path = "maps\\user\\(4) EMS Eines Königs würdig\\maps\\externalmap\\"
+		--local path = "maps\\user\\(4) EMS Eines Konigs wurdig\\maps\\externalmap\\"
 		local path = "maps\\externalmap\\"
 
 		-- Determine language
@@ -113,7 +113,7 @@ EMS_CustomMapConfig =
 		Display.SetPlayerColorMapping(5, 14)
 		Display.SetPlayerColorMapping(6, 14)
 		Display.SetPlayerColorMapping(7, 11)
-		
+
 		for p = 5, 7 do
 			Logic.SetPlayerRawName(p, Text.PlayerNames[p])
 		end
@@ -128,21 +128,27 @@ EMS_CustomMapConfig =
 			-- Neutral Player
 			SetNeutral(PlayerId, 8)
 
-			--[[ TODO: Debug only
-			Camera.ZoomSetFactorMax(5)
-			for i = 1,3 do
-				Display.GfxSetSetFogParams(i,0,0,0,0,0,0,0,0)
-			end
-			Display.SetRenderFogOfWar(0)
+			-- Debug only
+			-- Camera.ZoomSetFactorMax(5)
+			-- for i = 1,3 do
+			-- 	Display.GfxSetSetFogParams(i,0,0,0,0,0,0,0,0)
+			-- end
+			-- Display.SetRenderFogOfWar(0)
 
-			for _, Technology in pairs(Technologies) do
-				ResearchTechnology(Technology, PlayerId)
-			end]]
+			-- for _, Technology in pairs(Technologies) do
+			-- 	ResearchTechnology(Technology, PlayerId)
+			-- end
 		end
 
-		--for id in CEntityIterator.Iterator(CEntityIterator.OfAnyTypeFilter(Entities.PB_DarkTower2, Entities.PB_DarkTower3)) do
-			--Logic.DestroyEntity(id)
-		--end
+		-- Logic.CreateEntity(Entities.PU_Hero1c, 48500, 48800, 0, 1)
+		-- function Teleport()
+		-- 	local x, y = GUI.Debug_GetMapPositionUnderMouse()
+		-- 	CUtil.EntitySetPosition(GUI.GetSelectedEntity(), x, y)
+		-- end
+
+		for id in CEntityIterator.Iterator(CEntityIterator.OfAnyTypeFilter(Entities.PB_DarkTower2, Entities.PB_DarkTower3)) do
+			Logic.DestroyEntity(id)
+		end
 	end,
 
 	-- ********************************************************************************************
